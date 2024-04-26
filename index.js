@@ -57,12 +57,12 @@ fastify.register(require('@fastify/swagger'), {
 
 // cors 
 fastify.register(cors, {
-    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002",'https://careergenie-24.vercel.app'],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"], // Include 'x-api-key' header
     credentials: true
 });
 
-fastify.register(multer.contentParser);
+// fastify.register(multer.contentParser);
 
 fastify.decorate('verifyJWT', verifyJWT)
 

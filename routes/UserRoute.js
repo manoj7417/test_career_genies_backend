@@ -38,7 +38,7 @@ const resetPasswordSchema = {
         type: "object",
         required: ['newPassword', 'token'],
         properties: {
-            token: { type: 'string', format: "email", maxLength: 500 },
+            token: { type: 'string', maxLength: 500 },
             newPassword: { type: 'string', minLength: 8, maxLength: 100 }
         }
     }
