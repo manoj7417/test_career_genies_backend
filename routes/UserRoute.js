@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout } = require("../controllers/UserController");
 
 const registerSchema = {
     body: {
@@ -77,6 +77,13 @@ async function UserRoute(fastify, options) {
         preHandler: [fastify.verifyJWT, fastify.roleCheck(['admin'])],
         handler: getAllUsers
 
+    })
+
+    fastify.route({
+        method: "GET",
+        url: "/logout",
+        preHandler: [fastify.verifyJWT],
+        handler: logout
     })
 }
 

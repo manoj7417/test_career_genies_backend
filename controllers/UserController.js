@@ -81,10 +81,10 @@ const login = async (request, reply) => {
 
     if (accessToken) {
       reply.setCookie('accessToken', accessToken, {
-        httpOnly: true, 
-        secure: process.env.NODE_ENV !== 'development', 
-        sameSite: 'none', 
-        path : "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'none',
+        path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }).code(200).send({
         status: "SUCCESS",
@@ -300,6 +300,22 @@ const getAllUsers = async (request, reply) => {
   }
 }
 
+
+// 
+const logout = async (request, reply) => {
+  try {
+    reply.clearCookie('accessToken');
+
+    reply.code(200).send({ status: "SUCCESS", message: "Logout successful" });
+  } catch (error) {
+    console.log(error.message || "Internal server error")
+    reply.code(500).send({
+      status: "FAILURE",
+      error: error.message || "Internal server error",
+    });
+  }
+}
+
 //decode the reset password token and return the decode result
 async function decodeToken(token) {
   try {
@@ -316,5 +332,6 @@ module.exports = {
   forgetPassword,
   resetPassword,
   updateUserDetails,
-  getAllUsers
+  getAllUsers,
+  logout
 };
