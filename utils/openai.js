@@ -228,8 +228,20 @@ async function createThread(){
 async function aiAgent(req, reply) {
     try {
         
-        const thread = await createThread();
-        const threadId = thread.id;
+        const user = req.user;
+
+        const userthread = user.threadId;
+
+        if(!userthread){
+            
+            const thread = await createThread();
+            const threadId = thread.id;
+        
+        }
+        else{
+            const threadId = userthread;
+        }
+
         
         console.log(req.file.path);
         const resume = await openai.files.create({

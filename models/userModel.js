@@ -32,7 +32,10 @@ const UserSchema = new mongoose.Schema({
     resumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
-    }]
+    }],
+    threadId:{
+        type: String,
+    }
 },
     {
         timestamps: true
