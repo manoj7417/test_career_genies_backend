@@ -6,6 +6,7 @@ const { OpenAI } = require('openai');
 const fs = require('fs');
 const { type } = require('os');
 const { threadId } = require('worker_threads');
+const { User } = require('../models/userModel');
 
 
 const openai = new OpenAI(
@@ -17,21 +18,21 @@ const openai = new OpenAI(
 const assistantId = process.env['OPENAI_ASSISTANT_ID'];
 
 async function createAssistant() {
-  try {
-    const instructions = "You are a professional career expert tasked with analyzing resumes to identify areas for improvement and generating enhanced versions. The assistant should be capable of thoroughly examining each resume, highlighting any weaknesses or inconsistencies, and providing constructive feedback and suggestions for enhancement. Additionally, it should possess the capability to generate polished versions of the resumes, improving their overall effectiveness and presentation to increase the likelihood of securing job opportunities for the candidates."
-    const name = "Career Genie"
-    const model = "gpt-3.5-turbo"
+    try {
+        const instructions = "You are a professional career expert tasked with analyzing resumes to identify areas for improvement and generating enhanced versions. The assistant should be capable of thoroughly examining each resume, highlighting any weaknesses or inconsistencies, and providing constructive feedback and suggestions for enhancement. Additionally, it should possess the capability to generate polished versions of the resumes, improving their overall effectiveness and presentation to increase the likelihood of securing job opportunities for the candidates."
+        const name = "Career Genie"
+        const model = "gpt-3.5-turbo"
 
-    const response = await openai.beta.assistants.create({
-      name,
-      instructions,
-      model
-    });
-    return response;
-  } catch (error) {
-    console.error('Error creating AI assistant:', error);
-    throw error;
-  }
+        const response = await openai.beta.assistants.create({
+            name,
+            instructions,
+            model
+        });
+        return response;
+    } catch (error) {
+        console.error('Error creating AI assistant:', error);
+        throw error;
+    }
 }
 
 
@@ -50,16 +51,16 @@ async function createMessage(req, reply) {
         //     instructions : req.body.instructions,
         // });
 
-        
+
         // const run = await openai.beta.threads.runs.retrieve(req.body.threadId, "run_ddp23mVwTGj4WkYpxz6vRXNO");
-        
+
         // console.log(run);
         const messages = await openai.beta.threads.messages.list(req.body.threadId);
         console.log(messages);
         messages.body.data.forEach(message => {
             console.log(message.content);
         });
-        
+
     } catch (error) {
         console.error('Error creating message:', error);
         throw error;
@@ -72,9 +73,9 @@ async function communicateWithAgent(req, reply) {
 
         // Create a message in the thread
 
-        const thread =  await createThread()
+        const thread = await createThread()
 
-        const msg =  {
+        const msg = {
             "profile": {
                 "name": "Kuluru Vineeth",
                 "email": "vineeth@startup.com",
@@ -178,7 +179,7 @@ async function communicateWithAgent(req, reply) {
         }
 
         const msg2 = JSON.stringify(msg);
-        
+
         const createMessageResponse = await openai.beta.threads.messages.create(thread.id, {
             role: 'user',
             content: msg2
@@ -215,7 +216,7 @@ async function communicateWithAgent(req, reply) {
     }
 }
 
-async function createThread(){
+async function createThread() {
     try {
         const response = await openai.beta.threads.create();
         return response;
@@ -228,27 +229,29 @@ async function createThread(){
 async function aiAgent(req, reply) {
     try {
         
-        const user = req.user;
+        // const user = req.user;
 
-        const userthread = user.threadId;
+        // const userthread = user.threadId;
 
-        if(!userthread){
+        // if(!userthread){
             
-            const thread = await createThread();
-            const threadId = thread.id;
-        
-        }
-        else{
-            const threadId = userthread;
-        }
+        //     const thread = await createThread();
+        //     const threadId = thread.id;
+        //     await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
+        // }
+        // else{
+        //     const threadId = userthread;
+        // }
 
-        
+        const thread = await createThread();
+        const threadId = thread.id;
+
         console.log(req.file.path);
         const resume = await openai.files.create({
             file: fs.createReadStream(req.file.path),
             purpose: "assistants",
         });
-        
+
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: "You need to analyse the resume(From the attached pdf with message) and understand and provide feedback on the resume what can be added and how can be improved and what is missing.",
@@ -262,7 +265,6 @@ async function aiAgent(req, reply) {
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id: assistantId,
         });
-        console.log(run);
 
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
             const run = await openai.beta.threads.runs.retrieve(threadId, runId);
@@ -283,10 +285,200 @@ async function aiAgent(req, reply) {
         reply.send(response);
 
     }
-    catch(error){
+    catch (error) {
         reply.status(500).send(error);
-    }    
+    }
 }
+
+async function analyseResume(req, reply) {
+    try {
+        const user = req.user;
+        const userthread = user.threadId;
+        console.log(req.file.path)
+        if (!userthread) {
+
+            const thread = await createThread();
+            const threadId = thread.id;
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
+        }
+        else {
+            const threadId = userthread;
+        }
+
+        const resume = await openai.files.create({
+            file: fs.createReadStream(req.file.path),
+            purpose: "assistants",
+        });
+
+        const data = {
+            personalInfo: {
+                firstName: '',
+                lastName: "",
+                jobTitle: '',
+                email: '',
+                phone: '',
+                City: '',
+                Country: ""
+            },
+            profile: {
+                label: "Profile",
+                description: "",
+                isEditing: false
+            },
+            education: {
+                label: "Education",
+                isEditing: false,
+                sections: [{
+                    institute: "XYZ",
+                    degree: '',
+                    startDate: "",
+                    endDate: '',
+                    city: '',
+                    description: ""
+                }
+                ]
+            },
+            experience: {
+                label: "Experience",
+                isEditing: false,
+                sections: [{
+                    jobTitle: "XYZ",
+                    Employer: '',
+                    startDate: '',
+                    endDate: '',
+                    city: '',
+                    description: ''
+                },
+                ]
+            }
+        }
+
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: `1.Analyse the resume(From the pdf) and provide a score out of 10:  You need to analyse the resume and see what data is mising in it as per the industry standard and after checking that you can rate that resume out of 10.  In response you should only reply with score nothing else  example : score:score according to assitant. 2. You need to analyse the resume(From the pdf) and understand and provide feedback on the resume what can be added and how can be improved and what is missing. 3.Analyse the resume(From the pdf) and provide a better resume : You need to analyse the gaps in resume and make a better version of it and provide it in json format example: ${JSON.stringify(data)}`,
+            attachments: [{
+                file_id: resume.id,
+                tools: [{ type: 'code_interpreter' }]
+            }]
+        });
+
+
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: assistantId,
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        const removepdf = await fs.unlinkSync(req.file.path);
+        reply.send(response);
+
+    }
+    catch (error) {
+        reply.status(500).send(error);
+    }
+}
+
+async function atsCheck(req, reply) {
+    
+    try{
+
+    const thread = await createThread();
+    const threadId = thread.id;
+
+    const { message } = await req.body;
+
+    const createMessage = await openai.beta.threads.messages.create(threadId, {
+        role: 'user',
+        content: message
+    });
+
+
+    const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: "asst_4nff27JgCzKYTEFUFBOjcghp",
+    });
+
+    const checkStatusAndGenerateResponse = async (threadId, runId) => {
+        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+        if (run.status === 'completed') {
+            const messages = await openai.beta.threads.messages.list(threadId);
+            const response = messages.body.data.find(message => message.role === 'assistant');
+
+            // Try to parse the JSON content from the assistant's response
+            return response.content;
+        } else {
+            // Recursive call to check again until completion
+            return checkStatusAndGenerateResponse(threadId, runId);
+        }
+    };
+
+    const response = await checkStatusAndGenerateResponse(threadId, run.id);
+   
+    reply.send(response);
+
+}
+catch(error){
+    reply.status(500).send(error);
+}  
+}
+
+async function askBot(req, reply) {
+    
+    try{
+
+    // const thread = await createThread();
+    const threadId = "thread_RJSXp1st6LrR6D9okApOyS07";
+
+    const { message } = await req.body;
+
+    const createMessage = await openai.beta.threads.messages.create(threadId, {
+        role: 'user',
+        content: message
+    });
+
+
+    const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: "asst_59D0873JevaZMUSOMPLun1KV",
+    });
+
+    const checkStatusAndGenerateResponse = async (threadId, runId) => {
+        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+        if (run.status === 'completed') {
+            const messages = await openai.beta.threads.messages.list(threadId);
+            const response = messages.body.data.find(message => message.role === 'assistant');
+
+            // Try to parse the JSON content from the assistant's response
+            return response.content;
+        } else {
+            // Recursive call to check again until completion
+            return checkStatusAndGenerateResponse(threadId, runId);
+        }
+    };
+
+    const response = await checkStatusAndGenerateResponse(threadId, run.id);
+   
+    reply.send(response);
+
+}
+catch(error){
+    reply.status(500).send(error);
+}  
+}  
+
+
+
 
 async function createThread(){
     try {
@@ -299,4 +491,4 @@ async function createThread(){
     }
 }
 
-module.exports = { createAssistant, createMessage , createThread, communicateWithAgent, aiAgent};
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent,atsCheck, askBot, analyseResume };
