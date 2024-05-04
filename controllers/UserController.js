@@ -305,7 +305,6 @@ const getAllUsers = async (request, reply) => {
 const logout = async (request, reply) => {
   try {
     reply.clearCookie('accessToken');
-
     reply.code(200).send({ status: "SUCCESS", message: "Logout successful" });
   } catch (error) {
     console.log(error.message || "Internal server error")

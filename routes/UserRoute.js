@@ -82,7 +82,6 @@ async function UserRoute(fastify, options) {
     fastify.route({
         method: "GET",
         url: "/logout",
-        preHandler: [fastify.verifyJWT],
         handler: logout
     })
 }
