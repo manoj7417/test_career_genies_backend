@@ -34,6 +34,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 // register the user 
 const register = async (request, reply) => {
   const { email, fullname, password } = request.body;
+  console.log(request.body)
   try {
     const findExistingUser = await User.findOne({ email });
     if (findExistingUser) {
@@ -41,11 +42,10 @@ const register = async (request, reply) => {
         .code(409)
         .send({ status: "FAILURE", error: "User already exists" });
     }
-
     const user = new User({ email, fullname, password });
     await user.save();
 
-    reply.code(201).send({
+    return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
     });

@@ -57,7 +57,7 @@ fastify.register(require('@fastify/swagger'), {
 
 // cors 
 fastify.register(cors, {
-    origin: ["http://localhost:3000", "http://localhost:3002",'https://careergenie-24.vercel.app'],
+    origin: ["http://localhost:3000", "http://localhost:3002",'https://careergenie-24.vercel.app','https://career-genies-frontend.vercel.app'],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"], // Include 'x-api-key' header
     credentials: true
 });
