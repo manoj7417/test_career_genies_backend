@@ -584,6 +584,61 @@ catch(error){
 }  
 }  
 
+async function generateBetterResume(req, reply) {
+    try {
+        // const user = req.user;
+
+        // const userthread = user?.threadId;
+        // if (!userthread) {
+
+        //     const thread = await createThread();
+        //     const threadId = thread.id;
+        //     await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
+        // }
+        // else {
+        //     const threadId = userthread;
+        // }
+
+        const thread = await createThread();
+        const threadId = thread.id;
+
+        const { message } = await req.body;
+
+    const createMessage = await openai.beta.threads.messages.create(threadId, {
+        role: 'user',
+        content: message
+    });
+
+
+    const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: "asst_cgWXfKTsqbR4jrujm9XOpzVO",
+    });
+
+    const checkStatusAndGenerateResponse = async (threadId, runId) => {
+        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+        if (run.status === 'completed') {
+            const messages = await openai.beta.threads.messages.list(threadId);
+            const response = messages.body.data.find(message => message.role === 'assistant');
+
+            // Try to parse the JSON content from the assistant's response
+            return response.content;
+        } else {
+            // Recursive call to check again until completion
+            return checkStatusAndGenerateResponse(threadId, runId);
+        }
+    };
+
+    const response = await checkStatusAndGenerateResponse(threadId, run.id);
+   
+    reply.send(response);
+
+        
+
+    }catch(error){
+        reply.status(500).send(error);
+    }
+}
+        
 
 
 
@@ -598,4 +653,4 @@ async function createThread(){
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent,atsCheck, askBot, analyseResume ,analyzeResume };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent,atsCheck, askBot, analyseResume ,analyzeResume, generateBetterResume };
