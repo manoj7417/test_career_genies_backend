@@ -88,7 +88,7 @@ const login = async (request, reply) => {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }).code(200).send({
         status: "SUCCESS",
-        message: "LogIn successful",
+        message: "Login successful",
       });
     }
   } catch (error) {
