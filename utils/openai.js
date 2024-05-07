@@ -603,7 +603,6 @@ async function generateBetterResume(req, reply) {
         const threadId = thread.id;
 
         const { message } = await req.body;
-        console.log(message)
 
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
