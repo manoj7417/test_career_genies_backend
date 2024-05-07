@@ -499,90 +499,90 @@ async function analyseResume(req, reply) {
 }
 
 async function atsCheck(req, reply) {
-    
-    try{
 
-    const thread = await createThread();
-    const threadId = thread.id;
+    try {
 
-    const { message } = await req.body;
+        const thread = await createThread();
+        const threadId = thread.id;
 
-    const createMessage = await openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: message
-    });
+        const { message } = await req.body;
+
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
 
 
-    const run = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: "asst_4nff27JgCzKYTEFUFBOjcghp",
-    });
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_4nff27JgCzKYTEFUFBOjcghp",
+        });
 
-    const checkStatusAndGenerateResponse = async (threadId, runId) => {
-        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-        if (run.status === 'completed') {
-            const messages = await openai.beta.threads.messages.list(threadId);
-            const response = messages.body.data.find(message => message.role === 'assistant');
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
 
-            // Try to parse the JSON content from the assistant's response
-            return response.content;
-        } else {
-            // Recursive call to check again until completion
-            return checkStatusAndGenerateResponse(threadId, runId);
-        }
-    };
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
 
-    const response = await checkStatusAndGenerateResponse(threadId, run.id);
-   
-    reply.send(response);
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
 
-}
-catch(error){
-    reply.status(500).send(error);
-}  
+        reply.send(response);
+
+    }
+    catch (error) {
+        reply.status(500).send(error);
+    }
 }
 
 async function askBot(req, reply) {
-    
-    try{
 
-    // const thread = await createThread();
-    const threadId = "thread_RJSXp1st6LrR6D9okApOyS07";
+    try {
 
-    const { message } = await req.body;
+        // const thread = await createThread();
+        const threadId = "thread_RJSXp1st6LrR6D9okApOyS07";
 
-    const createMessage = await openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: message
-    });
+        const { message } = await req.body;
+
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
 
 
-    const run = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: "asst_59D0873JevaZMUSOMPLun1KV",
-    });
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_59D0873JevaZMUSOMPLun1KV",
+        });
 
-    const checkStatusAndGenerateResponse = async (threadId, runId) => {
-        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-        if (run.status === 'completed') {
-            const messages = await openai.beta.threads.messages.list(threadId);
-            const response = messages.body.data.find(message => message.role === 'assistant');
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
 
-            // Try to parse the JSON content from the assistant's response
-            return response.content;
-        } else {
-            // Recursive call to check again until completion
-            return checkStatusAndGenerateResponse(threadId, runId);
-        }
-    };
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
 
-    const response = await checkStatusAndGenerateResponse(threadId, run.id);
-   
-    reply.send(response);
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
 
+        reply.send(response);
+
+    }
+    catch (error) {
+        reply.status(500).send(error);
+    }
 }
-catch(error){
-    reply.status(500).send(error);
-}  
-}  
 
 async function generateBetterResume(req, reply) {
     try {
@@ -603,46 +603,47 @@ async function generateBetterResume(req, reply) {
         const threadId = thread.id;
 
         const { message } = await req.body;
+        console.log(message)
 
-    const createMessage = await openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: message
-    });
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
 
 
-    const run = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: "asst_cgWXfKTsqbR4jrujm9XOpzVO",
-    });
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_cgWXfKTsqbR4jrujm9XOpzVO",
+        });
 
-    const checkStatusAndGenerateResponse = async (threadId, runId) => {
-        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-        if (run.status === 'completed') {
-            const messages = await openai.beta.threads.messages.list(threadId);
-            const response = messages.body.data.find(message => message.role === 'assistant');
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
 
-            // Try to parse the JSON content from the assistant's response
-            return response.content;
-        } else {
-            // Recursive call to check again until completion
-            return checkStatusAndGenerateResponse(threadId, runId);
-        }
-    };
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
 
-    const response = await checkStatusAndGenerateResponse(threadId, run.id);
-   
-    reply.send(response);
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
 
-        
+        reply.send(response);
 
-    }catch(error){
+
+
+    } catch (error) {
         reply.status(500).send(error);
     }
 }
-        
 
 
 
-async function createThread(){
+
+async function createThread() {
     try {
         const response = await openai.beta.threads.create();
         console.log(response);
@@ -653,4 +654,4 @@ async function createThread(){
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent,atsCheck, askBot, analyseResume ,analyzeResume, generateBetterResume };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume };
