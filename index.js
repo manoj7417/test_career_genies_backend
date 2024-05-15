@@ -8,6 +8,7 @@ const OpenaiRoute = require('./routes/OpenaiRoute')
 const cors = require('@fastify/cors')
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer'); 
+const PrintResume = require('./routes/PrintResume')
 
 require('dotenv').config()
 
@@ -79,6 +80,8 @@ fastify.register(UserRoute, { prefix: '/api/user' })
 fastify.register(ResumeRoute, { prefix: '/api/resume' })
 
 fastify.register(OpenaiRoute, { prefix: '/api/openai' })
+
+fastify.register(PrintResume , {prefix : "api/print"})
 
 
 const start = async () => {
