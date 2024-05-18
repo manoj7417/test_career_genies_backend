@@ -7,7 +7,7 @@ const printResumePath = path.join(
     '..',
     'resumeTemplate/resume.html')
 
-const printResume = async (request, reply) => {
+const   printResume = async (request, reply) => {
     const htmlbody = request.body.html;
     const page = fs.readFileSync(printResumePath, 'utf8').toString()
     const html = page.replace('{{content}}', htmlbody);
