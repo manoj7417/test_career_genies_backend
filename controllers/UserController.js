@@ -77,13 +77,11 @@ const login = async (request, reply) => {
       });
     }
     const accessToken = await user.generateAccessToken();
-
-
     if (accessToken) {
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'none',
+        sameSite: 'lax',
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }).code(200).send({
