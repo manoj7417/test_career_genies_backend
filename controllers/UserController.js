@@ -80,7 +80,7 @@ const login = async (request, reply) => {
     if (accessToken) {
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
+        secure: true,
         sameSite:'none',
         domain:  'career-genies-frontend.vercel.app' || 'seal-app-tilby.ondigitalocean.app',
         path: "/",
