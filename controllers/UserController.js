@@ -83,7 +83,6 @@ const login = async (request, reply) => {
         httpOnly: true,
         secure: true,
         sameSite:'none',
-        domain:  'career-genies-frontend.vercel.app',
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         
