@@ -78,11 +78,12 @@ const login = async (request, reply) => {
     }
     const accessToken = await user.generateAccessToken();
     if (accessToken) {
+      const domain = 'career-genies-frontend.vercel.app' || 'seal-app-tilby.ondigitalocean.app'
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
         sameSite:'none',
-        domain:  'career-genies-frontend.vercel.app' || 'seal-app-tilby.ondigitalocean.app',
+        domain:  domain,
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         
