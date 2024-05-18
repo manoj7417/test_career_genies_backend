@@ -81,7 +81,8 @@ const login = async (request, reply) => {
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
-        sameSite:'lax',
+        sameSite:'none',
+        domain:  'career-genies-frontend.vercel.app' || 'seal-app-tilby.ondigitalocean.app',
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         
