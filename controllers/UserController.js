@@ -81,7 +81,7 @@ const login = async (request, reply) => {
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'none',
+        sameSite: process.env.NODE_ENV !== 'development' ? 'strict' : 'lax',
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }).code(200).send({
