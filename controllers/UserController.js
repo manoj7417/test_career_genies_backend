@@ -84,7 +84,7 @@ const login = async (request, reply) => {
         sameSite: process.env.NODE_ENV !== 'development' ? 'strict' : 'lax',
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        domain: "https://career-genies-frontend.vercel.app/"
+        domain: "career-genies-frontend.vercel.app"
       }).code(200).send({
         status: "SUCCESS",
         message: "Login successful",
