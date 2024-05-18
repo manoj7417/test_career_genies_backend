@@ -82,7 +82,7 @@ const login = async (request, reply) => {
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite:'none',
+        sameSite:'lex',
         domain:  domain,
         path: "/",
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
