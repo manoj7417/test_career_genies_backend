@@ -76,6 +76,7 @@ const login = async (request, reply) => {
         error: "Invalid credentials",
       });
     }
+
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
       reply.code(200).send({
         status: "SUCCESS",
