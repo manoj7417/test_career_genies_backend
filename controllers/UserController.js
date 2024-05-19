@@ -76,21 +76,24 @@ const login = async (request, reply) => {
         error: "Invalid credentials",
       });
     }
-    const accessToken = await user.generateAccessToken();
-    if (accessToken) {
 
-      reply.setCookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-        sameSite: process.env.NODE_ENV !== 'development' ? 'none' : 'lax',
-        path: "/",
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        
-      }).code(200).send({
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+      reply.code(200).send({
         status: "SUCCESS",
         message: "Login successful",
+        data: {
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          userdata: {
+            fullname: user.fullname,
+            email: user.email,
+            _id: user._id,
+            role: user.role,
+            isSubscribed: user.isSubscribed,
+            resumes: user.resumes
+          }
+        }
       });
-    }
   } catch (error) {
     console.log(error);
     reply.code(500).send({
