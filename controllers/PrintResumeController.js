@@ -16,6 +16,10 @@ const printResume = async (request, reply) => {
     console.log('Cache Path:', cachePath);
     console.log('Chrome Executable Path:', chromePath);
 
+    // This log will help you verify if the path is correct
+    const installLog = fs.readdirSync(path.join(cachePath, 'chrome', 'latest'));
+    console.log('Installed Chrome Files:', installLog);
+
     if (!fs.existsSync(chromePath)) {
       throw new Error(`Chrome executable not found at ${chromePath}`);
     }
