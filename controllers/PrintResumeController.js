@@ -13,7 +13,11 @@ const   printResume = async (request, reply) => {
     const html = page.replace('{{content}}', htmlbody);
     console.log(html)
     try {
-        const browser = await puppeteer.launch();
+        const cachePath = process.env.PUPPETEER_CACHE_DIR || path.resolve(__dirname, '.cache/puppeteer');
+        const browser = await puppeteer.launch({
+        executablePath: path.join(cachePath, 'chrome', 'latest', 'chrome-linux', 'chrome'),
+        headless: true,
+        });
         const page = await browser.newPage();
         await page.setContent(html);
         const pdfBuffer = await page.pdf({
