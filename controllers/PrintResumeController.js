@@ -11,12 +11,25 @@ const printResume = async (request, reply) => {
   console.log(html);
 
   try {
-    const chromePath = '/home/apps/.cache/puppeteer/chrome/linux-124.0.6367.207/chrome-linux64/chrome';
-    console.log('Chrome Executable Path:', chromePath);
+    const cachePath = '/home/apps/.cache/puppeteer';
+    const possiblePaths = [
+      path.join(cachePath, 'chrome', 'linux-124.0.6367.207', 'chrome-linux64', 'chrome'),
+      path.join(cachePath, 'chrome', 'latest', 'chrome-linux', 'chrome')
+    ];
 
-    if (!fs.existsSync(chromePath)) {
-      throw new Error(`Chrome executable not found at ${chromePath}`);
+    let chromePath;
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        chromePath = p;
+        break;
+      }
     }
+
+    if (!chromePath) {
+      throw new Error(`Chrome executable not found in any of the paths: ${possiblePaths.join(', ')}`);
+    }
+
+    console.log('Chrome Executable Path:', chromePath);
 
     const browser = await puppeteer.launch({
       executablePath: chromePath,

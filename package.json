@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "postinstall": "npx puppeteer browsers install chrome && ls -R /home/apps/.cache/puppeteer/chrome/linux-124.0.6367.207/chrome-linux64"
+ "postinstall": "npx puppeteer browsers install chrome && find /home/apps/.cache/puppeteer -type f"
   },
   "keywords": [],
   "author": "",
