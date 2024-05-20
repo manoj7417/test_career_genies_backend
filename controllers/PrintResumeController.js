@@ -11,7 +11,7 @@ const printResume = async (request, reply) => {
   console.log(html);
 
   try {
-    const cachePath = '/home/apps/.cache/puppeteer';
+    const cachePath = '.cache/puppeteer';
     const possiblePaths = [
       path.join(cachePath, 'chrome', 'linux-124.0.6367.207', 'chrome-linux64', 'chrome'),
       path.join(cachePath, 'chrome', 'latest', 'chrome-linux', 'chrome')
