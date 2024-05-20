@@ -11,14 +11,8 @@ const printResume = async (request, reply) => {
   console.log(html);
 
   try {
-    const cachePath = process.env.PUPPETEER_CACHE_DIR || path.resolve(__dirname, '..', '.cache/puppeteer');
-    const chromePath = path.join(cachePath, 'chrome', 'latest', 'chrome-linux', 'chrome');
-    console.log('Cache Path:', cachePath);
+    const chromePath = '/home/apps/.cache/puppeteer/chrome/linux-124.0.6367.207/chrome-linux64/chrome';
     console.log('Chrome Executable Path:', chromePath);
-
-    // This log will help you verify if the path is correct
-    const installLog = fs.readdirSync(path.join(cachePath, 'chrome', 'latest'));
-    console.log('Installed Chrome Files:', installLog);
 
     if (!fs.existsSync(chromePath)) {
       throw new Error(`Chrome executable not found at ${chromePath}`);
