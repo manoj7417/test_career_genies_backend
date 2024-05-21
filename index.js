@@ -13,11 +13,8 @@ const PrintResume = require('./routes/PrintResume')
 require('dotenv').config()
 
 const fastify = require('fastify')({
-    logger: {
-        transport: {
-            target: "pino-pretty"
-        }
-    }
+    logger: false
+    
 })
 
 fastify.register(cookie)
