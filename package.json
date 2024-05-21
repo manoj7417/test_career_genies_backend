@@ -26,6 +26,7 @@
     "mongoose": "^8.2.4",
     "nodemailer": "^6.9.13",
     "openai": "^4.38.2",
+    "pdf-lib": "^1.17.1",
     "puppeteer": "^22.8.2"
   },
   "devDependencies": {
