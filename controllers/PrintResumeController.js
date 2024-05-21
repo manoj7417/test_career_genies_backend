@@ -1,5 +1,9 @@
 const chromium = require('chrome-aws-lambda');
 const puppeteer = require('puppeteer-core');
+const path = require('path');
+const fs = require('fs');
+
+const printResumePath = path.join(__dirname, '..', 'resumeTemplate/resume.html');
 
 const printResume = async (request, reply) => {
     const htmlbody = request.body.html;
