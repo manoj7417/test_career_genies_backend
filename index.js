@@ -7,8 +7,9 @@ const UserRoute = require('./routes/UserRoute')
 const OpenaiRoute = require('./routes/OpenaiRoute')
 const cors = require('@fastify/cors')
 const cookie = require('@fastify/cookie');
-const multer = require('fastify-multer'); 
+const multer = require('fastify-multer');
 const PrintResume = require('./routes/PrintResume')
+
 
 require('dotenv').config()
 
@@ -58,7 +59,7 @@ fastify.register(require('@fastify/swagger'), {
 
 // cors 
 fastify.register(cors, {
-    origin: ["http://localhost:3000", "http://localhost:3002",'https://careergenie-24.vercel.app','https://career-genies-frontend.vercel.app','https://testing-cg-frontend.vercel.app'],
+    origin: ["http://localhost:3000", "http://localhost:3002", 'https://careergenie-24.vercel.app', 'https://career-genies-frontend.vercel.app', 'https://testing-cg-frontend.vercel.app'],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"], // Include 'x-api-key' header
     credentials: true
 });
@@ -81,7 +82,8 @@ fastify.register(ResumeRoute, { prefix: '/api/resume' })
 
 fastify.register(OpenaiRoute, { prefix: '/api/openai' })
 
-fastify.register(PrintResume , {prefix : "api/print"})
+fastify.register(PrintResume, { prefix: "api/print" })
+
 
 
 const start = async () => {

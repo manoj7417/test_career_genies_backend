@@ -544,12 +544,9 @@ async function atsCheck(req, reply) {
 async function askBot(req, reply) {
 
     try {
-
         // const thread = await createThread();
         const threadId = "thread_RJSXp1st6LrR6D9okApOyS07";
-
         const { message } = await req.body;
-
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: message

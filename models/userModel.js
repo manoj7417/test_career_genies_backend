@@ -29,13 +29,14 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    resumes: [{
+    createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
     }],
-    threadId:{
+    threadId: {
         type: String,
-    }
+    },
+    premiumTemplates: [String]
 },
     {
         timestamps: true
