@@ -18,7 +18,6 @@ const printResume = async (request, reply) => {
         <style>
             @page {
                 size: A4;
-                margin: 20mm;
             }
             @page:not(:first) {
                 margin-top: 20mm;
