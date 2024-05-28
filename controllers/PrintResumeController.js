@@ -7,12 +7,20 @@ const printResumePath = path.join(
     '..',
     'resumeTemplate/resume.html')
 
-const   printResume = async (request, reply) => {
+const printResume = async (request, reply) => {
     const htmlbody = request.body.html;
     const page = fs.readFileSync(printResumePath, 'utf8').toString()
     const html = page.replace('{{content}}', htmlbody);
     try {
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--single-process',
+                "--no-zygote",
+            ],
+            executablePath:  '/usr/bin/google-chrome-stable',
+        });
         const page = await browser.newPage();
         await page.setContent(html);
         const pdfBuffer = await page.pdf({
