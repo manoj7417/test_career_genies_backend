@@ -1,16 +1,32 @@
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer');
 
 const printResumePath = path.join(
     __dirname,
     '..',
-    'resumeTemplate/resume.html')
+    'resumeTemplate/resume.html'
+);
 
 const printResume = async (request, reply) => {
     const htmlbody = request.body.html;
-    const page = fs.readFileSync(printResumePath, 'utf8').toString()
+    const page = fs.readFileSync(printResumePath, 'utf8').toString();
     const html = page.replace('{{content}}', htmlbody);
+    
+    // Add CSS for page-specific margins
+    const styledHtml = `
+        <style>
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+            @page:not(:first) {
+                margin-top: 20mm;
+            }
+        </style>
+        ${html}
+    `;
+    
     try {
         const browser = await puppeteer.launch({
             args: [
@@ -22,7 +38,7 @@ const printResume = async (request, reply) => {
             executablePath:  '/usr/bin/google-chrome-stable',
         });
         const page = await browser.newPage();
-        await page.setContent(html);
+        await page.setContent(styledHtml);
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -35,7 +51,6 @@ const printResume = async (request, reply) => {
         console.error('Error generating PDF:', error);
         reply.status(500).send('Error generating PDF');
     }
-
 }
 
-module.exports = { printResume }
+module.exports = { printResume };
