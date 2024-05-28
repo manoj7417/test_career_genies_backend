@@ -15,16 +15,16 @@ const printResume = async (request, reply) => {
     
     // Add CSS for page-specific margins
     const styledHtml = `     
-        <style>
-            @page {
-                size: A4;
-                margin: 0;
-                padding-bottom: 20mm;
-            }
-            @page:not(:first) {
-                padding-top: 20mm;
-            }
-        </style>
+    <style>
+    @page {
+        size: A4;
+        margin-bottom: 20mm;
+    }
+    .page-break {
+        page-break-before: always;
+        margin-top: 20mm; 
+    }
+</style>
         ${html}
     `;
     
