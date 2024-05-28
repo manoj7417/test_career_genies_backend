@@ -15,10 +15,7 @@ const printResume = async (request, reply) => {
     
     // Add CSS for page-specific margins
     const styledHtml = `
-        <style>
-            @page {
-                size: A4;
-            }
+        <style>          
             @page:not(:first) {
                 margin-top: 20mm;
             }
