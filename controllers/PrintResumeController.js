@@ -14,8 +14,13 @@ const printResume = async (request, reply) => {
     const html = page.replace('{{content}}', htmlbody);
     
     // Add CSS for page-specific margins
-    const styledHtml = `
-        <style>          
+    const styledHtml = `     
+        <style>
+            html,body{
+                margin: 0;
+                padding: 0;
+            }
+            
             @page:not(:first) {
                 margin-top: 20mm;
             }
