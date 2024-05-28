@@ -13,16 +13,18 @@ const printResume = async (request, reply) => {
     const page = fs.readFileSync(printResumePath, 'utf8').toString();
     const html = page.replace('{{content}}', htmlbody);
     
-    // Add CSS for page-specific margins
-//     const styledHtml = `     
-//     <style>
-//     @page {
-//         size: A4;
-//         margin-bottom: 10mm;
-//     }
-// </style>
-//         ${html}
-//     `;
+
+    const styledHtml = `     
+@page :first{
+  size: A4;
+  margin-top: 0;
+  margin-bottom: 10mm;
+}
+@page{
+  margin-top: 10mm;
+  margin-bottom: 10mm;
+}
+    `;
     
     try {
         const browser = await puppeteer.launch({
@@ -35,7 +37,7 @@ const printResume = async (request, reply) => {
             executablePath:  '/usr/bin/google-chrome-stable',
         });
         const page = await browser.newPage();
-        await page.setContent(html);
+        await page.setContent(styledHtml);
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
