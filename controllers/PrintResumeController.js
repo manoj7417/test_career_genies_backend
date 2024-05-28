@@ -13,17 +13,20 @@ const printResume = async (request, reply) => {
     const page = fs.readFileSync(printResumePath, 'utf8').toString();
     const html = page.replace('{{content}}', htmlbody);
     
-
+    // Add CSS for page-specific margins
     const styledHtml = `     
-@page :first{
-  size: A4;
-  margin-top: 0;
-  margin-bottom: 10mm;
-}
-@page{
-  margin-top: 10mm;
-  margin-bottom: 10mm;
-}
+    <style>
+    @page :first{
+        size: A4;
+        margin-top: 0;
+        margin-bottom: 10mm;
+      }
+      @page{
+        margin-top: 10mm;
+        margin-bottom: 10mm;
+      }
+</style>
+        ${html}
     `;
     
     try {
