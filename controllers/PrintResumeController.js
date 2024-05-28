@@ -15,19 +15,22 @@ const printResume = async (request, reply) => {
     
     // Add CSS for page-specific margins
     const styledHtml = `     
-    <style>
-    @page {
-        size: A4;
-        margin-bottom: 20mm;
-    }
-    .page-break {
-        page-break-before: always;
-        margin-top: 20mm; 
-    }
-</style>
+        <style>
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+            .page-break {
+                page-break-before: always;
+                margin-top: 10mm; /* Adjust this as necessary */
+            }
+        </style>
         ${html}
     `;
-    
+
+    // Insert page break class to every section or element you want to start a new page with a margin
+    const finalHtml = styledHtml.replace(/<div class="new-page">/g, '<div class="page-break">');
+
     try {
         const browser = await puppeteer.launch({
             args: [
@@ -39,7 +42,7 @@ const printResume = async (request, reply) => {
             executablePath:  '/usr/bin/google-chrome-stable',
         });
         const page = await browser.newPage();
-        await page.setContent(styledHtml);
+        await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
