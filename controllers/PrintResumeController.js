@@ -18,7 +18,7 @@ const printResume = async (request, reply) => {
         <style>
             @page {
                 size: A4;
-                margin: 10mm;
+                margin-bottom: 10mm;
             }
             .page-break {
                 page-break-before: always;
