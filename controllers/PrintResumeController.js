@@ -11,7 +11,6 @@ const printResume = async (request, reply) => {
     const htmlbody = request.body.html;
     const page = fs.readFileSync(printResumePath, 'utf8').toString()
     const html = page.replace('{{content}}', htmlbody);
-    console.log(html)
     try {
         const browser = await puppeteer.launch({
             args: [

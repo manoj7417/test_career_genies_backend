@@ -64,7 +64,7 @@ const login = async (request, reply) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return request.code(404).send({
+      return reply.code(404).send({
         status: "FAILURE",
         error: "User not found",
       });
@@ -78,22 +78,23 @@ const login = async (request, reply) => {
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
-      reply.code(200).send({
-        status: "SUCCESS",
-        message: "Login successful",
-        data: {
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          userdata: {
-            fullname: user.fullname,
-            email: user.email,
-            _id: user._id,
-            role: user.role,
-            isSubscribed: user.isSubscribed,
-            resumes: user.resumes
-          }
+    reply.code(200).send({
+      status: "SUCCESS",
+      message: "Login successful",
+      data: {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        userdata: {
+          fullname: user.fullname,
+          email: user.email,
+          _id: user._id,
+          role: user.role,
+          isSubscribed: user.isSubscribed,
+          createdResumes: user.createdResumes,
+          premiumTemplates: user.premiumTemplates
         }
-      });
+      }
+    });
   } catch (error) {
     console.log(error);
     reply.code(500).send({

@@ -1,103 +1,180 @@
 const mongoose = require('mongoose')
 
-const linkTypeEnum = ['website', 'LinkedIn', 'custom', 'instagram', 'facebook'];
-
 const ResumeSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    personalInfo: {
-        firstName: {
-            type: String,
-            required: false
-        },
-        lastName: {
-            type: String,
-            required: false
-        },
-        email: {
-            type: String,
-            required: false
-        },
-        phoneNumber: String,
-        address: String,
-        city: String,
-        state: String,
-        zip: String,
-        country: String,
-        summary: String,
-        customLinks: [{
-            linkType: {
-                type: String,
-                enum: linkTypeEnum,
-                required: false
-            },
+    data: {
+        basics: {
+            name: String,
+            email: String,
+            phone: String,
+            country: String,
+            city: String,
+            jobtitle: String,
             url: {
-                type: String,
-                required: false
-            }
-        }]
+                label: String,
+                href: String,
+            },
+            customFields: [],
+            picture: {
+                url: String,
+                size: Number,
+                aspectRatio: Number,
+                borderRadius: Number,
+                effects: {
+                    hidden: Boolean,
+                    border: Boolean,
+                    grayscale: Boolean,
+                },
+            },
+        },
+        sections: {
+            summary: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                content: String,
+            },
+            awards: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            certifications: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            education: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            experience: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            volunteer: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            interests: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            languages: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            profiles: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            projects: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            publications: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            references: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            skills: {
+                name: String,
+                columns: Number,
+                visible: Boolean,
+                id: String,
+                items: [],
+            },
+            custom: {
+            },
+        },
+        metadata: {
+            template: String,
+            layout: [
+                [
+                    [
+                        String
+                    ],
+                ]
+            ],
+            css: {
+                value:
+                    String,
+                visible: Boolean,
+            },
+            page: {
+                margin: Number,
+                format: {
+                    type: String,
+                    enum: ['a4', 'letter'] // Enum for A4 and Letter
+                },
+                options: {
+                    breakLine: Boolean,
+                    pageNumbers: Boolean,
+                },
+            },
+            theme: {
+                background: String,
+                text: String,
+                primary: String,
+            },
+            typography: {
+                font: {
+                    family: String,
+                    subset: String,
+                    variants: [String],
+                    size: Number,
+                },
+                lineHeight: Number,
+                hideIcons: Boolean,
+                underlineLinks: Boolean,
+            },
+        },
     },
-    education: [{
-        institution: {
-            type: String,
-            required: false
-        },
-        degree: {
-            type: String,
-            required: false
-        },
-        fieldOfStudy: String,
-        startDate: Date,
-        endDate: Date,
-        description: String
-    }],
-    experience: [{
-        company: {
-            type: String,
-            required: false
-        },
-        position: {
-            type: String,
-            required: false
-        },
-        startDate: Date,
-        endDate: Date,
-        description: String
-    }],
-    skills: [String],
-    certifications: [{
-        name: {
-            type: String,
-            required: false
-        },
-        organization: String,
-        date: Date,
-        description: String
-    }],
-    projects: [{
-        name: {
-            type: String,
-            required: false
-        },
-        description: String,
-        link: String
-    }],
-    customSections: [{
-        title: {
-            type: String,
-            required: false
-        },
-        content: String
-    }],
+    title: { type: String },
     status: {
         type: String,
         enum: ['inProgress', 'completed', 'downloaded'],
-        default: 'inProgress',
-        required: true
-    },
+        default: 'inProgress'
+    }
 }, {
     timestamps: true
 })
