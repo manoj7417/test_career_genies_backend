@@ -68,21 +68,24 @@ const getAllResumes = async (request, reply) => {
 
 
 // udpate the resume fields of the user based on the resumeId 
-const updateUserResume = async () => {
-    const { resumeId } = req.params;
-    const updates = req.body;
+const updateUserResume = async (request, reply) => {
+    const { resumeId } = request.params;
+    const userId = request.user._id;
+    const { data } = request.body;
     try {
-        const resume = await Resume.findById(resumeId)
+        if (!resumeId) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Resume Id not found"
+            })
+        }
+        const resume = await Resume.findOne({ _id: resumeId, userId })
         if (!resume) {
             return reply.code(404).send({ status: "FAILURE", error: 'Resume not found' });
         }
 
-        for (let key in updates) {
-            if (key !== '_id') {
-                resume[key] = updates[key];
-            }
-        }
-
+        resume.data = data
+        resume.updatedAt = new Date()
         await resume.save()
         return reply.code(200).send({
             status: "SUCCESS",
@@ -100,9 +103,12 @@ const updateUserResume = async () => {
 const createResume = async (request, reply) => {
     const userId = request.user._id;
     try {
+        const resume = new Resume({ userId })
+        await resume.save()
         return reply.code(201).send({
             status: "SUCCESS",
             message: "Resume created succesfully",
+            data: resume
         })
     } catch (error) {
         console.log(error)
@@ -143,4 +149,4 @@ const deleteResume = async (request, reply) => {
 
 
 
-module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes    }
+module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes }

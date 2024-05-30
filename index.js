@@ -82,7 +82,6 @@ fastify.register(OpenaiRoute, { prefix: '/api/openai' })
 fastify.register(PrintResume, { prefix: "api/print" })
 
 
-
 const start = async () => {
     try {
         await DBConnection()
