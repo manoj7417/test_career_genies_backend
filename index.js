@@ -4,6 +4,7 @@ const roleCheck = require('./middlewares/RoleBasedAccessControl')
 const verifyJWT = require('./middlewares/verifyJwt')
 const ResumeRoute = require('./routes/ResumeRoute')
 const UserRoute = require('./routes/UserRoute')
+const StripeRoute = require('./routes/StripeRoute')
 const OpenaiRoute = require('./routes/OpenaiRoute')
 const cors = require('@fastify/cors')
 const cookie = require('@fastify/cookie');
@@ -80,6 +81,8 @@ fastify.register(ResumeRoute, { prefix: '/api/resume' })
 fastify.register(OpenaiRoute, { prefix: '/api/openai' })
 
 fastify.register(PrintResume, { prefix: "api/print" })
+
+fastify.register(StripeRoute, { prefix: "api/stripe" })
 
 
 const start = async () => {
