@@ -103,7 +103,10 @@ const updateUserResume = async (request, reply) => {
 const createResume = async (request, reply) => {
     const userId = request.user._id;
     try {
-        const resume = new Resume({ userId })
+        const count = await Resume.countDocuments({ userId });
+        const username = request.user.fullname.split(" ")[0];
+        const title = `${username}_Resume_${count + 1}`;
+        const resume = new Resume({ userId, title })
         await resume.save()
         return reply.code(201).send({
             status: "SUCCESS",
