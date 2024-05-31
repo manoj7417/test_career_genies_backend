@@ -10,7 +10,7 @@ async function verifyJWT(request, reply) {
         if (!token) {
             return reply.code(401).send({
                 status: "FAILURE",
-                error: "Unathorized"
+                error: "Auth token is required"
             })
         }
 
