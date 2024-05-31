@@ -8,6 +8,7 @@ const fs = require('fs');
 const { type } = require('os');
 const { threadId } = require('worker_threads');
 const { User } = require('../models/userModel');
+const { Resume } = require('../models/ResumeModel');
 
 
 const openai = new OpenAI(
@@ -636,6 +637,77 @@ async function generateBetterResume(req, reply) {
     }
 }
 
+async function generateResumeOnFeeback(req, reply) {
+    const userId = req.user._id
+    try {
+        // const user = req.user;
+
+        // const userthread = user?.threadId;
+        // if (!userthread) {
+
+        //     const thread = await createThread();
+        //     const threadId = thread.id;
+        //     await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
+        // }
+        // else {
+        //     const threadId = userthread;
+        // }
+
+        const thread = await createThread();
+        const threadId = thread.id;
+
+        const { message } = await req.body;
+
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
+
+
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_cgWXfKTsqbR4jrujm9XOpzVO",
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        const value = JSON.parse(response[0]?.text?.value)
+        if (value) {
+            const count = await Resume.countDocuments({ userId });
+            const username = req.user.fullname.split(" ")[0];
+            const title = `${username}_Resume_${count + 1}`;
+            const resume = await new Resume({ userId, title })
+            resume.data.basics = value.basics;
+            resume.data.sections = value.sections;
+            await resume.save();
+            console.log("resume", resume)
+            reply.code(201).send({
+                status: "SUCCESS",
+                message: "Resume created succesfully",
+                data: resume
+            })
+        }
+        reply.code(400).send({
+            status: "FAILURE",
+            message: "Feedback not generated"
+        })
+    } catch (error) {
+        reply.status(500).send(error);
+    }
+}
+
 
 
 
@@ -650,4 +722,4 @@ async function createThread() {
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback };
