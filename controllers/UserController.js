@@ -35,7 +35,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
 // register the user 
 const register = async (request, reply) => {
   const { email, fullname, password } = request.body;
-  console.log(request.body)
   try {
     const findExistingUser = await User.findOne({ email });
     if (findExistingUser) {
@@ -62,34 +61,34 @@ const register = async (request, reply) => {
 
 const templatepurchase = async (request, reply) => {
 
-  try{
-  const { templateName,userId,amount } = await request.body;
-  
-  const transaction = new Transaction({
-    userId: userId,
-    templateName: templateName,
-    amount: amount,
-    status: "success"
-  })
+  try {
+    const { templateName, userId, amount } = await request.body;
 
-  await transaction.save()
+    const transaction = new Transaction({
+      userId: userId,
+      templateName: templateName,
+      amount: amount,
+      status: "completed"
+    })
 
-  const user = await User.findById(userId);
-  await user.premiumTemplates.push(templateName);
-  await user.save();
-  const templates = await user.premiumTemplates;
+    await transaction.save()
 
-  reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, templates: templates  });
+    const user = await User.findById(userId);
+    user.premiumTemplates.push(templateName);
+    await user.save();
+    const templates = user.premiumTemplates;
+
+    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, templates: templates });
   }
-  catch(error){
+  catch (error) {
     console.log(error)
     reply.code(500).send({ status: "FAILURE", message: "Purchase failed", error: error.message });
   }
 
 
-  
-  
-  
+
+
+
 }
 
 // verfiy user password and send access token in cookies
