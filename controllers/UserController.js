@@ -73,8 +73,13 @@ const templatepurchase = async (request, reply) => {
   })
 
   await transaction.save()
-  
-  reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id });
+
+  const user = await User.findById(userId);
+  await user.premiumTemplates.push(templateName);
+  await user.save();
+  const templates = await user.premiumTemplates;
+
+  reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, templates: templates  });
   }
   catch(error){
     console.log(error)
