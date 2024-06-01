@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase } = require("../controllers/UserController");
 
 const registerSchema = {
     body: {
@@ -49,6 +49,8 @@ async function UserRoute(fastify, options) {
 
     // register the user 
     fastify.post("/register", { schema: registerSchema }, register)
+
+    fastify.post("/templatepurchase",  templatepurchase)
 
 
     // verfiy user password and send access token in cookies

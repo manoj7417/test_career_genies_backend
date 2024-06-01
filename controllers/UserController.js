@@ -11,6 +11,7 @@ const resetPasswordTemplatePath = path.join(
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
+const { Transaction } = require("../models/TransactionModel");
 
 //generate access token and refresh token for the user
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -57,6 +58,34 @@ const register = async (request, reply) => {
     });
   }
 };
+
+
+const templatepurchase = async (request, reply) => {
+
+  try{
+  const { templateName,userId,amount } = await request.body;
+  
+  const transaction = new Transaction({
+    userId: userId,
+    templateName: templateName,
+    amount: amount,
+    status: "success"
+  })
+
+  await transaction.save()
+  
+  reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id });
+  }
+  catch(error){
+    console.log(error)
+    reply.code(500).send({ status: "FAILURE", message: "Purchase failed", error: error.message });
+  }
+
+
+  
+  
+  
+}
 
 // verfiy user password and send access token in cookies
 const login = async (request, reply) => {
@@ -336,5 +365,6 @@ module.exports = {
   resetPassword,
   updateUserDetails,
   getAllUsers,
-  logout
+  logout,
+  templatepurchase
 };

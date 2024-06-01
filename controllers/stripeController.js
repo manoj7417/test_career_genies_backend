@@ -29,7 +29,7 @@ const createSession = async (request, reply) => {
             cancel_url: cancel_url,
         });
 
-        reply.send({ url: session.url, templateName: templateName, userId: request.user._id });
+        reply.send({ url: session.url, templateName: templateName, userId: request.user._id, amount: amount});
     } catch (err) {
         reply.status(500).send({ error: err.message });
     }
