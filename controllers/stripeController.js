@@ -3,7 +3,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const createSession = async (request, reply) => {
     const { amount, email, name, url, cancel_url, templateName } = request.body;
 
-    // console.log(request.user._id,templateName,amount,email,name);
+    // Convert the amount to cents
+    const amountInCents = Math.round(amount * 100);
 
     const line_items = [{
         price_data: {
@@ -12,7 +13,7 @@ const createSession = async (request, reply) => {
                 name: 'template',
                 description: 'premium template',
             },
-            unit_amount: amount,
+            unit_amount: amountInCents,
         },
         quantity: 1
     }];
@@ -29,7 +30,7 @@ const createSession = async (request, reply) => {
             cancel_url: cancel_url,
         });
 
-        reply.send({ url: session.url, templateName: templateName, userId: request.user._id, amount: amount});
+        reply.send({ url: session.url, templateName: templateName, userId: request.user._id, amount: amount });
     } catch (err) {
         reply.status(500).send({ error: err.message });
     }
