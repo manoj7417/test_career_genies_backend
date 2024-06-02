@@ -63,7 +63,9 @@ const templatepurchase = async (request, reply) => {
 
   try {
     const { templateName, userId, amount } = await request.body;
-
+    if (!templateName) {
+      return reply.code(400).send({ status: "FAILURE", error: "Template name not found" });
+    }
     const transaction = new Transaction({
       userId: userId,
       templateName: templateName,
@@ -76,9 +78,8 @@ const templatepurchase = async (request, reply) => {
     const user = await User.findById(userId);
     user.premiumTemplates.push(templateName);
     await user.save();
-    const templates = user.premiumTemplates;
 
-    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, templates: templates });
+    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, userdata: user });
   }
   catch (error) {
     console.log(error)
