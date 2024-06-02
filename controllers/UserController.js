@@ -13,6 +13,7 @@ const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
 
+
 //generate access token and refresh token for the user
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -60,7 +61,6 @@ const register = async (request, reply) => {
 
 
 const templatepurchase = async (request, reply) => {
-
   try {
     const { templateName, userId, amount } = await request.body;
     if (!templateName) {
@@ -79,7 +79,7 @@ const templatepurchase = async (request, reply) => {
     user.premiumTemplates.push(templateName);
     await user.save();
 
-    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, userdata: user });
+    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", transactionId: transaction._id, userdata: user, redirectTo: "/builder" });
   }
   catch (error) {
     console.log(error)
@@ -91,6 +91,23 @@ const templatepurchase = async (request, reply) => {
 
 
 }
+
+const analyserCreditsPurchase = async (request, reply) => {
+  const userId = request.user._id
+  try {
+    const user = await User.findById(userId)
+    if (!user) {
+      return reply.code(404).send({ status: "FAILURE", error: "User not found" })
+    }
+    user.tokens = user.tokens + 10
+    await user.save()
+    reply.code(200).send({ status: "SUCCESS", message: "Purchase successful", userdata: user })
+  } catch (error) {
+    console.log(error)
+    reply.code(500).send({ status: "FAILURE", message: "Purchase failed", error: error.message });
+  }
+}
+
 
 // verfiy user password and send access token in cookies
 const login = async (request, reply) => {
@@ -371,5 +388,6 @@ module.exports = {
   updateUserDetails,
   getAllUsers,
   logout,
-  templatepurchase
+  templatepurchase,
+  analyserCreditsPurchase
 };

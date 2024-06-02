@@ -640,18 +640,7 @@ async function generateBetterResume(req, reply) {
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
     try {
-        // const user = req.user;
 
-        // const userthread = user?.threadId;
-        // if (!userthread) {
-
-        //     const thread = await createThread();
-        //     const threadId = thread.id;
-        //     await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
-        // }
-        // else {
-        //     const threadId = userthread;
-        // }
 
         const thread = await createThread();
         const threadId = thread.id;
@@ -692,11 +681,12 @@ async function generateResumeOnFeeback(req, reply) {
             resume.data.basics = value.basics;
             resume.data.sections = value.sections;
             await resume.save();
-            console.log("resume", resume)
+            const user = await User.findByIdAndUpdate(userId, { $inc: { tokens: -1 } });
             reply.code(201).send({
                 status: "SUCCESS",
                 message: "Resume created succesfully",
-                data: resume
+                data: resume,
+                userData: user
             })
         }
         reply.code(400).send({

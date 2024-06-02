@@ -36,8 +36,9 @@ const UserSchema = new mongoose.Schema({
     threadId: {
         type: String,
     },
-    premiumTemplates: [String]
-     
+    premiumTemplates: [String],
+    tokens: { type: Number, default: 0 }
+
 },
     {
         timestamps: true

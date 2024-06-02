@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase } = require("../controllers/UserController");
 
 const registerSchema = {
     body: {
@@ -50,7 +50,9 @@ async function UserRoute(fastify, options) {
     // register the user 
     fastify.post("/register", { schema: registerSchema }, register)
 
-    fastify.post("/templatepurchase",  templatepurchase)
+    fastify.post("/templatepurchase", templatepurchase)
+
+    fastify.post("/creditsPurchase", { preHandler: fastify.verifyJWT }, analyserCreditsPurchase)
 
 
     // verfiy user password and send access token in cookies
