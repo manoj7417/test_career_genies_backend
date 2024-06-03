@@ -127,7 +127,7 @@ const ResumeSchema = new mongoose.Schema({
             },
         },
         metadata: {
-            template: { type: String, default: '' },
+            template: { type: String, default: 'Template3' },
             layout: [
                 [
                     [

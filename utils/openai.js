@@ -666,7 +666,7 @@ async function generateResumeOnFeeback(req, reply) {
                 // Try to parse the JSON content from the assistant's response
                 return response.content;
             } else {
-                // Recursive call to check again until completion
+
                 return checkStatusAndGenerateResponse(threadId, runId);
             }
         };
