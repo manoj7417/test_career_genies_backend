@@ -85,11 +85,6 @@ const templatepurchase = async (request, reply) => {
     console.log(error)
     reply.code(500).send({ status: "FAILURE", message: "Purchase failed", error: error.message });
   }
-
-
-
-
-
 }
 
 const analyserCreditsPurchase = async (request, reply) => {
@@ -167,7 +162,7 @@ const forgetPassword = async (request, reply) => {
       });
     }
     const token = await user.generateResetPassowordToken();
-    const url = `${process.env.DOMAINURL}?token=${token}`;
+    const url = `https://career-genies-frontend.vercel.app/reset-password?token=${token}`;
     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
     const emailBody = emailtemplate
       .replace("{userName}", user.fullname)
