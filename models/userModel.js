@@ -18,6 +18,33 @@ const UserSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    phoneNumber: {
+        country_code: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        number: {
+            type: String,
+            trim: true,
+            default: ''
+        }
+    },
+    profilePicture: {
+        type: String,
+        trim: true,
+        default: 'https://static.vecteezy.com/system/resources/previews/004/991/321/original/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-vector.jpg'
+    },
+    address: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    occupation: {
+        type: String,
+        trim: true,
+        default: ""
+    },
     role: {
         type: String,
         required: true,
@@ -38,7 +65,6 @@ const UserSchema = new mongoose.Schema({
     },
     premiumTemplates: [String],
     tokens: { type: Number, default: 0 }
-
 },
     {
         timestamps: true

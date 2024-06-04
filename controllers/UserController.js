@@ -103,6 +103,53 @@ const analyserCreditsPurchase = async (request, reply) => {
   }
 }
 
+const UploadProfilePic = async (request, reply) => {
+  const userId = request.user._id
+  try {
+    const file = request.file;
+    console.log(file)
+    if (!file) {
+      reply.code(404).send({
+        status: "FAILURE",
+        error: "File not found"
+      })
+    }
+    const user = await User.findById(userId)
+    if (!user) {
+      reply.code(404).send({
+        status: "FAILURE",
+        error: "User not found"
+      })
+    }
+    if (user.profilePicture) {
+      const existingImagePath = user.profilePicture; // Get the path from the database
+
+      try {
+        // Attempt to delete the existing file securely
+        await fs.promises.unlink(existingImagePath);
+        console.log(`Existing profile picture '${existingImagePath}' deleted.`);
+      } catch (error) {
+        console.error(`Error deleting existing profile picture: ${error.message}`);
+        // Optionally handle deletion errors (e.g., log, return error response)
+      }
+    }
+    const imgDest = file.destination + file.filename
+    user.profilePicture = imgDest;
+    await user.save()
+    reply.code(200).send({
+      status: "SUCCESS",
+      message: "Profile picture uploaded successfully",
+      userdata: user
+    })
+  } catch (error) {
+    console.log("Error uploading user profile picture", error)
+    reply.code(500).send({
+      status: "FAILURE",
+      error: error.message || "Internal server error"
+    })
+  }
+}
+
 
 // verfiy user password and send access token in cookies
 const login = async (request, reply) => {
@@ -137,7 +184,11 @@ const login = async (request, reply) => {
           role: user.role,
           isSubscribed: user.isSubscribed,
           createdResumes: user.createdResumes,
-          premiumTemplates: user.premiumTemplates
+          premiumTemplates: user.premiumTemplates,
+          profilePicture: user.profilePicture,
+          address: user.address,
+          occupation: user.occupation,
+          phoneNumber: user.phoneNumber
         }
       }
     });
@@ -225,32 +276,7 @@ const resetPassword = async (request, reply) => {
 
 
 // update the user role and subsription status  for the specific user 
-const updateUserDetails = async (request, reply) => {
-  const { role, isSubscribed } = request.body;
-  const { userId } = request.params;
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return reply.code(404).send({
-        status: "FAILURE",
-        error: "User not found",
-      });
-    }
-    if (role) user.role = role;
-    if (isSubscribed !== undefined) user.isSubscribed = isSubscribed;
-    await user.save();
-    return reply.code(200).send({
-      status: "SUCCESS",
-      message: "User details updated successfully",
-    });
-  } catch (error) {
-    console.log("error", error);
-    reply.code(500).send({
-      status: "FAILURE",
-      error: error.message || "Internal server error",
-    });
-  }
-}
+
 
 
 //get all users data
@@ -365,6 +391,24 @@ const logout = async (request, reply) => {
   }
 }
 
+
+const updateUserDetails = async (req, reply) => {
+  const userId = req.user._id;
+  const { fullname, phoneNumber, address, occupation } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return reply.code(404).send({
+        status: "FAILURE",
+        error: "User not found",
+      })
+    }
+
+  } catch (error) {
+
+  }
+}
+
 //decode the reset password token and return the decode result
 async function decodeToken(token) {
   try {
@@ -379,10 +423,11 @@ module.exports = {
   register,
   login,
   forgetPassword,
+  UploadProfilePic,
   resetPassword,
-  updateUserDetails,
   getAllUsers,
   logout,
   templatepurchase,
-  analyserCreditsPurchase
+  analyserCreditsPurchase,
+  updateUserDetails
 };

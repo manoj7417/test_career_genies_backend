@@ -10,13 +10,13 @@ const cors = require('@fastify/cors')
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
 const PrintResume = require('./routes/PrintResume')
-
+const path = require('path');
 
 require('dotenv').config()
 
 const fastify = require('fastify')({
     logger: false
-    
+
 })
 
 fastify.register(cookie)
@@ -62,27 +62,25 @@ fastify.register(cors, {
     credentials: true
 });
 
-// fastify.register(multer.contentParser);
+fastify.register(require('@fastify/static'), {
+    root: path.join(__dirname, 'uploads'),
+    prefix: '/uploads',
+});
+
 
 fastify.decorate('verifyJWT', verifyJWT)
 
 fastify.decorate('roleCheck', roleCheck)
 
-// check apikey on each request
-fastify.addHook("onRequest", apiKeyAuth)
 // Routes 
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
 //userRoute
-fastify.register(UserRoute, { prefix: '/api/user' })
-
-fastify.register(ResumeRoute, { prefix: '/api/resume' })
-
-fastify.register(OpenaiRoute, { prefix: '/api/openai' })
-
-fastify.register(PrintResume, { prefix: "api/print" })
-
-fastify.register(StripeRoute, { prefix: "api/stripe" })
+fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth })
+fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth })
+fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth })
+fastify.register(PrintResume, { prefix: "api/print", before: apiKeyAuth })
+fastify.register(StripeRoute, { prefix: "api/stripe", before: apiKeyAuth })
 
 
 const start = async () => {

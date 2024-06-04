@@ -1,4 +1,6 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic } = require("../controllers/UserController");
+const upload = require('../config/multer')
+
 
 const registerSchema = {
     body: {
@@ -46,7 +48,6 @@ const resetPasswordSchema = {
 
 
 async function UserRoute(fastify, options) {
-
     // register the user 
     fastify.post("/register", { schema: registerSchema }, register)
 
@@ -54,7 +55,7 @@ async function UserRoute(fastify, options) {
 
     fastify.post("/creditsPurchase", { preHandler: fastify.verifyJWT }, analyserCreditsPurchase)
 
-
+    fastify.post("/upload/profile", { preHandler: [fastify.verifyJWT, upload.single('file')] }, UploadProfilePic)
     // verfiy user password and send access token in cookies
     fastify.post("/login", { schema: loginSchema }, login)
 
@@ -69,13 +70,6 @@ async function UserRoute(fastify, options) {
 
     // update the user role and subsription status  for the specific user 
     fastify.route({
-        method: 'patch',
-        url: "/updateRole/:userId",
-        preHandler: [fastify.verifyJWT, fastify.roleCheck(['admin'])],
-        handler: updateUserDetails
-    })
-
-    fastify.route({
         method: "GET",
         url: "/all",
         preHandler: [fastify.verifyJWT, fastify.roleCheck(['admin'])],
@@ -88,6 +82,8 @@ async function UserRoute(fastify, options) {
         url: "/logout",
         handler: logout
     })
+
+    fastify.post('/update/userdetails', { preHandler: fastify.verifyJWT }, updateUserDetails)
 }
 
 module.exports = UserRoute
