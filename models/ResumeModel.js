@@ -21,7 +21,7 @@ const ResumeSchema = new mongoose.Schema({
             customFields: [],
             picture: {
                 url: { type: String, default: '' },
-                visible: true
+                visible: { type: Boolean, default: true }
             },
         },
         sections: {
@@ -73,7 +73,7 @@ const ResumeSchema = new mongoose.Schema({
             page: {
                 format: {
                     type: { type: String, default: 'a4' },
-                    enum: ['a4', 'letter'] 
+                    enum: ['a4', 'letter']
                 }
             },
             theme: {

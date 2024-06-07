@@ -640,8 +640,6 @@ async function generateBetterResume(req, reply) {
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
     try {
-
-
         const thread = await createThread();
         const threadId = thread.id;
 
@@ -654,7 +652,9 @@ async function generateResumeOnFeeback(req, reply) {
 
 
         const run = await openai.beta.threads.runs.create(threadId, {
-            assistant_id: "asst_cgWXfKTsqbR4jrujm9XOpzVO",
+            assistant_id:
+                // "asst_cgWXfKTsqbR4jrujm9XOpzVO",
+                "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
         });
 
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
@@ -672,7 +672,8 @@ async function generateResumeOnFeeback(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        const value = JSON.parse(response[0]?.text?.value)
+        console.log(response)
+        let value = JSON.parse(response[0]?.text?.value)
         if (value) {
             const count = await Resume.countDocuments({ userId });
             const username = req.user.fullname.split(" ")[0];
