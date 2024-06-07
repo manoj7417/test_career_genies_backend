@@ -21,14 +21,7 @@ const ResumeSchema = new mongoose.Schema({
             customFields: [],
             picture: {
                 url: { type: String, default: '' },
-                size: { type: Number, default: 64 },
-                aspectRatio: { type: Number, default: 1 },
-                borderRadius: { type: Number, default: 0 },
-                effects: {
-                    hidden: { type: Boolean, default: false },
-                    border: { type: Boolean, default: false },
-                    grayscale: { type: Boolean, default: false },
-                },
+                visible: true
             },
         },
         sections: {
@@ -38,20 +31,6 @@ const ResumeSchema = new mongoose.Schema({
                 visible: { type: Boolean, default: true },
                 id: { type: String, default: 'profile' },
                 content: { type: String, default: '' },
-            },
-            awards: {
-                name: { type: String, default: 'Awards' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'awards' },
-                items: [],
-            },
-            certifications: {
-                name: { type: String, default: 'Certifications' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'certifications' },
-                items: [],
             },
             education: {
                 name: { type: String, default: 'Education' },
@@ -65,27 +44,6 @@ const ResumeSchema = new mongoose.Schema({
                 columns: { type: Number, default: 1 },
                 visible: { type: Boolean, default: true },
                 id: { type: String, default: 'experience' },
-                items: [],
-            },
-            volunteer: {
-                name: { type: String, default: 'Volunteering' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'volunteer' },
-                items: [],
-            },
-            interests: {
-                name: { type: String, default: 'Interests' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'interests' },
-                items: [],
-            },
-            languages: {
-                name: { type: String, default: 'Languages' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'languages' },
                 items: [],
             },
             profiles: {
@@ -102,54 +60,21 @@ const ResumeSchema = new mongoose.Schema({
                 id: { type: String, default: 'projects' },
                 items: [],
             },
-            publications: {
-                name: { type: String, default: 'Publications' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'publications' },
-                items: [],
-            },
-            references: {
-                name: { type: String, default: 'References' },
-                columns: { type: Number, default: 1 },
-                visible: { type: Boolean, default: true },
-                id: { type: String, default: 'references' },
-                items: [],
-            },
             skills: {
                 name: { type: String, default: 'Skills' },
                 columns: { type: Number, default: 1 },
                 visible: { type: Boolean, default: true },
                 id: { type: String, default: 'skills' },
                 items: [],
-            },
-            custom: {
-            },
+            }
         },
         metadata: {
             template: { type: String, default: 'Template3' },
-            layout: [
-                [
-                    [
-                        { type: String, default: '' }
-                    ],
-                ]
-            ],
-            css: {
-                value:
-                    { type: String, default: '' },
-                visible: { type: Boolean, default: false },
-            },
             page: {
-                margin: { type: Number, default: 20 },
                 format: {
                     type: { type: String, default: 'a4' },
-                    enum: ['a4', 'letter'] // Enum for A4 and Letter
-                },
-                options: {
-                    breakLine: { type: Boolean, default: false },
-                    pageNumbers: { type: Boolean, default: false },
-                },
+                    enum: ['a4', 'letter'] 
+                }
             },
             theme: {
                 background: { type: String, default: '#ffffff' },

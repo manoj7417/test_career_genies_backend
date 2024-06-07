@@ -645,8 +645,8 @@ async function generateResumeOnFeeback(req, reply) {
         const thread = await createThread();
         const threadId = thread.id;
 
-        const { message } = await req.body;
-
+        let { message } = await req.body;
+        message = message + "applying for job of software developer"
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: message
@@ -694,6 +694,7 @@ async function generateResumeOnFeeback(req, reply) {
             message: "Feedback not generated"
         })
     } catch (error) {
+        console.log(error)
         reply.status(500).send(error);
     }
 }

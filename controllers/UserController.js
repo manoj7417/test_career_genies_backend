@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 const fs = require("fs");
 const path = require("path");
 const { sendEmail } = require("../utils/nodemailer");
@@ -12,8 +12,14 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
+const produrl = process.env.PROD_URL
 
-
+function getFilenameFromUrl(url) {
+  const parts = url.split('uploads/');
+  let endpoint = parts.length > 1 ? parts[1] : ''
+  endpoint = 'uploads/' + endpoint
+  return endpoint
+}
 //generate access token and refresh token for the user
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -107,7 +113,6 @@ const UploadProfilePic = async (request, reply) => {
   const userId = request.user._id
   try {
     const file = request.file;
-    console.log(file)
     if (!file) {
       reply.code(404).send({
         status: "FAILURE",
@@ -122,19 +127,16 @@ const UploadProfilePic = async (request, reply) => {
       })
     }
     if (user.profilePicture) {
-      const existingImagePath = user.profilePicture; // Get the path from the database
-
+      const filename = getFilenameFromUrl(user.profilePicture);
       try {
-        // Attempt to delete the existing file securely
-        await fs.promises.unlink(existingImagePath);
-        console.log(`Existing profile picture '${existingImagePath}' deleted.`);
+        await fs.promises.unlink(filename);
       } catch (error) {
         console.error(`Error deleting existing profile picture: ${error.message}`);
-        // Optionally handle deletion errors (e.g., log, return error response)
       }
     }
-    const imgDest = file.destination + file.filename
+    const imgDest = produrl + file.destination + file.filename
     user.profilePicture = imgDest;
+
     await user.save()
     reply.code(200).send({
       status: "SUCCESS",
@@ -188,7 +190,8 @@ const login = async (request, reply) => {
           profilePicture: user.profilePicture,
           address: user.address,
           occupation: user.occupation,
-          phoneNumber: user.phoneNumber
+          phoneNumber: user.phoneNumber,
+          tokens: user.tokens
         }
       }
     });
