@@ -12,7 +12,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
-const produrl = process.env.PROD_URL
+const produrl = process.env.NODE_ENV === 'production' ? process.env.PROD_URL : process.env.LOCAL_URL
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');

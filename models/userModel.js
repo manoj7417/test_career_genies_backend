@@ -45,6 +45,38 @@ const UserSchema = new mongoose.Schema({
         trim: true,
         default: ""
     },
+    links : {
+        linkedin: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        github: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        twitter: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        facebook: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        instagram: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        website: {
+            type: String,
+            trim: true,
+            default: ''
+        }
+    },
     role: {
         type: String,
         required: true,
