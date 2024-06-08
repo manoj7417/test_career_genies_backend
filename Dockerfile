@@ -5,6 +5,9 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /usr/src/app
 
+# Switch to root user to set permissions
+USER root
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci
@@ -15,7 +18,10 @@ COPY . .
 # Create and set permissions for the uploads directory
 RUN mkdir -p /usr/src/app/uploads \
     && chmod -R 755 /usr/src/app/uploads \
-    && chown -R root:root /usr/src/app/uploads
+    && chown -R pptruser:pptruser /usr/src/app/uploads
+
+# Switch back to pptruser
+USER pptruser
 
 # Start the application
 CMD ["node", "index.js"]
