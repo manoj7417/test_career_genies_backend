@@ -151,6 +151,34 @@ const deleteResume = async (request, reply) => {
 }
 
 
+const createNewJobResume = async (request, reply) => {
+    const userId = request.user._id;
+    const { data } = request.body;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "User not found"
+            })
+        }
+        const title = user.fullname
+        const resume = new Resume({ userId, data, title })
+        await resume.save()
+        return reply.code(201).send({
+            status: "SUCCESS",
+            message: "Resume created succesfully",
+            data: resume
+        })
+    } catch (error) {
+        console.error(error)
+        return reply.code(500).send({
+            status: "FAILURE",
+            error: error.message || "Internal server error"
+        })
+    }
+}
 
 
-module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes }
+
+module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume }

@@ -72,8 +72,8 @@ const ResumeSchema = new mongoose.Schema({
             template: { type: String, default: 'Template3' },
             page: {
                 format: {
-                    type: { type: String, default: 'a4' },
-                    enum: ['a4', 'letter']
+                    type: { type: String, default: "a4" },
+                    enum: ["a4", "letter"]
                 }
             },
             theme: {
