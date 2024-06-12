@@ -654,7 +654,8 @@ async function generateResumeOnFeeback(req, reply) {
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id:
                 // "asst_cgWXfKTsqbR4jrujm9XOpzVO",
-                "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+                // "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+                "asst_cgWXfKTsqbR4jrujm9XOpzVO"
         });
 
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
@@ -672,7 +673,6 @@ async function generateResumeOnFeeback(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        console.log(response)
         let value = JSON.parse(response[0]?.text?.value)
         if (value) {
             const count = await Resume.countDocuments({ userId });
