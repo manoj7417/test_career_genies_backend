@@ -654,8 +654,8 @@ async function generateResumeOnFeeback(req, reply) {
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id:
                 // "asst_cgWXfKTsqbR4jrujm9XOpzVO",
-                // "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
-                "asst_cgWXfKTsqbR4jrujm9XOpzVO"
+                "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+                // "asst_cgWXfKTsqbR4jrujm9XOpzVO"
         });
 
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
