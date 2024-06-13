@@ -644,7 +644,7 @@ async function generateResumeOnFeeback(req, reply) {
         const threadId = thread.id;
 
         let { message } = await req.body;
-        message = message + "applying for job of software developer"
+        // message = message + "applying for job of software developer"
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: message
@@ -663,7 +663,7 @@ async function generateResumeOnFeeback(req, reply) {
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(threadId);
                 const response = messages.body.data.find(message => message.role === 'assistant');
-
+                console.log(response.content)
                 // Try to parse the JSON content from the assistant's response
                 return response.content;
             } else {
