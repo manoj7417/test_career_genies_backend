@@ -445,6 +445,85 @@ async function decodeToken(token) {
   }
 }
 
+
+
+const updateUserProfileDetails = async (req, reply) => {
+  const userId = req.user._id;
+  const { fullname, email, password, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
+ 
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return reply.code(404).send({
+        status: "FAILURE",
+        error: "User not found",
+      });
+    }
+
+    if (fullname !== undefined) user.fullname = fullname;
+    if (email !== undefined) user.email = email;
+    if (password !== undefined) user.password = password;
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+    if (profilePicture !== undefined) user.profilePicture = profilePicture;
+    if (address !== undefined) user.address = address;
+    if (occupation !== undefined) user.occupation = occupation;
+    if (links !== undefined) user.links = links;
+    if (role !== undefined) user.role = role;
+
+    // Save the updated user
+    await user.save();
+
+    const generateAccessAndRefereshTokens = async (userId) => {
+      try {
+        const user = await User.findById(userId);
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+    
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+    
+        return { accessToken, refreshToken };
+      } catch (error) {
+        throw new Error(
+          "Something went wrong while generating refresh and access token"
+        );
+      }
+    };
+    // Generate new tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+    return reply.code(200).send({
+      status: "SUCCESS",
+      message: "User details updated successfully",
+      data: {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        userdata: {
+          fullname: user.fullname,
+          email: user.email,
+          _id: user._id,
+          role: user.role,
+          isSubscribed: user.isSubscribed,
+          createdResumes: user.createdResumes,
+          premiumTemplates: user.premiumTemplates,
+          profilePicture: user.profilePicture,
+          address: user.address,
+          occupation: user.occupation,
+          phoneNumber: user.phoneNumber,
+          tokens: user.tokens
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error updating user details:", error);
+    return reply.code(500).send({
+      status: "FAILURE",
+      error: "An error occurred while updating user details",
+    });
+  }
+};
+
+
 module.exports = {
   register,
   login,
@@ -455,5 +534,6 @@ module.exports = {
   logout,
   templatepurchase,
   analyserCreditsPurchase,
-  updateUserDetails
+  updateUserDetails,
+  updateUserProfileDetails
 };
