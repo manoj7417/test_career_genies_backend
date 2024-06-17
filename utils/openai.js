@@ -9,7 +9,7 @@ const { type } = require('os');
 const { threadId } = require('worker_threads');
 const { User } = require('../models/userModel');
 const { Resume } = require('../models/ResumeModel');
-
+const { v4: uuidv4 } = require('uuid');
 
 const openai = new OpenAI(
     {
@@ -644,7 +644,6 @@ async function generateResumeOnFeeback(req, reply) {
         const threadId = thread.id;
 
         let { message } = await req.body;
-        message = message + "applying for job of software developer"
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: message
@@ -653,9 +652,9 @@ async function generateResumeOnFeeback(req, reply) {
 
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id:
-                // "asst_cgWXfKTsqbR4jrujm9XOpzVO",
-                "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
-                // "asst_cgWXfKTsqbR4jrujm9XOpzVO"
+                "asst_cgWXfKTsqbR4jrujm9XOpzVO"
+            // "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+
         });
 
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
@@ -673,11 +672,12 @@ async function generateResumeOnFeeback(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        console.log(response)
         let value = JSON.parse(response[0]?.text?.value)
         if (value) {
             const count = await Resume.countDocuments({ userId });
             const username = req.user.fullname.split(" ")[0];
-            const title = `${username}_Resume_${count + 1}`;
+            const title = `${username}_resume` + uuidv4();
             const resume = await new Resume({ userId, title })
             resume.data.basics = value.basics;
             resume.data.sections = value.sections;

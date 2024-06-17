@@ -1,5 +1,6 @@
 const { Resume } = require("../models/ResumeModel");
 const { User } = require("../models/userModel")
+const { v4: uuidv4 } = require('uuid');
 
 // get the user resume based on the resumeId
 const getUserResume = async (request, reply) => {
@@ -106,7 +107,7 @@ const createResume = async (request, reply) => {
     try {
         const count = await Resume.countDocuments({ userId });
         const username = request.user.fullname.split(" ")[0];
-        const title = `${username}_Resume_${count + 1}`;
+        const title = `${username}_resume` + uuidv4();
         const resume = new Resume({ userId, title, 'data.metadata.template': template })
         await resume.save()
         return reply.code(201).send({
@@ -162,7 +163,7 @@ const createNewJobResume = async (request, reply) => {
                 error: "User not found"
             })
         }
-        const title = user.fullname
+        const title = `${user.fullname}_resume` + uuidv4();
         const resume = new Resume({ userId, data, title })
         await resume.save()
         return reply.code(201).send({
