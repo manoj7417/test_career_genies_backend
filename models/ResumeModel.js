@@ -66,6 +66,13 @@ const ResumeSchema = new mongoose.Schema({
                 visible: { type: Boolean, default: true },
                 id: { type: String, default: 'skills' },
                 items: [],
+            },
+            hobbies: {
+                name: { type: String, default: "Hobbies" },
+                columns: { type: Number, default: 1 },
+                visible: { type: Boolean, default: true },
+                id: { type: String, default: "hobbies" },
+                items: [],
             }
         },
         metadata: {
