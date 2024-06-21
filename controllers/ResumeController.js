@@ -7,7 +7,7 @@ const getUserResume = async (request, reply) => {
     const userId = request.user._id
     const { resumeId } = request.params;
     try {
-        const userResume = await Resume.find({ _id: resumeId, userId })
+        const userResume = await Resume.find({ _id: resumeId, userId }).sort({ createdAt: -1 })
         if (!userResume) {
             reply.code(404).send({
                 status: "FAILURE",
