@@ -11,6 +11,7 @@ const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
 const PrintResume = require('./routes/PrintResume')
 const path = require('path');
+const { webhook } = require('./controllers/stripeController')
 
 require('dotenv').config()
 
@@ -81,6 +82,8 @@ fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth })
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth })
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth })
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth })
+
+fastify.post("/webhook", webhook)
 
 
 const start = async () => {
