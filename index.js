@@ -79,8 +79,8 @@ fastify.register(multer.contentParser);
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth })
 fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth })
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth })
-fastify.register(PrintResume, { prefix: "api/print", before: apiKeyAuth })
-fastify.register(StripeRoute, { prefix: "api/stripe", before: apiKeyAuth })
+fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth })
+fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth })
 
 
 const start = async () => {
