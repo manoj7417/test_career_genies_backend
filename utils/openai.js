@@ -701,7 +701,39 @@ async function generateResumeOnFeeback(req, reply) {
     }
 }
 
+async function aicounselling(req, reply) {
+    try {
+        const { message } = await req.body;
 
+        const createMessage = await openai.beta.threads.messages.create(req.body.threadId, {
+            role: 'user',
+            content: message
+        });
+
+
+        const run = await openai.beta.threads.runs.create(req.body.threadId, {
+            assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq",
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+                console.log(response.content)
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(req.body.threadId, run.id);
+        reply.send(response);
+    } catch (error) {
+        reply.status(500).send(error);
+    }
+}
 
 
 async function createThread() {
@@ -715,4 +747,4 @@ async function createThread() {
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, aicounselling };
