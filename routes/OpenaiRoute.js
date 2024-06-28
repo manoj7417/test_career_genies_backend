@@ -1,4 +1,4 @@
-const { createAssistant, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyzeResume, generateBetterResume, generateResumeOnFeeback } = require("../utils/openai");
+const { createAssistant, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyzeResume, generateBetterResume, generateResumeOnFeeback,aicounselling } = require("../utils/openai");
 const multer = require('fastify-multer');
 const upload = multer({ dest: 'uploads/' });
 
@@ -29,6 +29,7 @@ async function OpenaiRoute(fastify, options) {
     fastify.post("/createThread", { schema: createAssistantSchema }, createThread)
     fastify.post("/generateBetterResume", generateBetterResume)
     fastify.post("/generateResumeOnFeeback", { preHandler: fastify.verifyJWT }, generateResumeOnFeeback)
+    fastify.post("/aicounselling", { preHandler: fastify.verifyJWT }, aicounselling)
 }
 
 module.exports = OpenaiRoute;
