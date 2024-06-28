@@ -66,21 +66,34 @@ const createSession = async (request, reply) => {
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     let event;
-
+    let payload = request.body
     try {
-        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+        const payloadString = JSON.stringify(payload, null, 2);
+        const secret = endpointSecret;
+
+        const header = stripe.webhooks.generateTestHeaderString({
+            payload: payloadString,
+            secret,
+        });
+        event = await stripe.webhooks.constructEvent(payloadString, header, endpointSecret);
     }
     catch (err) {
+        console.log(err)
         reply.status(400).send(`Webhook Error: ${err.message}`);
     }
-
+    // if (event.type === 'payment_intent.succeeded') {
+    //     console.log("event ", event.data)
+    // }
     switch (event.type) {
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-            console.log('PaymentIntent was successful!');
+            const sessions = await stripe.checkout.sessions.list({
+                payment_intent: paymentIntent.id
+            });
+            const sessionId = sessions.data[0].id
             try {
                 await Order.findOneAndUpdate(
-                    { sessionId: paymentIntent.id },
+                    { sessionId },
                     { paymentStatus: 'Completed', 'paymentDetails.paymentDate': Date.now() }
                 );
                 console.log('Order updated to Completed status.');
@@ -92,11 +105,13 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
-            console.log('PaymentIntent failed!');
-
+            const sessions = await stripe.checkout.sessions.list({
+                payment_intent: paymentIntent.id
+            });
+            const sessionId = sessions.data[0].id
             try {
                 await Order.findOneAndUpdate(
-                    { sessionId: paymentIntent.id },
+                    { sessionId },
                     { paymentStatus: 'Failed', 'paymentDetails.paymentDate': Date.now() }
                 );
                 console.log('Order updated to Failed status.');
@@ -120,7 +135,7 @@ const webhook = async (request, reply) => {
 }
 
 const analyserWebHook = async (request, reply) => {
-    
+
 }
 
 module.exports = {

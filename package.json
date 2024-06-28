@@ -22,6 +22,7 @@
     "fastify": "^4.26.2",
     "fastify-multer": "^2.0.3",
     "fastify-plugin": "^4.5.1",
+    "fastify-raw-body": "^4.3.0",
     "fastify-static": "^4.7.0",
     "jsonwebtoken": "^9.0.2",
     "login": "^0.8.0",

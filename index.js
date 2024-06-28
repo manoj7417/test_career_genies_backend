@@ -12,6 +12,7 @@ const multer = require('fastify-multer');
 const PrintResume = require('./routes/PrintResume')
 const path = require('path');
 const { webhook } = require('./controllers/stripeController')
+const fastifyRawBody = require('fastify-raw-body');
 
 require('dotenv').config()
 
@@ -56,6 +57,13 @@ fastify.register(require('@fastify/swagger'), {
     }
 })
 
+fastify.register(fastifyRawBody, {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf8',
+    runFirst: true,
+});
+
 // cors 
 fastify.register(cors, {
     origin: ["http://localhost:3000", "http://localhost:3002", 'https://careergenie-24.vercel.app', 'https://career-genies-frontend.vercel.app', 'https://testing-cg-frontend.vercel.app'],
@@ -83,7 +91,11 @@ fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth })
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth })
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth })
 
-fastify.post("/webhook", webhook)
+fastify.post("/webhook", {
+    config: {
+        rawBody: true,
+    }
+}, webhook)
 
 
 const start = async () => {
