@@ -71,14 +71,13 @@ const webhook = async (request, reply) => {
         event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     }
     catch (err) {
-        response.status(400).send(`Webhook Error: ${err.message}`);
+        reply.status(400).send(`Webhook Error: ${err.message}`);
     }
 
     switch (event.type) {
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
             console.log('PaymentIntent was successful!');
-
             try {
                 await Order.findOneAndUpdate(
                     { sessionId: paymentIntent.id },
@@ -118,6 +117,10 @@ const webhook = async (request, reply) => {
     }
 
     reply.status(200).send();
+}
+
+const analyserWebHook = async (request, reply) => {
+    
 }
 
 module.exports = {
