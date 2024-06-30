@@ -63,71 +63,71 @@ const createSession = async (request, reply) => {
 };
 
 
-const webhook = async (request, reply) => {
-    const sig = request.headers['stripe-signature'];
-    const payload = request.rawBody; // Ensure raw body is used here
+// const webhook = async (request, reply) => {
+//     const sig = request.headers['stripe-signature'];
+//     const payload = request.rawBody; // Ensure raw body is used here
 
-    // console.log(request.body);
-    const payloadString = JSON.stringify(payload, null, 2);
-    console.log(payloadString)
+//     // console.log(request.body);
+//     const payloadString = JSON.stringify(payload, null, 2);
+//     console.log(payloadString)
 
-    let event;
+//     let event;
 
-    try {
-        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
-        console.log(`Received event: ${event.type}`);
-    } catch (err) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return reply.status(400).send(`Webhook Error: ${err.message}`);
-    }
+//     try {
+//         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+//         console.log(`Received event: ${event.type}`);
+//     } catch (err) {
+//         console.error(`Webhook signature verification failed: ${err.message}`);
+//         return reply.status(400).send(`Webhook Error: ${err.message}`);
+//     }
 
-    switch (event.type) {
-        case 'payment_intent.succeeded': {
-            const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
-            });
-            const sessionId = sessions.data[0].id;
-            try {
-                await Order.findOneAndUpdate(
-                    { sessionId },
-                    { paymentStatus: 'Completed', 'paymentDetails.paymentDate': Date.now() }
-                );
-                console.log('Order updated to Completed status.');
-            } catch (err) {
-                console.error('Error updating order status to Completed:', err);
-            }
-            break;
-        }
+//     switch (event.type) {
+//         case 'payment_intent.succeeded': {
+//             const paymentIntent = event.data.object;
+//             const sessions = await stripe.checkout.sessions.list({
+//                 payment_intent: paymentIntent.id
+//             });
+//             const sessionId = sessions.data[0].id;
+//             try {
+//                 await Order.findOneAndUpdate(
+//                     { sessionId },
+//                     { paymentStatus: 'Completed', 'paymentDetails.paymentDate': Date.now() }
+//                 );
+//                 console.log('Order updated to Completed status.');
+//             } catch (err) {
+//                 console.error('Error updating order status to Completed:', err);
+//             }
+//             break;
+//         }
 
-        case 'payment_intent.payment_failed': {
-            const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
-            });
-            const sessionId = sessions.data[0].id;
-            try {
-                await Order.findOneAndUpdate(
-                    { sessionId },
-                    { paymentStatus: 'Failed', 'paymentDetails.paymentDate': Date.now() }
-                );
-                console.log('Order updated to Failed status.');
-            } catch (err) {
-                console.error('Error updating order status to Failed:', err);
-            }
-            break;
-        }
+//         case 'payment_intent.payment_failed': {
+//             const paymentIntent = event.data.object;
+//             const sessions = await stripe.checkout.sessions.list({
+//                 payment_intent: paymentIntent.id
+//             });
+//             const sessionId = sessions.data[0].id;
+//             try {
+//                 await Order.findOneAndUpdate(
+//                     { sessionId },
+//                     { paymentStatus: 'Failed', 'paymentDetails.paymentDate': Date.now() }
+//                 );
+//                 console.log('Order updated to Failed status.');
+//             } catch (err) {
+//                 console.error('Error updating order status to Failed:', err);
+//             }
+//             break;
+//         }
 
-        default:
-            console.log(`Unhandled event type ${event.type}`);
-    }
+//         default:
+//             console.log(`Unhandled event type ${event.type}`);
+//     }
 
-    reply.status(200).send();
-};
+//     reply.status(200).send();
+// };
 
 
 
 module.exports = {
     createSession,
-    webhook
+    // webhook
 };

@@ -1,5 +1,5 @@
 const fastify = require('fastify')({
-    logger: false
+    logger: true
 });
 
 const path = require('path');
@@ -15,8 +15,6 @@ const PrintResume = require('./routes/PrintResume');
 const cors = require('@fastify/cors');
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
-const fastifyRawBody = require('fastify-raw-body');
-const { webhook } = require('./controllers/stripeController');
 
 require('dotenv').config();
 
@@ -56,14 +54,6 @@ fastify.register(require('@fastify/swagger'), {
     }
 });
 
-fastify.register(fastifyRawBody, {
-    field: 'rawBody',
-    global: false,
-    encoding: 'utf8',
-    runFirst: true,
-    routes: ['/webhook'],
-});
-
 fastify.register(cors, {
     origin: [
         "http://localhost:3000", 
@@ -93,11 +83,73 @@ fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
-fastify.post("/webhook", {
-    config: {
-        rawBody: true,
+// Add custom content type parser
+fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    req.rawBody = body;
+    done(null, body);
+});
+
+// Register webhook route
+fastify.post("/webhook", async (request, reply) => {
+    const sig = request.headers['stripe-signature'];
+    const payload = request.rawBody; // Ensure raw body is used here
+
+    console.log(`Headers: ${JSON.stringify(request.headers)}`);
+    console.log(`Raw Body: ${payload}`);
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+        console.log(`Received event: ${event.type}`);
+    } catch (err) {
+        console.error(`Webhook signature verification failed: ${err.message}`);
+        return reply.status(400).send(`Webhook Error: ${err.message}`);
     }
-}, webhook);
+
+    switch (event.type) {
+        case 'payment_intent.succeeded': {
+            const paymentIntent = event.data.object;
+            const sessions = await stripe.checkout.sessions.list({
+                payment_intent: paymentIntent.id
+            });
+            const sessionId = sessions.data[0].id;
+            try {
+                await Order.findOneAndUpdate(
+                    { sessionId },
+                    { paymentStatus: 'Completed', 'paymentDetails.paymentDate': Date.now() }
+                );
+                console.log('Order updated to Completed status.');
+            } catch (err) {
+                console.error('Error updating order status to Completed:', err);
+            }
+            break;
+        }
+
+        case 'payment_intent.payment_failed': {
+            const paymentIntent = event.data.object;
+            const sessions = await stripe.checkout.sessions.list({
+                payment_intent: paymentIntent.id
+            });
+            const sessionId = sessions.data[0].id;
+            try {
+                await Order.findOneAndUpdate(
+                    { sessionId },
+                    { paymentStatus: 'Failed', 'paymentDetails.paymentDate': Date.now() }
+                );
+                console.log('Order updated to Failed status.');
+            } catch (err) {
+                console.error('Error updating order status to Failed:', err);
+            }
+            break;
+        }
+
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+
+    reply.status(200).send();
+});
 
 const start = async () => {
     try {
