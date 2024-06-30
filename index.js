@@ -15,6 +15,7 @@ const PrintResume = require('./routes/PrintResume');
 const cors = require('@fastify/cors');
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
+const Order = require('./models/OrderModel');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 
