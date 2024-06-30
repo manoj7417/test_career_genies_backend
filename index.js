@@ -1,28 +1,27 @@
-const DBConnection = require('./config/db')
-const { apiKeyAuth } = require('./middlewares/auth')
-const roleCheck = require('./middlewares/RoleBasedAccessControl')
-const verifyJWT = require('./middlewares/verifyJwt')
-const ResumeRoute = require('./routes/ResumeRoute')
-const UserRoute = require('./routes/UserRoute')
-const StripeRoute = require('./routes/StripeRoute')
-const OpenaiRoute = require('./routes/OpenaiRoute')
-const cors = require('@fastify/cors')
-const cookie = require('@fastify/cookie');
-const multer = require('fastify-multer');
-const PrintResume = require('./routes/PrintResume')
-const path = require('path');
-const fastifyRawBody = require('fastify-raw-body');
-const { webhook } = require('./controllers/stripeController')
-
-require('dotenv').config()
-
 const fastify = require('fastify')({
     logger: false
+});
 
-})
+const path = require('path');
+const DBConnection = require('./config/db');
+const { apiKeyAuth } = require('./middlewares/auth');
+const roleCheck = require('./middlewares/RoleBasedAccessControl');
+const verifyJWT = require('./middlewares/verifyJwt');
+const ResumeRoute = require('./routes/ResumeRoute');
+const UserRoute = require('./routes/UserRoute');
+const StripeRoute = require('./routes/StripeRoute');
+const OpenaiRoute = require('./routes/OpenaiRoute');
+const PrintResume = require('./routes/PrintResume');
+const cors = require('@fastify/cors');
+const cookie = require('@fastify/cookie');
+const multer = require('fastify-multer');
+const fastifyRawBody = require('fastify-raw-body');
+const { webhook } = require('./controllers/stripeController');
 
-fastify.register(cookie)
+require('dotenv').config();
 
+// Register plugins
+fastify.register(cookie);
 fastify.register(require('@fastify/swagger'), {
     openapi: {
         openapi: '3.0.0',
@@ -55,7 +54,7 @@ fastify.register(require('@fastify/swagger'), {
             description: 'Find more info here'
         }
     }
-})
+});
 
 fastify.register(fastifyRawBody, {
     field: 'rawBody',
@@ -64,10 +63,15 @@ fastify.register(fastifyRawBody, {
     runFirst: true,
 });
 
-// cors 
 fastify.register(cors, {
-    origin: ["http://localhost:3000", "http://localhost:3002", 'https://careergenie-24.vercel.app', 'https://career-genies-frontend.vercel.app', 'https://testing-cg-frontend.vercel.app'],
-    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"], // Include 'x-api-key' header
+    origin: [
+        "http://localhost:3000", 
+        "http://localhost:3002", 
+        'https://careergenie-24.vercel.app', 
+        'https://career-genies-frontend.vercel.app', 
+        'https://testing-cg-frontend.vercel.app'
+    ],
+    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"],
     credentials: true
 });
 
@@ -76,37 +80,33 @@ fastify.register(require('@fastify/static'), {
     prefix: '/uploads',
 });
 
+fastify.decorate('verifyJWT', verifyJWT);
+fastify.decorate('roleCheck', roleCheck);
 
-fastify.decorate('verifyJWT', verifyJWT)
-
-fastify.decorate('roleCheck', roleCheck)
-
-// Routes 
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
-//userRoute
-fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth })
-fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth })
-fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth })
-fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth })
-fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth })
+
+fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
+fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
+fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
+fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
+fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
 fastify.post("/webhook", {
     config: {
         rawBody: true,
     }
-}, webhook)
-
+}, webhook);
 
 const start = async () => {
     try {
-        await DBConnection()
-        await fastify.listen({ port: process.env.PORT || 3009, host: '0.0.0.0' })
-        fastify.log.info(`Server started on PORT ${fastify.server.address().port}`)
+        await DBConnection();
+        await fastify.listen({ port: process.env.PORT || 3009, host: '0.0.0.0' });
+        fastify.log.info(`Server started on PORT ${fastify.server.address().port}`);
     } catch (error) {
-        console.log(error)
-        fastify.log.info("Server connection error")
+        console.log(error);
+        fastify.log.info("Server connection error");
     }
-}
+};
 
-start()
+start();

@@ -67,6 +67,8 @@ const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody; // Ensure raw body is used here
 
+    console.log(`Headers: ${JSON.stringify(request.headers)}`);
+    console.log(`Raw Body: ${payload}`);
     let event;
 
     try {
