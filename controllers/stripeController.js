@@ -65,7 +65,7 @@ const createSession = async (request, reply) => {
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
-    const payload = request.body; // Ensure raw body is used here
+    const payload = request.rawBody; // Ensure raw body is used here
 
     // console.log(request.body);
     const payloadString = JSON.stringify(payload, null, 2);
