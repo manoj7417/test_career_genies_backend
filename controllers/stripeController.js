@@ -66,7 +66,7 @@ const createSession = async (request, reply) => {
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     let event;
-    let payload = request.body
+    let payload = request.rawBody
     try {
         const payloadString = JSON.stringify(payload, null, 2);
         const secret = endpointSecret;
