@@ -65,14 +65,14 @@ const createSession = async (request, reply) => {
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
-    const payload = request.rawBody; // Ensure raw body is used here
+    const payload = request.body; // Ensure raw body is used here
 
     console.log(`Headers: ${JSON.stringify(request.headers)}`);
     console.log(`Raw Body: ${payload}`);
     let event;
 
     try {
-        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
         console.log(`Received event: ${event.type}`);
     } catch (err) {
         console.error(`Webhook signature verification failed: ${err.message}`);
