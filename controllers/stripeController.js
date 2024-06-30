@@ -65,8 +65,9 @@ const createSession = async (request, reply) => {
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
+    const payload = request.rawBody; // Ensure raw body is used here
+
     let event;
-    let payload = request.rawBody;
 
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);

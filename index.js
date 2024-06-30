@@ -11,8 +11,8 @@ const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
 const PrintResume = require('./routes/PrintResume')
 const path = require('path');
-const { webhook } = require('./controllers/stripeController')
 const fastifyRawBody = require('fastify-raw-body');
+const { webhook } = require('./controllers/stripeController')
 
 require('dotenv').config()
 
