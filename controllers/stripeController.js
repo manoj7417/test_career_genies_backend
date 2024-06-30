@@ -75,7 +75,8 @@ const webhook = async (request, reply) => {
             payload: payloadString,
             secret,
         });
-        event = await stripe.webhooks.constructEvent(payloadString, header, endpointSecret);
+        event = await stripe.webhooks.constructEvent(payloadString, sig, endpointSecret);
+        console.log(event.type)
     }
     catch (err) {
         console.log(err)
