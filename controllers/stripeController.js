@@ -66,32 +66,23 @@ const createSession = async (request, reply) => {
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     let event;
-    let payload = request.rawBody
-    try {
-        const payloadString = JSON.stringify(payload, null, 2);
-        const secret = endpointSecret;
+    let payload = request.rawBody;
 
-        const header = stripe.webhooks.generateTestHeaderString({
-            payload: payloadString,
-            secret,
-        });
-        event = await stripe.webhooks.constructEvent(payloadString, sig, endpointSecret);
-        console.log(event.type)
+    try {
+        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+        console.log(`Received event: ${event.type}`);
+    } catch (err) {
+        console.error(`Webhook signature verification failed: ${err.message}`);
+        return reply.status(400).send(`Webhook Error: ${err.message}`);
     }
-    catch (err) {
-        console.log(err)
-        reply.status(400).send(`Webhook Error: ${err.message}`);
-    }
-    // if (event.type === 'payment_intent.succeeded') {
-    //     console.log("event ", event.data)
-    // }
+
     switch (event.type) {
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
             const sessions = await stripe.checkout.sessions.list({
                 payment_intent: paymentIntent.id
             });
-            const sessionId = sessions.data[0].id
+            const sessionId = sessions.data[0].id;
             try {
                 await Order.findOneAndUpdate(
                     { sessionId },
@@ -109,7 +100,7 @@ const webhook = async (request, reply) => {
             const sessions = await stripe.checkout.sessions.list({
                 payment_intent: paymentIntent.id
             });
-            const sessionId = sessions.data[0].id
+            const sessionId = sessions.data[0].id;
             try {
                 await Order.findOneAndUpdate(
                     { sessionId },
@@ -122,22 +113,14 @@ const webhook = async (request, reply) => {
             break;
         }
 
-        case 'payment_method.attached': {
-            const paymentMethod = event.data.object;
-            console.log('PaymentMethod was attached to a Customer!');
-            break;
-        }
-
         default:
             console.log(`Unhandled event type ${event.type}`);
     }
 
     reply.status(200).send();
-}
+};
 
-const analyserWebHook = async (request, reply) => {
 
-}
 
 module.exports = {
     createSession,
