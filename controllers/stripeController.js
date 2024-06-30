@@ -69,7 +69,7 @@ const webhook = async (request, reply) => {
 
     // console.log(request.body);
     const payloadString = JSON.stringify(payload, null, 2);
-    
+    console.log(payloadString)
 
     let event;
 
