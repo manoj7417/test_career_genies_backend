@@ -61,6 +61,7 @@ fastify.register(fastifyRawBody, {
     global: false,
     encoding: 'utf8',
     runFirst: true,
+    routes: ['/webhook'],
 });
 
 fastify.register(cors, {
