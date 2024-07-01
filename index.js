@@ -59,10 +59,10 @@ fastify.register(require('@fastify/swagger'), {
 
 fastify.register(cors, {
     origin: [
-        "http://localhost:3000", 
-        "http://localhost:3002", 
-        'https://careergenie-24.vercel.app', 
-        'https://career-genies-frontend.vercel.app', 
+        "http://localhost:3000",
+        "http://localhost:3002",
+        'https://careergenie-24.vercel.app',
+        'https://career-genies-frontend.vercel.app',
         'https://testing-cg-frontend.vercel.app'
     ],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"],
@@ -102,8 +102,8 @@ fastify.post("/webhook", async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody; // Ensure raw body is used here
 
-    console.log(`Headers: ${JSON.stringify(request.headers)}`);
-    console.log(`Raw Body: ${payload}`);
+    // console.log(`Headers: ${JSON.stringify(request.headers)}`);
+    // console.log(`Raw Body: ${payload}`);
 
     let event;
 

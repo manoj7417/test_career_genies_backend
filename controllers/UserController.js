@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
+const { Order } = require("../models/OrderModel");
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
 
 function getFilenameFromUrl(url) {
@@ -450,7 +451,7 @@ async function decodeToken(token) {
 const updateUserProfileDetails = async (req, reply) => {
   const userId = req.user._id;
   const { fullname, email, password, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
- 
+
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -478,10 +479,10 @@ const updateUserProfileDetails = async (req, reply) => {
         const user = await User.findById(userId);
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
-    
+
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
-    
+
         return { accessToken, refreshToken };
       } catch (error) {
         throw new Error(
@@ -524,6 +525,47 @@ const updateUserProfileDetails = async (req, reply) => {
 };
 
 
+const checkUserTemplate = async (req, reply) => {
+  const userId = req.user._id
+  const { templateName } = req.body;
+
+  try {
+    const hasTemplate = await Order.findOne({ userId, templateName })
+    if (!hasTemplate) {
+      return reply.code(404).send({
+        status: "FAILURE",
+        error: "User does not have this template",
+      });
+    }
+
+    if (hasTemplate && hasTemplate.paymentStatus === 'Failed') {
+      return reply.code(400).send({
+        status: "FAILURE",
+        error: "Payment failed for this template"
+      })
+    }
+
+    if (hasTemplate && hasTemplate.paymentStatus === 'Pending') {
+      return reply.code(400).send({
+        status: "FAILURE",
+        error: "Payment pending for this template"
+      })
+    }
+
+    return reply.code(200).send({
+      status: "SUCCESS",
+      message: "User has this template"
+    })
+  } catch (error) {
+    console.error("Error checking user template:", error);
+    return reply.code(500).send({
+      status: "FAILURE",
+      error: "An error occurred while checking user template"
+    })
+  }
+}
+
+
 module.exports = {
   register,
   login,
@@ -535,5 +577,6 @@ module.exports = {
   templatepurchase,
   analyserCreditsPurchase,
   updateUserDetails,
-  updateUserProfileDetails
+  updateUserProfileDetails,
+  checkUserTemplate
 };

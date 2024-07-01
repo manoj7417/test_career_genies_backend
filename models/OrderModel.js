@@ -29,7 +29,6 @@ OrderSchema.pre('save', function (next) {
     next();
 });
 
-// Create the Order model
 const Order = mongoose.model('Order', OrderSchema);
 
-module.exports = Order;
+module.exports = { Order };
