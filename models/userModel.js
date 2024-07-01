@@ -64,18 +64,38 @@ const UserSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user',
     },
-    isSubscribed: {
-        type: Boolean,
-        default: false
+    subscription: {
+        plan: {
+            type: String,
+            enum: ['free', 'basic', 'premium'],
+            default: 'free'
+        },
+        status: {
+            type: String,
+            enum: ['Pending', 'Active', 'Canceled', 'Incomplete', 'Incomplete_expired', 'Trialing', 'Unpaid', 'Past_due'],
+            default: 'Pending'
+        },
+        currentPeriodStart: {
+            type: Date
+        },
+        currentPeriodEnd: {
+            type: Date
+        },
+        cancelAtPeriodEnd: {
+            type: Boolean,
+            default: false
+        },
+        canceledAt: {
+            type: Date
+        },
+        stripeCheckoutSessionId: {
+            type: String
+        }
     },
     createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
     }],
-    threadId: {
-        type: String,
-    },
-    premiumTemplates: [String],
     tokens: { type: Number, default: 0 }
 },
     {

@@ -15,7 +15,7 @@ const PrintResume = require('./routes/PrintResume');
 const cors = require('@fastify/cors');
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
-const Order = require('./models/OrderModel');
+const { webhook } = require('./controllers/stripeController');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT;
 
@@ -97,67 +97,7 @@ fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function
     }
 });
 
-// Register webhook route
-fastify.post("/webhook", async (request, reply) => {
-    const sig = request.headers['stripe-signature'];
-    const payload = request.rawBody; // Ensure raw body is used here
-
-    // console.log(`Headers: ${JSON.stringify(request.headers)}`);
-    // console.log(`Raw Body: ${payload}`);
-
-    let event;
-
-    try {
-        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
-        console.log(`Received event: ${event.type}`);
-    } catch (err) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return reply.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    switch (event.type) {
-        case 'payment_intent.succeeded': {
-            const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
-            });
-            const sessionId = sessions.data[0].id;
-            try {
-                await Order.findOneAndUpdate(
-                    { sessionId },
-                    { paymentStatus: 'Completed', 'paymentDetails.paymentDate': Date.now() }
-                );
-                console.log('Order updated to Completed status.');
-            } catch (err) {
-                console.error('Error updating order status to Completed:', err);
-            }
-            break;
-        }
-
-        case 'payment_intent.payment_failed': {
-            const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
-            });
-            const sessionId = sessions.data[0].id;
-            try {
-                await Order.findOneAndUpdate(
-                    { sessionId },
-                    { paymentStatus: 'Failed', 'paymentDetails.paymentDate': Date.now() }
-                );
-                console.log('Order updated to Failed status.');
-            } catch (err) {
-                console.error('Error updating order status to Failed:', err);
-            }
-            break;
-        }
-
-        default:
-            console.log(`Unhandled event type ${event.type}`);
-    }
-
-    reply.status(200).send();
-});
+fastify.post("/webhook", webhook);
 
 const start = async () => {
     try {

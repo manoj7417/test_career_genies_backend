@@ -86,7 +86,6 @@ async function UserRoute(fastify, options) {
     fastify.post('/update/userdetails', { preHandler: fastify.verifyJWT }, updateUserDetails)
     fastify.patch('/update/userprofiledetails', { preHandler: fastify.verifyJWT }, updateUserProfileDetails)
 
-    fastify.post('/checkTemplate', { preHandler: fastify.verifyJWT }, checkUserTemplate)
 }
 
 module.exports = UserRoute

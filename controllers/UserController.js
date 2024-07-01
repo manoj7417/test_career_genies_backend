@@ -12,7 +12,6 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
-const { Order } = require('../models/OrderModel');
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
 
 function getFilenameFromUrl(url) {
@@ -40,9 +39,18 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 
+const generateRandomPassword = (email, fullname) => {
+  const characters = (email + fullname).split('');
+  for (let i = characters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [characters[i], characters[j]] = [characters[j], characters[i]];
+  }
+  return characters.join('');
+};
+
 // register the user 
 const register = async (request, reply) => {
-  const { email, fullname, password } = request.body;
+  const { email, fullname } = request.body;
   try {
     const findExistingUser = await User.findOne({ email });
     if (findExistingUser) {
@@ -50,9 +58,10 @@ const register = async (request, reply) => {
         .code(409)
         .send({ status: "FAILURE", error: "User already exists" });
     }
+    const password = generateRandomPassword(email, fullname);
     const user = new User({ email, fullname, password });
     await user.save();
-
+    
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
@@ -525,47 +534,6 @@ const updateUserProfileDetails = async (req, reply) => {
 };
 
 
-const checkUserTemplate = async (req, reply) => {
-  const userId = req.user._id
-  const { templateName } = req.body;
-
-  try {
-    const hasTemplate = await Order.findOne({ userId, templateName })
-    if (!hasTemplate) {
-      return reply.code(404).send({
-        status: "FAILURE",
-        error: "User does not have this template",
-      });
-    }
-
-    if (hasTemplate && hasTemplate.paymentStatus === 'Failed') {
-      return reply.code(400).send({
-        status: "FAILURE",
-        error: "Payment failed for this template"
-      })
-    }
-
-    if (hasTemplate && hasTemplate.paymentStatus === 'Pending') {
-      return reply.code(400).send({
-        status: "FAILURE",
-        error: "Payment pending for this template"
-      })
-    }
-
-    return reply.code(200).send({
-      status: "SUCCESS",
-      message: "User has this template"
-    })
-  } catch (error) {
-    console.error("Error checking user template:", error);
-    return reply.code(500).send({
-      status: "FAILURE",
-      error: "An error occurred while checking user template"
-    })
-  }
-}
-
-
 module.exports = {
   register,
   login,
@@ -577,6 +545,5 @@ module.exports = {
   templatepurchase,
   analyserCreditsPurchase,
   updateUserDetails,
-  updateUserProfileDetails,
-  checkUserTemplate
+  updateUserProfileDetails
 };

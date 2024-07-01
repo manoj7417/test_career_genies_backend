@@ -1,7 +1,8 @@
-const { createSession } = require("../controllers/stripeController");
+const { createSubscriptionPayment } = require("../controllers/stripeController");
+
 
 async function StripeRoute(fastify, options) {
-    fastify.post("/create-checkout-session", { preHandler: [fastify.verifyJWT] }, createSession)
+    fastify.post("/createSubscription", { preHandler: [fastify.verifyJWT] }, createSubscriptionPayment)
 
 
 }
