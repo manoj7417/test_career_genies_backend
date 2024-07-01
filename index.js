@@ -1,7 +1,7 @@
 const fastify = require('fastify')({
-    logger: true
+    logger: false
 });
-
+fastify.register(require('@fastify/formbody'));
 const path = require('path');
 const DBConnection = require('./config/db');
 const { apiKeyAuth } = require('./middlewares/auth');
@@ -17,7 +17,7 @@ const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
 const Order = require('./models/OrderModel');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.WEBHOOK_ENDPOINT
+const endpointSecret = process.env.WEBHOOK_ENDPOINT;
 
 require('dotenv').config();
 
@@ -80,20 +80,25 @@ fastify.decorate('roleCheck', roleCheck);
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
 
+// Register the routes
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
 fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
-// Add custom content type parser
-fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
-    req.rawBody = body;
-    done(null, body);
-});
-
-// Register webhook route
-fastify.post("/webhook", async (request, reply) => {
+// Register webhook route with custom preHandler to parse raw body
+fastify.post("/webhook", {
+    preHandler: (request, reply, done) => {
+        request.rawBody = '';
+        request.raw.on('data', chunk => {
+            request.rawBody += chunk;
+        });
+        request.raw.on('end', () => {
+            done();
+        });
+    }
+}, async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody; // Ensure raw body is used here
 
