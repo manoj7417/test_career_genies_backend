@@ -89,14 +89,14 @@ fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
 // Register webhook route with custom preHandler to parse raw body
 fastify.post("/webhook", {
-    preHandler: (request, reply, done) => {
-        request.rawBody = '';
-        request.raw.on('data', chunk => {
-            request.rawBody += chunk;
+    preHandler: async (request, reply) => {
+        const rawBody = await new Promise((resolve, reject) => {
+            let data = '';
+            request.raw.on('data', chunk => data += chunk);
+            request.raw.on('end', () => resolve(data));
+            request.raw.on('error', reject);
         });
-        request.raw.on('end', () => {
-            done();
-        });
+        request.rawBody = rawBody;
     }
 }, async (request, reply) => {
     const sig = request.headers['stripe-signature'];
