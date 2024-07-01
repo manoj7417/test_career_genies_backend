@@ -80,18 +80,21 @@ fastify.decorate('roleCheck', roleCheck);
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
 
+// Register the routes
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
 fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
-// Add custom content type parser for the webhook route only
-fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
-    if (req.raw.url === '/webhook') {
+// Custom content type parser for webhook route
+fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
+    if (req.url === '/webhook') {
         req.rawBody = body;
+        done(null, body);
+    } else {
+        done(null, JSON.parse(body));
     }
-    done(null, body);
 });
 
 // Register webhook route
