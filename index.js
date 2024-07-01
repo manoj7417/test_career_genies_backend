@@ -80,25 +80,22 @@ fastify.decorate('roleCheck', roleCheck);
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
 
-// Register the routes
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
 fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 
-// Register webhook route with custom preHandler to parse raw body
-fastify.post("/webhook", {
-    preHandler: async (request, reply) => {
-        const rawBody = await new Promise((resolve, reject) => {
-            let data = '';
-            request.raw.on('data', chunk => data += chunk);
-            request.raw.on('end', () => resolve(data));
-            request.raw.on('error', reject);
-        });
-        request.rawBody = rawBody;
+// Add custom content type parser for the webhook route only
+fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    if (req.raw.url === '/webhook') {
+        req.rawBody = body;
     }
-}, async (request, reply) => {
+    done(null, body);
+});
+
+// Register webhook route
+fastify.post("/webhook", async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody; // Ensure raw body is used here
 
