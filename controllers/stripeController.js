@@ -1,4 +1,5 @@
-const Order = require('../models/OrderModel');
+const { Order } = require('../models/OrderModel');
+
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
