@@ -12,7 +12,7 @@ const printResume = async (request, reply) => {
     const htmlbody = request.body.html;
     const page = fs.readFileSync(printResumePath, 'utf8').toString();
     const html = page.replace('{{content}}', htmlbody);
-    
+
     // Add CSS for page-specific margins
     const styledHtml = `     
     <style>
@@ -28,16 +28,16 @@ const printResume = async (request, reply) => {
 </style>
         ${html}
     `;
-    
+
     try {
         const browser = await puppeteer.launch({
             args: [
-                '--no-sandbox', 
+                '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--single-process',
                 "--no-zygote",
             ],
-            executablePath:  '/usr/bin/google-chrome-stable',
+            executablePath: '/usr/bin/google-chrome-stable',
         });
         const page = await browser.newPage();
         await page.setContent(styledHtml);

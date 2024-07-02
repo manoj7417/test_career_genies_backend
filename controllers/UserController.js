@@ -61,7 +61,7 @@ const register = async (request, reply) => {
     const password = generateRandomPassword(email, fullname);
     const user = new User({ email, fullname, password });
     await user.save();
-    
+
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
@@ -189,20 +189,7 @@ const login = async (request, reply) => {
       data: {
         accessToken: accessToken,
         refreshToken: refreshToken,
-        userdata: {
-          fullname: user.fullname,
-          email: user.email,
-          _id: user._id,
-          role: user.role,
-          isSubscribed: user.isSubscribed,
-          createdResumes: user.createdResumes,
-          premiumTemplates: user.premiumTemplates,
-          profilePicture: user.profilePicture,
-          address: user.address,
-          occupation: user.occupation,
-          phoneNumber: user.phoneNumber,
-          tokens: user.tokens
-        }
+        userdata: user.toSafeObject()
       }
     });
   } catch (error) {

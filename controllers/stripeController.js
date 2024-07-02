@@ -7,19 +7,18 @@ const endpointSecret = process.env.WEBHOOK_ENDPOINT
 
 const createSubscriptionPayment = async (request, reply) => {
     const userId = request.user._id;
-    const { email, plan, success_url, cancel_url } = request.body;
+    const { email, plan, duration, success_url, cancel_url } = request.body;
     try {
         let amount, stripeCheckoutUrl;
-
         switch (plan) {
             case 'free':
                 amount = 0;
                 break;
             case 'basic':
-                amount = 40000;
+                amount = duration === 'monthly' ? 39900 : 335100;
                 break;
             case 'premium':
-                amount = 100000;
+                amount = duration === 'monthly' ? 99900 : 840000;
                 break;
             default:
                 return reply.code(400).send({
@@ -27,7 +26,6 @@ const createSubscriptionPayment = async (request, reply) => {
                     error: "Invalid plan selected"
                 });
         }
-
 
         if (plan !== 'free') {
             const session = await stripe.checkout.sessions.create({

@@ -90,13 +90,14 @@ const UserSchema = new mongoose.Schema({
         },
         stripeCheckoutSessionId: {
             type: String
-        }
+        },
+        analyserTokens: { type: Number, default: 1 },
+        optimizerTokens: { type: Number, default: 0 },
     },
     createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
-    }],
-    tokens: { type: Number, default: 0 }
+    }]
 },
     {
         timestamps: true
@@ -158,6 +159,22 @@ UserSchema.methods.generateResetPassowordToken = function () {
         }
     )
 }
+
+UserSchema.methods.toSafeObject = function () {
+    return {
+        fullname: this.fullname,
+        email: this.email,
+        _id: this._id,
+        role: this.role,
+        subscription: this.subscription,
+        createdResumes: this.createdResumes,
+        profilePicture: this.profilePicture,
+        address: this.address,
+        occupation: this.occupation,
+        phoneNumber: this.phoneNumber
+    };
+};
+
 
 const User = mongoose.model("User", UserSchema)
 
