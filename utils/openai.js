@@ -500,8 +500,24 @@ async function analyseResume(req, reply) {
 }
 
 async function atsCheck(req, reply) {
+    const userId = req.user._id;
 
     try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "User not found"
+            });
+        }
+
+        if (user.subscription.analyserTokens <= 0) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Insufficient tokens"
+            });
+        }
 
         const thread = await createThread();
         const threadId = thread.id;
@@ -533,9 +549,9 @@ async function atsCheck(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-
+        user.subscription.analyserTokens -= 1;
+        await user.save();
         reply.send(response);
-
     }
     catch (error) {
         reply.status(500).send(error);
@@ -639,7 +655,24 @@ async function generateBetterResume(req, reply) {
 
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
+    console.log(userId)
     try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "User not found"
+            });
+        }
+
+        // Check if user has enough optimizer tokens
+        if (user.subscription.optimizerTokens <= 0) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Insufficient optimizer tokens"
+            });
+        }
         const thread = await createThread();
         const threadId = thread.id;
 
@@ -683,7 +716,10 @@ async function generateResumeOnFeeback(req, reply) {
             resume.data.basics = value.basics;
             resume.data.sections = value.sections;
             await resume.save();
-            const user = await User.findByIdAndUpdate(userId, { $inc: { tokens: -1 } });
+
+            user.subscription.optimizerTokens -= 1;
+            await user.save();
+
             reply.code(201).send({
                 status: "SUCCESS",
                 message: "Resume created succesfully",
@@ -713,7 +749,7 @@ async function aicounselling(req, reply) {
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq",
         });
-        
+
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
             const run = await openai.beta.threads.runs.retrieve(threadId, runId);
             if (run.status === 'completed') {
