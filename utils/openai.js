@@ -752,37 +752,44 @@ async function generateResumeOnFeeback(req, reply) {
     }
 }
 
-async function aicounselling(req, reply) {
+async function generateCounsellingTest(req, reply) {
     try {
-        const { message } = await req.body;
-        const thread = await createThread();
-        const threadId = thread.id;
-        const createMessage = await openai.beta.threads.messages.create(threadId, {
-            role: 'user',
-            content: message
-        });
-        const run = await openai.beta.threads.runs.create(threadId, {
-            assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq",
-        });
-
-        const checkStatusAndGenerateResponse = async (threadId, runId) => {
-            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-            if (run.status === 'completed') {
-                const messages = await openai.beta.threads.messages.list(threadId);
-                const response = messages.body.data.find(message => message.role === 'assistant');
-                return response.content;
-            } else {
-                return checkStatusAndGenerateResponse(threadId, runId);
-            }
-        };
-
-        const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        console.log(response)
-        reply.status(201).send(response);
+      const reqdata = await req.body;
+      const thread = await createThread();
+      const threadId = thread.id;
+  
+      const reqdataString = JSON.stringify(reqdata);
+    
+  
+      await openai.beta.threads.messages.create(threadId, {
+        role: 'user',
+        content: reqdataString
+      });
+  
+      const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+      });
+  
+      const checkStatusAndGenerateResponse = async (threadId, runId) => {
+        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+        if (run.status === 'completed') {
+          const messages = await openai.beta.threads.messages.list(threadId);
+          const response = messages.body.data.find(message => message.role === 'assistant');
+          return response.content;
+        } else {
+          return checkStatusAndGenerateResponse(threadId, runId);
+        }
+      };
+  
+      const response = await checkStatusAndGenerateResponse(threadId, run.id);
+      const test = response[0].text.value;
+      reply.status(201).send(test);
     } catch (error) {
-        reply.status(500).send(error);
+      reply.status(500).send(error);
     }
-}
+  }
+  
+  
 
 
 async function createThread() {
@@ -795,4 +802,46 @@ async function createThread() {
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, aicounselling };
+async function generateCareerAdvice(req, reply) {
+    try {
+        const thread = await createThread();
+        const threadId = thread.id;
+
+        const message = await req.body;
+
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
+
+
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq",
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+                // Recursive call to check again until completion
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
+
+        reply.send(response);
+
+    }
+    catch (error) {
+        reply.status(500).send(error);
+    }
+
+}
+
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, generateCounsellingTest, generateCareerAdvice };
