@@ -520,6 +520,27 @@ const updateUserProfileDetails = async (req, reply) => {
   }
 };
 
+const GetuserDetails = async (req, reply) => {
+  const userId = req.user._id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: "FAILURE", message: "User not found" });
+    }
+    const userData = user.toSafeObject();
+    return reply.code(200).send({
+      status: "SUCCESS",
+      data: userData
+    })
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    reply.code(500).send({
+      status: "FAILURE",
+      error: "An error occurred while fetching user details",
+    })
+  }
+}
+
 
 module.exports = {
   register,
@@ -532,5 +553,6 @@ module.exports = {
   templatepurchase,
   analyserCreditsPurchase,
   updateUserDetails,
-  updateUserProfileDetails
+  updateUserProfileDetails,
+  GetuserDetails
 };

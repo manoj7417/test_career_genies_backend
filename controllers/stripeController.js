@@ -154,8 +154,6 @@ const webhook = async (request, reply) => {
     reply.status(200).send();
 }
 
-
-
 module.exports = {
     createSubscriptionPayment,
     webhook
