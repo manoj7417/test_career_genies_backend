@@ -789,7 +789,7 @@ async function createThread() {
     try {
         const response = await openai.beta.threads.create();
         return response;
-    } catch (error) {
+    } catch (error) { 
         console.error('Error creating thread:', error);
         throw error;
     }

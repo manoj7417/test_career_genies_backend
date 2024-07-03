@@ -17,13 +17,13 @@ const createSubscriptionPayment = async (request, reply) => {
                 amount = 0;
                 break;
             case 'basic':
-                amount = duration === 'monthly' ? 39900 : 335100;
+                amount = duration === 'monthly' ? 399 : 3351;
                 analyserTokens = 10;
                 optimizerTokens = 10;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
-                amount = duration === 'monthly' ? 99900 : 840000;
+                amount = duration === 'monthly' ? 999 : 8400;
                 analyserTokens = 10000;
                 optimizerTokens = 10000;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
