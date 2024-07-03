@@ -512,6 +512,14 @@ async function atsCheck(req, reply) {
             });
         }
 
+        const currentDate = new Date();
+        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Subscription is inactive or expired"
+            });
+        }
+
         if (user.subscription.analyserTokens <= 0) {
             return reply.code(400).send({
                 status: "FAILURE",
@@ -665,6 +673,14 @@ async function generateResumeOnFeeback(req, reply) {
             });
         }
 
+        const currentDate = new Date();
+        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Subscription is inactive or expired"
+            });
+        }
+
         // Check if user has enough optimizer tokens
         if (user.subscription.optimizerTokens <= 0) {
             return reply.code(400).send({
@@ -781,7 +797,7 @@ async function createThread() {
     try {
         const response = await openai.beta.threads.create();
         return response;
-    } catch (error) {
+    } catch (error) { 
         console.error('Error creating thread:', error);
         throw error;
     }

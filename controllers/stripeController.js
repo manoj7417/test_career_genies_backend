@@ -10,15 +10,23 @@ const createSubscriptionPayment = async (request, reply) => {
     const { email, plan, duration, success_url, cancel_url } = request.body;
     try {
         let amount, stripeCheckoutUrl;
+        let analyserTokens, optimizerTokens;
+        let currentPeriodEnd;
         switch (plan) {
             case 'free':
                 amount = 0;
                 break;
             case 'basic':
                 amount = duration === 'monthly' ? 39900 : 335100;
+                analyserTokens = 10;
+                optimizerTokens = 10;
+                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
                 amount = duration === 'monthly' ? 99900 : 840000;
+                analyserTokens = 10000;
+                optimizerTokens = 10000;
+                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             default:
                 return reply.code(400).send({
@@ -28,6 +36,7 @@ const createSubscriptionPayment = async (request, reply) => {
         }
 
         if (plan !== 'free') {
+            console.log(currentPeriodEnd)
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 mode: 'payment',
@@ -52,8 +61,11 @@ const createSubscriptionPayment = async (request, reply) => {
                     'subscription.plan': plan,
                     'subscription.status': 'Pending',
                     'subscription.currentPeriodStart': new Date(),
-                    'subscription.currentPeriodEnd': new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                    'subscription.currentPeriodEnd': currentPeriodEnd,
                     'subscription.stripeCheckoutSessionId': session.id,
+                    'subscription.analyserTokens':
+                        analyserTokens,
+                    'subscription.optimizerTokens': optimizerTokens
                 }
             });
 
@@ -69,7 +81,7 @@ const createSubscriptionPayment = async (request, reply) => {
                     'subscription.plan': plan,
                     'subscription.status': 'Active',
                     'subscription.currentPeriodStart': new Date(),
-                    'subscription.currentPeriodEnd': new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                    'subscription.currentPeriodEnd': currentPeriodEnd,
                 }
             });
 
@@ -88,13 +100,8 @@ const createSubscriptionPayment = async (request, reply) => {
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
-    const payload = request.rawBody; // Ensure raw body is used here
-
-    // console.log(`Headers: ${JSON.stringify(request.headers)}`);
-    // console.log(`Raw Body: ${payload}`);
-
+    const payload = request.rawBody;
     let event;
-
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
         console.log(`Received event: ${event.type}`);
@@ -113,15 +120,11 @@ const webhook = async (request, reply) => {
             try {
                 await User.findOneAndUpdate(
                     { 'subscription.stripeCheckoutSessionId': sessionId },
-                    {
-                        'subscription.status': 'Active',
-                        'subscription.currentPeriodStart': new Date(),
-                        'subscription.currentPeriodEnd': new Date(new Date().setFullYear(new Date().getFullYear() + 1))
-                    }
+                    { 'subscription.status': 'Active' }
                 );
                 console.log('Subscription status updated to Active.');
             } catch (err) {
-                console.error('Error updating order status to Completed:', err);
+                console.error('Error updating subscription status to Active:', err);
             }
             break;
         }
@@ -139,7 +142,7 @@ const webhook = async (request, reply) => {
                 );
                 console.log('Subscription status updated to Failed.');
             } catch (err) {
-                console.error('Error updating order status to Failed:', err);
+                console.error('Error updating subscription status to Failed:', err);
             }
             break;
         }
