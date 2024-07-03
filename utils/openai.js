@@ -752,7 +752,7 @@ async function generateResumeOnFeeback(req, reply) {
     }
 }
 
-async function aicounselling(req, reply) {
+async function generateCounsellingTest(req, reply) {
     try {
       const reqdata = await req.body;
       const thread = await createThread();
@@ -803,4 +803,4 @@ async function createThread() {
     }
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, aicounselling };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, generateCounsellingTest };
