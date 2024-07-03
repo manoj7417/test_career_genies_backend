@@ -512,6 +512,14 @@ async function atsCheck(req, reply) {
             });
         }
 
+        const currentDate = new Date();
+        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Subscription is inactive or expired"
+            });
+        }
+
         if (user.subscription.analyserTokens <= 0) {
             return reply.code(400).send({
                 status: "FAILURE",
@@ -662,6 +670,14 @@ async function generateResumeOnFeeback(req, reply) {
             return reply.code(404).send({
                 status: "FAILURE",
                 error: "User not found"
+            });
+        }
+
+        const currentDate = new Date();
+        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Subscription is inactive or expired"
             });
         }
 
