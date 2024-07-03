@@ -783,8 +783,6 @@ async function generateCounsellingTest(req, reply) {
   
       const response = await checkStatusAndGenerateResponse(threadId, run.id);
       const test = response[0].text.value;
-      console.log(test)
-  
       reply.status(201).send(test);
     } catch (error) {
       reply.status(500).send(error);
