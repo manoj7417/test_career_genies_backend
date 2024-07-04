@@ -823,10 +823,11 @@ async function generateCareerAdvice(req, reply) {
         const threadId = thread.id;
 
         const message = await req.body;
+        const stringMessage = JSON.stringify(message);
 
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
-            content: message
+            content: stringMessage
         });
 
 
@@ -849,6 +850,7 @@ async function generateCareerAdvice(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        console.log(response)
 
         reply.send(response);
 
