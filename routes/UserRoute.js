@@ -5,11 +5,10 @@ const upload = require('../config/multer')
 const registerSchema = {
     body: {
         type: 'object',
-        required: ['fullname', 'email', 'password'],
+        required: ['fullname', 'email'],
         properties: {
             fullname: { type: 'string', maxLength: 100 },
-            email: { type: 'string', format: 'email', maxLength: 255 },
-            password: { type: 'string', minLength: 8, maxLength: 100 }
+            email: { type: 'string', format: 'email', maxLength: 255 }
         }
     }
 };

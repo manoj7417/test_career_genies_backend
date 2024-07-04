@@ -663,6 +663,7 @@ async function generateBetterResume(req, reply) {
 
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
+    let { message, type } = await req.body;
     try {
         const user = await User.findById(userId);
 
@@ -681,8 +682,22 @@ async function generateResumeOnFeeback(req, reply) {
             });
         }
 
+        if (!type) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Type of resume not provided"
+            });
+        }
+
+        if (type === 'JobCV' && user.subscription.JobCVTokens <= 0) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Insufficient optimizer tokens"
+            });
+        }
+
         // Check if user has enough optimizer tokens
-        if (user.subscription.optimizerTokens <= 0) {
+        if (type === 'optimizer' && user.subscription.optimizerTokens <= 0) {
             return reply.code(400).send({
                 status: "FAILURE",
                 error: "Insufficient optimizer tokens"
@@ -691,7 +706,7 @@ async function generateResumeOnFeeback(req, reply) {
         const thread = await createThread();
         const threadId = thread.id;
 
-        let { message } = await req.body;
+
         // message = message + "applying for job of software developer"
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
@@ -734,12 +749,12 @@ async function generateResumeOnFeeback(req, reply) {
 
             user.subscription.optimizerTokens -= 1;
             await user.save();
-
+            const userdata = user.toSafeObject()
             reply.code(201).send({
                 status: "SUCCESS",
                 message: "Resume created succesfully",
                 data: resume,
-                userData: user
+                userdata
             })
         }
         reply.code(400).send({
@@ -754,49 +769,49 @@ async function generateResumeOnFeeback(req, reply) {
 
 async function generateCounsellingTest(req, reply) {
     try {
-      const reqdata = await req.body;
-      const thread = await createThread();
-      const threadId = thread.id;
-  
-      const reqdataString = JSON.stringify(reqdata);
-    
-  
-      await openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: reqdataString
-      });
-  
-      const run = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
-      });
-  
-      const checkStatusAndGenerateResponse = async (threadId, runId) => {
-        const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-        if (run.status === 'completed') {
-          const messages = await openai.beta.threads.messages.list(threadId);
-          const response = messages.body.data.find(message => message.role === 'assistant');
-          return response.content;
-        } else {
-          return checkStatusAndGenerateResponse(threadId, runId);
-        }
-      };
-  
-      const response = await checkStatusAndGenerateResponse(threadId, run.id);
-      const test = response[0].text.value;
-      reply.status(201).send(test);
+        const reqdata = await req.body;
+        const thread = await createThread();
+        const threadId = thread.id;
+
+        const reqdataString = JSON.stringify(reqdata);
+
+
+        await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: reqdataString
+        });
+
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+                return response.content;
+            } else {
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        const test = response[0].text.value;
+        reply.status(201).send(test);
     } catch (error) {
-      reply.status(500).send(error);
+        reply.status(500).send(error);
     }
-  }
-  
-  
+}
+
+
 
 
 async function createThread() {
     try {
         const response = await openai.beta.threads.create();
         return response;
-    } catch (error) { 
+    } catch (error) {
         console.error('Error creating thread:', error);
         throw error;
     }

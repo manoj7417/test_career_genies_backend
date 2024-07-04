@@ -8,11 +8,13 @@ const resetPasswordTemplatePath = path.join(
   "emailTemplates",
   "resetPassword.html"
 );
+const passwordTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'password.html');
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
+const axios = require('axios')
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -40,13 +42,35 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const generateRandomPassword = (email, fullname) => {
-  const characters = (email + fullname).split('');
-  for (let i = characters.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [characters[i], characters[j]] = [characters[j], characters[i]];
+  const allCharacters = (email + fullname).split('').filter(char => char !== ' ');
+  const specialCharacters = '!@#$'; // User-friendly special characters
+  const numbers = '0123456789';
+  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  const passwordLength = Math.floor(Math.random() * 3) + 10; // Generates a length between 10 and 12
+  let passwordCharacters = [];
+
+  // Ensure the password contains at least one number and exactly one special character
+  passwordCharacters.push(numbers[Math.floor(Math.random() * numbers.length)]);
+  passwordCharacters.push(specialCharacters[Math.floor(Math.random() * specialCharacters.length)]);
+
+  // Fill the remaining characters
+  for (let i = 2; i < passwordLength; i++) {
+    const randomIndex = Math.floor(Math.random() * allCharacters.length);
+    passwordCharacters.push(allCharacters[randomIndex]);
   }
-  return characters.join('');
+
+  // Shuffle the selected characters
+  for (let i = passwordCharacters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [passwordCharacters[i], passwordCharacters[j]] = [passwordCharacters[j], passwordCharacters[i]];
+  }
+
+  return passwordCharacters.join('');
 };
+
+
+
 
 // register the user 
 const register = async (request, reply) => {
@@ -59,9 +83,15 @@ const register = async (request, reply) => {
         .send({ status: "FAILURE", error: "User already exists" });
     }
     const password = generateRandomPassword(email, fullname);
+    const emailtemplate = fs.readFileSync(passwordTemplatePath, "utf-8");
+    const emailBody = emailtemplate.replace("{password}", password)
+    await sendEmail(
+      email,
+      "CareerGenie: Login password",
+      emailBody,
+    );
     const user = new User({ email, fullname, password });
     await user.save();
-
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",

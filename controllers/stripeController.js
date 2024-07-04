@@ -10,7 +10,7 @@ const createSubscriptionPayment = async (request, reply) => {
     const { email, plan, duration, success_url, cancel_url } = request.body;
     try {
         let amount, stripeCheckoutUrl;
-        let analyserTokens, optimizerTokens;
+        let analyserTokens, optimizerTokens, JobCVTokens;
         let currentPeriodEnd;
         switch (plan) {
             case 'free':
@@ -20,12 +20,14 @@ const createSubscriptionPayment = async (request, reply) => {
                 amount = duration === 'monthly' ? 39900 : 335100;
                 analyserTokens = 10;
                 optimizerTokens = 10;
+                JobCVTokens = 10;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
                 amount = duration === 'monthly' ? 99900 : 840000;
                 analyserTokens = 10000;
                 optimizerTokens = 10000;
+                JobCVTokens = 10000;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             default:
@@ -36,7 +38,6 @@ const createSubscriptionPayment = async (request, reply) => {
         }
 
         if (plan !== 'free') {
-            console.log(currentPeriodEnd)
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 mode: 'payment',
@@ -65,7 +66,8 @@ const createSubscriptionPayment = async (request, reply) => {
                     'subscription.stripeCheckoutSessionId': session.id,
                     'subscription.analyserTokens':
                         analyserTokens,
-                    'subscription.optimizerTokens': optimizerTokens
+                    'subscription.optimizerTokens': optimizerTokens,
+                    'subscription.jobCVTokens': JobCVTokens,
                 }
             });
 
@@ -146,7 +148,6 @@ const webhook = async (request, reply) => {
             }
             break;
         }
-
         default:
             console.log(`Unhandled event type ${event.type}`);
     }

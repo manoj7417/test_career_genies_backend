@@ -93,6 +93,7 @@ const UserSchema = new mongoose.Schema({
         },
         analyserTokens: { type: Number, default: 1 },
         optimizerTokens: { type: Number, default: 0 },
+        JobCVTokens: { type: Number, default: 1 }
     },
     createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
