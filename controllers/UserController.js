@@ -518,6 +518,7 @@ const updateUserProfileDetails = async (req, reply) => {
     };
     // Generate new tokens
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+    let userdata = await user.toSafeObject()
 
     return reply.code(200).send({
       status: "SUCCESS",
@@ -525,20 +526,7 @@ const updateUserProfileDetails = async (req, reply) => {
       data: {
         accessToken: accessToken,
         refreshToken: refreshToken,
-        userdata: {
-          fullname: user.fullname,
-          email: user.email,
-          _id: user._id,
-          role: user.role,
-          isSubscribed: user.isSubscribed,
-          createdResumes: user.createdResumes,
-          premiumTemplates: user.premiumTemplates,
-          profilePicture: user.profilePicture,
-          address: user.address,
-          occupation: user.occupation,
-          phoneNumber: user.phoneNumber,
-          tokens: user.tokens
-        }
+        userdata
       }
     });
   } catch (error) {

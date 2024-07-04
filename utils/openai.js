@@ -688,11 +688,10 @@ async function generateResumeOnFeeback(req, reply) {
                 error: "Type of resume not provided"
             });
         }
-
         if (type === 'JobCV' && user.subscription.JobCVTokens <= 0) {
             return reply.code(400).send({
                 status: "FAILURE",
-                error: "Insufficient optimizer tokens"
+                error: "Insufficient JobCV tokens"
             });
         }
 
@@ -736,7 +735,6 @@ async function generateResumeOnFeeback(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        console.log(response)
         let value = JSON.parse(response[0]?.text?.value)
         if (value) {
             const count = await Resume.countDocuments({ userId });
@@ -747,9 +745,15 @@ async function generateResumeOnFeeback(req, reply) {
             resume.data.sections = value.sections;
             await resume.save();
 
-            user.subscription.optimizerTokens -= 1;
+            if (type === 'JobCV') {
+                user.subscription.JobCVTokens -= 1;
+            } else if (type === 'optimizer') {
+                user.subscription.optimizerTokens -= 1;
+            }
+
             await user.save();
-            const userdata = user.toSafeObject()
+            const userdata = await user.toSafeObject()
+
             reply.code(201).send({
                 status: "SUCCESS",
                 message: "Resume created succesfully",
