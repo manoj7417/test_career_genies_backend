@@ -10,6 +10,7 @@ const { threadId } = require('worker_threads');
 const { User } = require('../models/userModel');
 const { Resume } = require('../models/ResumeModel');
 const { v4: uuidv4 } = require('uuid');
+const { Analysis } = require('../models/AnalysisModel');
 
 const openai = new OpenAI(
     {
@@ -555,13 +556,20 @@ async function atsCheck(req, reply) {
                 return checkStatusAndGenerateResponse(threadId, runId);
             }
         };
-
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        const feedback = JSON.parse(response[0].text.value)
+        const newAnalyserFeedback = new Analysis({ userId, ...feedback })
+        await newAnalyserFeedback.save();
         user.subscription.analyserTokens -= 1;
         await user.save();
-        reply.send(response);
+        reply.status(201).send({
+            status: "SUCCESS",
+            message: "Analysis completed successfully",
+            analysisId: newAnalyserFeedback._id
+        });
     }
     catch (error) {
+        console.log("Error analysing resume", error)
         reply.status(500).send(error);
     }
 }

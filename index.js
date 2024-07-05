@@ -16,6 +16,7 @@ const cors = require('@fastify/cors');
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
 const { webhook } = require('./controllers/stripeController');
+const AnalysisRoute = require('./routes/AnalysisRoute');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT;
 
@@ -86,6 +87,7 @@ fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
 fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
+fastify.register(AnalysisRoute, { prefix: "/api/analysis", before: apiKeyAuth });
 
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
