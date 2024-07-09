@@ -6,6 +6,7 @@ const analysisSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+    resumeContent: { type: String, required: true },
     analysis: {
         resume_score: {
             type: Number,

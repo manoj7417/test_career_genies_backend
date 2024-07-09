@@ -558,7 +558,7 @@ async function atsCheck(req, reply) {
         };
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
         const feedback = JSON.parse(response[0].text.value)
-        const newAnalyserFeedback = new Analysis({ userId, ...feedback })
+        const newAnalyserFeedback = new Analysis({ userId, ...feedback, resumeContent: message })
         await newAnalyserFeedback.save();
         user.subscription.analyserTokens -= 1;
         await user.save();
@@ -575,7 +575,6 @@ async function atsCheck(req, reply) {
 }
 
 async function askBot(req, reply) {
-
     try {
         // const thread = await createThread();
         const threadId = "thread_RJSXp1st6LrR6D9okApOyS07";
@@ -616,18 +615,6 @@ async function askBot(req, reply) {
 
 async function generateBetterResume(req, reply) {
     try {
-        // const user = req.user;
-
-        // const userthread = user?.threadId;
-        // if (!userthread) {
-
-        //     const thread = await createThread();
-        //     const threadId = thread.id;
-        //     await User.findOneAndUpdate({ _id: user._id }, { $set: { threadId: threadId } });
-        // }
-        // else {
-        //     const threadId = userthread;
-        // }
 
         const thread = await createThread();
         const threadId = thread.id;
@@ -787,7 +774,6 @@ async function generateCounsellingTest(req, reply) {
 
         const reqdataString = JSON.stringify(reqdata);
 
-
         await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: reqdataString
@@ -809,8 +795,20 @@ async function generateCounsellingTest(req, reply) {
         };
 
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        const test = response[0].text.value;
-        reply.status(201).send(test);
+        const test = JSON.parse(response[0].text.value);
+
+        const mapAnswersToQuestions = (testSections) => {
+            return Object.keys(testSections).reduce((acc, section) => {
+                acc[section] = testSections[section].map((question, index) => ({
+                    ...question,
+                    answer: ""
+                }));
+                return acc;
+            }, {});
+        };
+
+        const testWithAnswers = mapAnswersToQuestions(test);
+        reply.status(201).send(testWithAnswers);
     } catch (error) {
         reply.status(500).send(error);
     }
