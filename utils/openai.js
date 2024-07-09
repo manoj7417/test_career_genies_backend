@@ -2,8 +2,6 @@
 
 require('dotenv').config();
 const { OpenAI } = require('openai');
-
-
 const fs = require('fs');
 const { type } = require('os');
 const { threadId } = require('worker_threads');
@@ -658,6 +656,126 @@ async function generateBetterResume(req, reply) {
 
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
+    let { analysisId, type } = await req.body;
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "User not found"
+            });
+        }
+
+        const analysis = await Analysis.findById(analysisId);
+        if (!analysis) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "Analysis not found"
+            });
+        }
+
+        const message = analysis.resumeContent;
+
+        const currentDate = new Date();
+        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Subscription is inactive or expired"
+            });
+        }
+
+        if (!type) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Type of resume not provided"
+            });
+        }
+        if (type === 'JobCV' && user.subscription.JobCVTokens <= 0) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Insufficient JobCV tokens"
+            });
+        }
+
+        // Check if user has enough optimizer tokens
+        if (type === 'optimizer' && user.subscription.optimizerTokens <= 0) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Insufficient optimizer tokens"
+            });
+        }
+        const thread = await createThread();
+        const threadId = thread.id;
+
+
+        // message = message + "applying for job of software developer"
+        const createMessage = await openai.beta.threads.messages.create(threadId, {
+            role: 'user',
+            content: message
+        });
+
+
+        const run = await openai.beta.threads.runs.create(threadId, {
+            assistant_id:
+                "asst_cgWXfKTsqbR4jrujm9XOpzVO"
+            // "asst_4NjhiyQFZIrgiOc4u49M0Ocq"
+
+        });
+
+        const checkStatusAndGenerateResponse = async (threadId, runId) => {
+            const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+            if (run.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                const response = messages.body.data.find(message => message.role === 'assistant');
+                console.log(response.content)
+                // Try to parse the JSON content from the assistant's response
+                return response.content;
+            } else {
+
+                return checkStatusAndGenerateResponse(threadId, runId);
+            }
+        };
+
+        const response = await checkStatusAndGenerateResponse(threadId, run.id);
+        let value = JSON.parse(response[0]?.text?.value)
+        if (value) {
+            const count = await Resume.countDocuments({ userId });
+            const username = req.user.fullname.split(" ")[0];
+            const title = `${username}_resume` + uuidv4();
+            const resume = await new Resume({ userId, title })
+            resume.data.basics = value.basics;
+            resume.data.sections = value.sections;
+            await resume.save();
+
+            if (type === 'JobCV') {
+                user.subscription.JobCVTokens -= 1;
+            } else if (type === 'optimizer') {
+                user.subscription.optimizerTokens -= 1;
+            }
+
+            await user.save();
+            const userdata = await user.toSafeObject()
+
+            reply.code(201).send({
+                status: "SUCCESS",
+                message: "Resume created succesfully",
+                data: resume,
+                userdata
+            })
+        }
+        reply.code(400).send({
+            status: "FAILURE",
+            message: "Feedback not generated"
+        })
+    } catch (error) {
+        console.log(error)
+        reply.status(500).send(error);
+    }
+}
+
+async function generateFreshResume(req, reply) {
+    const userId = req.user._id
     let { message, type } = await req.body;
     try {
         const user = await User.findById(userId);
@@ -668,6 +786,7 @@ async function generateResumeOnFeeback(req, reply) {
                 error: "User not found"
             });
         }
+
 
         const currentDate = new Date();
         if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
@@ -871,4 +990,4 @@ async function generateCareerAdvice(req, reply) {
 
 }
 
-module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, generateCounsellingTest, generateCareerAdvice };
+module.exports = { createAssistant, createMessage, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyseResume, analyzeResume, generateBetterResume, generateResumeOnFeeback, generateCounsellingTest, generateCareerAdvice, generateFreshResume };
