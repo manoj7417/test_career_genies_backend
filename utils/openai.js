@@ -9,6 +9,7 @@ const { User } = require('../models/userModel');
 const { Resume } = require('../models/ResumeModel');
 const { v4: uuidv4 } = require('uuid');
 const { Analysis } = require('../models/AnalysisModel');
+const { Summary } = require('../models/SummaryModel');
 
 const openai = new OpenAI(
     {
@@ -947,18 +948,16 @@ async function createThread() {
 }
 
 async function generateCareerAdvice(req, reply) {
+    const userId = req.user._id;
     try {
         const thread = await createThread();
         const threadId = thread.id;
-
         const message = await req.body;
         const stringMessage = JSON.stringify(message);
-
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: stringMessage
         });
-
 
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id: "asst_4NjhiyQFZIrgiOc4u49M0Ocq",
@@ -977,14 +976,14 @@ async function generateCareerAdvice(req, reply) {
                 return checkStatusAndGenerateResponse(threadId, runId);
             }
         };
-
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-        console.log(response)
 
+        const personalisedSummary = JSON.parse(response[0].text.value)
+        const userSummary = new Summary({ userId, ...personalisedSummary })
+        await userSummary.save();
         reply.send(response);
 
-    }
-    catch (error) {
+    } catch (error) {
         reply.status(500).send(error);
     }
 
