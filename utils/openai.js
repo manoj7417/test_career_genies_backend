@@ -888,6 +888,20 @@ async function generateFreshResume(req, reply) {
 
 async function generateCounsellingTest(req, reply) {
     try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return reply.code(404).send({
+                status: "FAILURE",
+                error: "User not found"
+            });
+        }
+
+        if (user.subscription.status !== 'Active') {
+            return reply.status(403).send({ error: "Subscription is not active" });
+        }
+
+
         const reqdata = await req.body;
         const thread = await createThread();
         const threadId = thread.id;
@@ -950,6 +964,22 @@ async function createThread() {
 async function generateCareerAdvice(req, reply) {
     const userId = req.user._id;
     try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return reply.status(404).send({ error: "User not found" });
+        }
+
+        if (user.subscription.status !== 'Active') {
+            return reply.status(403).send({ error: "Subscription is not active" });
+        }
+
+        if (user.subscription.careerCounsellingTokens <= 0) {
+            return reply.status(400).send({ error: "Insufficient career counselling tokens" });
+        }
+
+
+
         const thread = await createThread();
         const threadId = thread.id;
         const message = await req.body;
@@ -981,6 +1011,10 @@ async function generateCareerAdvice(req, reply) {
         const personalisedSummary = JSON.parse(response[0].text.value)
         const userSummary = new Summary({ userId, ...personalisedSummary })
         await userSummary.save();
+
+        await User.findByIdAndUpdate(userId, {
+            $inc: { 'subscription.careerCounsellingTokens': -1 }
+        });
         reply.send(response);
 
     } catch (error) {

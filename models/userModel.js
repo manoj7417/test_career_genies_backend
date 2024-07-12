@@ -70,10 +70,12 @@ const UserSchema = new mongoose.Schema({
             enum: ['free', 'basic', 'premium'],
             default: 'free'
         },
+        amount: { type: Number, default: 0 },
+        planType: { type: String, enum: ['monthly', 'yearly'], default: '' },
         status: {
             type: String,
             enum: ['Pending', 'Active', 'Canceled', 'Incomplete', 'Incomplete_expired', 'Trialing', 'Unpaid', 'Past_due'],
-            default: 'Pending'
+            default: 'Active'
         },
         currentPeriodStart: {
             type: Date
@@ -91,10 +93,19 @@ const UserSchema = new mongoose.Schema({
         stripeCheckoutSessionId: {
             type: String
         },
+        paymentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Payment"
+        },
         analyserTokens: { type: Number, default: 1 },
         optimizerTokens: { type: Number, default: 0 },
-        JobCVTokens: { type: Number, default: 1 }
+        JobCVTokens: { type: Number, default: 1 },
+        careerCounsellingTokens: { type: Number, default: 1 }
     },
+    payments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment"
+    }],
     createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
@@ -175,7 +186,6 @@ UserSchema.methods.toSafeObject = function () {
         phoneNumber: this.phoneNumber
     };
 };
-
 
 const User = mongoose.model("User", UserSchema)
 

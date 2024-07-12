@@ -560,6 +560,44 @@ const GetuserDetails = async (req, reply) => {
 }
 
 
+const careerCounsellingEligibility = async (req, reply) => {
+  const userId = req.user._id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return reply.code(404).send({ status: "FAILURE", message: "User not found" });
+    }
+
+    console.log(user)
+
+    if (user.subscription.status !== 'Active') {
+      return reply.code(403).send({
+        status: "FAILURE",
+        message: "Subscription is not active"
+      });
+    }
+
+    if (user.subscription.careerCounsellingTokens <= 0) {
+      return reply.code(403).send({
+        status: "FAILURE",
+        message: "Insufficient career counselling tokens"
+      });
+    }
+
+    reply.send({
+      status: "SUCCESS",
+      message: "User is eligible for career counselling test"
+    });
+  } catch (error) {
+    console.error("Error fetching career counselling eligibility:", error);
+    reply.code(500).send({
+      status: "FAILURE",
+      error: "An error occurred while fetching career counselling eligibility"
+    })
+  }
+}
+
+
 module.exports = {
   register,
   login,
@@ -572,5 +610,6 @@ module.exports = {
   analyserCreditsPurchase,
   updateUserDetails,
   updateUserProfileDetails,
-  GetuserDetails
+  GetuserDetails,
+  careerCounsellingEligibility
 };
