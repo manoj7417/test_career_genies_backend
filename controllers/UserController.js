@@ -80,7 +80,7 @@ const register = async (request, reply) => {
     if (findExistingUser) {
       return reply
         .code(409)
-        .send({ status: "FAILURE", error: "User already exists" });
+        .send({ status: "FAILURE", error: "Account already exists" });
     }
     const password = generateRandomPassword(email, fullname);
     const emailtemplate = fs.readFileSync(passwordTemplatePath, "utf-8");
@@ -201,14 +201,14 @@ const login = async (request, reply) => {
     if (!user) {
       return reply.code(404).send({
         status: "FAILURE",
-        error: "User not found",
+        error: "Account with email address doesn't exist",
       });
     }
     const isPasswordcorrect = await user.comparePassword(password);
     if (!isPasswordcorrect) {
       return reply.code(401).send({
         status: "FAILURE",
-        error: "Invalid credentials",
+        error: "Invalid password",
       });
     }
 
