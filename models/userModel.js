@@ -71,7 +71,7 @@ const UserSchema = new mongoose.Schema({
             default: 'free'
         },
         amount: { type: Number, default: 0 },
-        planType: { type: String, enum: ['monthly', 'yearly'], default: '' },
+        planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
         status: {
             type: String,
             enum: ['Pending', 'Active', 'Canceled', 'Incomplete', 'Incomplete_expired', 'Trialing', 'Unpaid', 'Past_due'],

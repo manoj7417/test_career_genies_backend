@@ -568,7 +568,6 @@ const careerCounsellingEligibility = async (req, reply) => {
       return reply.code(404).send({ status: "FAILURE", message: "User not found" });
     }
 
-    console.log(user)
 
     if (user.subscription.status !== 'Active') {
       return reply.code(403).send({

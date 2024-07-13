@@ -25,11 +25,11 @@ const createSubscriptionPayment = async (request, reply) => {
                 analyserTokens = duration === 'monthly' ? 10 : 10 * 12;
                 optimizerTokens = duration === 'monthly' ? 10 : 10 * 12;
                 JobCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 5 : 5 * 12; // Example value
+                careerCounsellingTokens = duration === 'monthly' ? 10 : 10 * 12; // Example value
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
-                amount = duration === 'monthly' ? 99900 : 840000;
+                amount = duration === 'monthly' ? 99900 : 839100;
                 analyserTokens = duration === 'monthly' ? 1000 : 1000 * 12;
                 optimizerTokens = duration === 'monthly' ? 1000 : 1000 * 12;
                 JobCVTokens = duration === 'monthly' ? 1000 : 1000 * 12;
