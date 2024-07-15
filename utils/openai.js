@@ -501,7 +501,6 @@ async function analyseResume(req, reply) {
 
 async function atsCheck(req, reply) {
     const userId = req.user._id;
-
     try {
         const user = await User.findById(userId);
 
@@ -593,11 +592,8 @@ async function askBot(req, reply) {
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(threadId);
                 const response = messages.body.data.find(message => message.role === 'assistant');
-
-                // Try to parse the JSON content from the assistant's response
                 return response.content;
             } else {
-                // Recursive call to check again until completion
                 return checkStatusAndGenerateResponse(threadId, runId);
             }
         };
@@ -745,8 +741,19 @@ async function generateResumeOnFeeback(req, reply) {
             const username = req.user.fullname.split(" ")[0];
             const title = `${username}_resume` + uuidv4();
             const resume = await new Resume({ userId, title })
-            resume.data.basics = value.basics;
-            resume.data.sections = value.sections;
+            if (value.basics) {
+                Object.assign(resume.data.basics, value.basics);
+            }
+
+            if (value.sections) {
+                Object.keys(value.sections).forEach((section) => {
+                    if (resume.data.sections[section]) {
+                        Object.assign(resume.data.sections[section], value.sections[section]);
+                    } else {
+                        resume.data.sections[section] = value.sections[section];
+                    }
+                });
+            }
             await resume.save();
 
             if (type === 'JobCV') {
@@ -856,8 +863,19 @@ async function generateFreshResume(req, reply) {
             const username = req.user.fullname.split(" ")[0];
             const title = `${username}_resume` + uuidv4();
             const resume = await new Resume({ userId, title })
-            resume.data.basics = value.basics;
-            resume.data.sections = value.sections;
+            if (value.basics) {
+                Object.assign(resume.data.basics, value.basics);
+            }
+
+            if (value.sections) {
+                Object.keys(value.sections).forEach((section) => {
+                    if (resume.data.sections[section]) {
+                        Object.assign(resume.data.sections[section], value.sections[section]);
+                    } else {
+                        resume.data.sections[section] = value.sections[section];
+                    }
+                });
+            }
             await resume.save();
 
             if (type === 'JobCV') {
