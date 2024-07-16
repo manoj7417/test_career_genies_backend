@@ -305,6 +305,39 @@ const resetPassword = async (request, reply) => {
 };
 
 
+const changePassword = async (req, reply) => {
+  const userId = req.user._id;
+  const { oldPassword, newPassword } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return reply.code(404).send({
+        status: "FAILURE",
+        error: "User not found",
+      });
+    }
+    const isPasswordCorrect = await user.comparePassword(oldPassword);
+    if (!isPasswordCorrect) {
+      return reply.code(401).send({
+        status: "FAILURE",
+        error: "Invalid password",
+      });
+    }
+    user.password = newPassword;
+    await user.save();
+    return reply.code(200).send({
+      status: "SUCCESS",
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    reply.code(500).send({
+      status: "FAILURE",
+      error: error.message || "Internal server error",
+    });
+  }
+}
+
 // update the user role and subsription status  for the specific user 
 
 
@@ -610,5 +643,6 @@ module.exports = {
   updateUserDetails,
   updateUserProfileDetails,
   GetuserDetails,
-  careerCounsellingEligibility
+  careerCounsellingEligibility,
+  changePassword
 };

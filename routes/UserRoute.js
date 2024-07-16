@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, checkUserTemplate, GetuserDetails, careerCounsellingEligibility } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, checkUserTemplate, GetuserDetails, careerCounsellingEligibility, changePassword } = require("../controllers/UserController");
 const upload = require('../config/multer')
 
 
@@ -89,6 +89,10 @@ async function UserRoute(fastify, options) {
     fastify.get('/eligiblity/careerCounselling', {
         preHandler: fastify.verifyJWT
     }, careerCounsellingEligibility)
+
+    fastify.post('/changepassword', {
+        preHandler: fastify.verifyJWT
+    }, changePassword)
 }
 
 module.exports = UserRoute
