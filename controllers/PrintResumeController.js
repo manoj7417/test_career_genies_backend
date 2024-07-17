@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const { User } = require('../models/userModel');
 
 const printResumePath = path.join(
     __dirname,
@@ -9,45 +10,62 @@ const printResumePath = path.join(
 );
 
 const printResume = async (request, reply) => {
-    const htmlbody = request.body.html;
-    const page = fs.readFileSync(printResumePath, 'utf8').toString();
-    const html = page.replace('{{content}}', htmlbody);
-    // Add CSS for page-specific margins
-    const styledHtml = `     
-    <style>
-    @page :first{
-        size: A4;
-        margin-top: 0;
-        margin-bottom: 10mm;
-      }
-      @page{
-        margin-top: 10mm;
-        margin-bottom: 10mm;
-      }
-</style>
-        ${html}
-    `;
-
+    const userId = request.user._id;
+    
     try {
-        const browser = await puppeteer.launch({
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--single-process',
-                "--no-zygote",
-            ],
-            executablePath: '/usr/bin/google-chrome-stable',
-        });
-        const page = await browser.newPage();
-        await page.setContent(styledHtml);
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-        });
-        await browser.close();
-        reply.header('Content-Type', 'application/pdf');
-        reply.header('Content-Disposition', 'attachment; filename="generated.pdf"');
-        reply.send(pdfBuffer);
+        const user = await User.findById(userId);
+        if (!user) {
+            return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
+        }
+
+        if (user.subscription.plan === 'free') {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
+        }
+
+        if (user.subscription.plan !== 'free' && user.subscription.status === 'Active') {
+            const htmlbody = request.body.html;
+            const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
+            const html = htmlPage.replace('{{content}}', htmlbody);
+            // Add CSS for page-specific margins
+            const styledHtml = `     
+            <style>
+            @page :first{
+                size: A4;
+                margin-top: 0;
+                margin-bottom: 10mm;
+              }
+              @page{
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+              }
+        </style>
+                ${html}
+            `;
+            const browser = await puppeteer.launch({
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--single-process',
+                    "--no-zygote",
+                ],
+                executablePath: '/usr/bin/google-chrome-stable',
+            });
+            const page = await browser.newPage();
+            await page.setContent(styledHtml);
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+            });
+            await browser.close();
+            reply.header('Content-Type', 'application/pdf');
+            reply.header('Content-Disposition', 'attachment; filename="generated.pdf"');
+            return reply.status(200).send(pdfBuffer);
+        }
+        return reply.status(400).send({
+            status: "FAILURE",
+            message: "Invalid subscription plan or status"
+        })
+
     } catch (error) {
         console.error('Error generating PDF:', error);
         reply.status(500).send('Error generating PDF');

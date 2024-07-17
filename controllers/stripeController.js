@@ -21,7 +21,7 @@ const createSubscriptionPayment = async (request, reply) => {
                 amount = 0;
                 break;
             case 'basic':
-                amount = duration === 'monthly' ? 39900 : 335100;
+                amount = duration === 'monthly' ? 400 : 4800;
                 analyserTokens = duration === 'monthly' ? 10 : 10 * 12;
                 optimizerTokens = duration === 'monthly' ? 10 : 10 * 12;
                 JobCVTokens = duration === 'monthly' ? 10 : 10 * 12;
@@ -29,7 +29,7 @@ const createSubscriptionPayment = async (request, reply) => {
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
-                amount = duration === 'monthly' ? 99900 : 839100;
+                amount = duration === 'monthly' ? 1000 : 12000;
                 analyserTokens = duration === 'monthly' ? 1000 : 1000 * 12;
                 optimizerTokens = duration === 'monthly' ? 1000 : 1000 * 12;
                 JobCVTokens = duration === 'monthly' ? 1000 : 1000 * 12;
@@ -49,7 +49,7 @@ const createSubscriptionPayment = async (request, reply) => {
             mode: 'payment',
             line_items: [{
                 price_data: {
-                    currency: 'inr',
+                    currency: 'usd',
                     product_data: {
                         name: `Subscription Plan - ${plan}`,
                     },
