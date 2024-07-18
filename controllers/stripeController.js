@@ -121,6 +121,9 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
+                const user = await User.findById(payment.user);
+                const customerEmail = user.email;
+
                 await User.findByIdAndUpdate(payment.user, {
                     $set: {
                         'subscription.status': 'Active',
@@ -138,6 +141,15 @@ const webhook = async (request, reply) => {
                 });
 
                 console.log('Subscription status updated to Active.');
+
+                const invoice = await stripe.invoices.create({
+                    customer_email: customerEmail,
+                    auto_advance: true // Auto-finalize this draft after ~1 hour
+                });
+
+                await stripe.invoices.sendInvoice(invoice.id);
+
+                console.log('Invoice sent to customer\'s email.');
             } catch (err) {
                 console.error('Error updating subscription status to Active:', err);
             }
