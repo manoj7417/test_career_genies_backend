@@ -69,7 +69,8 @@ fastify.register(cors, {
 
     ],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key", "Access-Control-Allow-Origin"],
-    credentials: true
+    credentials: true,
+    preflightContinue : true
 });
 
 fastify.register(require('@fastify/static'), {
