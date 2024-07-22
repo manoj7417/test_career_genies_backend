@@ -61,9 +61,7 @@ const createSubscriptionPayment = async (request, reply) => {
             success_url,
             cancel_url
         });
-
         stripeCheckoutUrl = session.url;
-
         // Create a new payment record
         const payment = new Payment({
             user: userId,
@@ -80,13 +78,7 @@ const createSubscriptionPayment = async (request, reply) => {
         });
 
         await payment.save();
-
-        reply.send({
-            stripeCheckoutUrl,
-            plan,
-            amount: amount / 100
-        });
-
+        reply.redirect(stripeCheckoutUrl)
     } catch (err) {
         console.log(err);
         reply.status(500).send({ error: err.message });

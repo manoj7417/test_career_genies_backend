@@ -653,26 +653,26 @@ async function generateBetterResume(req, reply) {
 
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
-    let { analysisId, type } = await req.body;
+    let { analysisId, type , message } = await req.body;
     try {
         const user = await User.findById(userId);
-
         if (!user) {
             return reply.code(404).send({
                 status: "FAILURE",
                 error: "User not found"
             });
         }
-
-        const analysis = await Analysis.findById(analysisId);
-        if (!analysis) {
-            return reply.code(404).send({
-                status: "FAILURE",
-                error: "Analysis not found"
-            });
+        if (analysisId) {
+            const analysis = await Analysis.findById(analysisId);
+            if (!analysis) {
+                return reply.code(404).send({
+                    status: "FAILURE",
+                    error: "Analysis not found"
+                });
+            }
+            message = analysis?.resumeContent;
         }
 
-        const message = analysis.resumeContent;
 
         const currentDate = new Date();
         if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
@@ -725,7 +725,6 @@ async function generateResumeOnFeeback(req, reply) {
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(threadId);
                 const response = messages.body.data.find(message => message.role === 'assistant');
-                console.log(response.content)
                 // Try to parse the JSON content from the assistant's response
                 return response.content;
             } else {
