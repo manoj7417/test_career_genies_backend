@@ -68,7 +68,7 @@ fastify.register(cors, {
         "https://checkout.stripe.com"
 
     ],
-    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key"],
+    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key", "Access-Control-Allow-Origin"],
     credentials: true
 });
 
