@@ -78,7 +78,11 @@ const createSubscriptionPayment = async (request, reply) => {
         });
 
         await payment.save();
-        reply.redirect(stripeCheckoutUrl)
+        reply.headers({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization, x-api-key, Access-Control-Allow-Origin',
+        }).redirect(stripeCheckoutUrl);
     } catch (err) {
         console.log(err);
         reply.status(500).send({ error: err.message });
