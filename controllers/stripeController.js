@@ -86,8 +86,6 @@ const createSubscriptionPayment = async (request, reply) => {
 };
 
 
-
-
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody;

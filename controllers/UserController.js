@@ -87,7 +87,7 @@ const register = async (request, reply) => {
     const emailBody = emailtemplate.replace("{password}", password)
     await sendEmail(
       email,
-      "CareerGenie: Login password",
+      "Genie's Career Hub: Login password",
       emailBody,
     );
     const user = new User({ email, fullname, password });
