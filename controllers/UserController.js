@@ -8,6 +8,9 @@ const resetPasswordTemplatePath = path.join(
   "emailTemplates",
   "resetPassword.html"
 );
+const welcomeTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'WelcomeTemplate.html');
+
+
 const passwordTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'password.html');
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
@@ -69,9 +72,6 @@ const generateRandomPassword = (email, fullname) => {
   return passwordCharacters.join('');
 };
 
-
-
-
 // register the user 
 const register = async (request, reply) => {
   const { email, fullname } = request.body;
@@ -84,12 +84,15 @@ const register = async (request, reply) => {
     }
     const password = generateRandomPassword(email, fullname);
     const emailtemplate = fs.readFileSync(passwordTemplatePath, "utf-8");
+    const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
     const emailBody = emailtemplate.replace("{password}", password)
+    const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
     await sendEmail(
       email,
       "Genie's Career Hub: Login password",
       emailBody,
     );
+    await sendEmail(email, "Welcome to Genie's Career Hub", welcomeEmailBody);
     const user = new User({ email, fullname, password });
     await user.save();
     return reply.code(201).send({

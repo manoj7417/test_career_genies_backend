@@ -66,8 +66,7 @@ fastify.register(cors, {
         'https://career-genies-frontend.vercel.app',
         'https://testing-cg-frontend.vercel.app',
         "https://sea-turtle-app-2-e6fjt.ondigitalocean.app",
-        "https://checkout.stripe.com"
-
+        "https://geniescareerhub.com"
     ],
     allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key", "Access-Control-Allow-Origin"],
     credentials: true,
