@@ -2,6 +2,7 @@ const { Payment } = require('../models/PaymentModel');
 const { User } = require('../models/userModel');
 const path = require('path')
 const fs = require('fs');
+const { sendEmail } = require('../utils/nodemailer');
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
@@ -154,10 +155,8 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                // Update the payment status to failed
                 await Payment.findByIdAndUpdate(payment._id, { status: 'Failed' });
 
-                console.log('Payment status updated to Failed.');
             } catch (err) {
                 console.error('Error updating subscription status to Failed:', err);
             }
