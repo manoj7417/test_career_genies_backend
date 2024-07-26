@@ -9,8 +9,6 @@ const resetPasswordTemplatePath = path.join(
   "resetPassword.html"
 );
 const welcomeTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'WelcomeTemplate.html');
-
-
 const passwordTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'password.html');
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
@@ -31,10 +29,8 @@ const generateAccessAndRefereshTokens = async (userId) => {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
-
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
-
     return { accessToken, refreshToken };
   } catch (error) {
     throw new Error(
@@ -195,7 +191,6 @@ const UploadProfilePic = async (request, reply) => {
   }
 }
 
-
 // verfiy user password and send access token in cookies
 const login = async (request, reply) => {
   const { email, password } = request.body;
@@ -246,13 +241,13 @@ const forgetPassword = async (request, reply) => {
       });
     }
     const token = await user.generateResetPassowordToken();
-    const url = `https://career-genies-frontend.vercel.app/reset-password?token=${token}`;
+    const url = `http://localhost:3000/reset-password?token=${token}`;
+    // const url = `https://geniescareerhub.com/reset-password?token=${token}`;
     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
     const emailBody = emailtemplate
       .replace("{userName}", user.fullname)
       .replace("{reset-password-link}", url);
     await sendEmail(user.email, "Reset Password", emailBody);
-    console.log(token);
     reply.code(201).send({
       status: "SUCCESS",
       message: "Reset password link has been sent to your email",
@@ -461,7 +456,6 @@ const logout = async (request, reply) => {
 const updateUserDetails = async (req, reply) => {
   const userId = req.user._id;
   const { fullname, email, password, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
-
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -507,8 +501,6 @@ async function decodeToken(token) {
     throw new Error(error?.message);
   }
 }
-
-
 
 const updateUserProfileDetails = async (req, reply) => {
   const userId = req.user._id;
@@ -633,6 +625,46 @@ const careerCounsellingEligibility = async (req, reply) => {
 }
 
 
+const verifyToken = async (res, reply) => {
+  const { accessToken, refreshToken } = res.body;
+  if (!accessToken || !refreshToken) {
+    return reply.status(400).send({ status: "FAILURE", message: "Missing access token or refresh token" });
+  }
+  try {
+    const decodedAccessToken = await jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findById(decodedAccessToken._id);
+    if (!user) {
+      return reply.status(401).send({ status: "FAILURE", message: "User not found" });
+    }
+    return reply.status(200).send({ valid: true, userdata: user.toSafeObject(), accessToken, refreshToken });
+  } catch (accessTokenError) {
+    if (accessTokenError.name === 'TokenExpiredError') {
+      try {
+        const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const user = await User.findById(decodedRefreshToken._id);
+        if (!user) {
+          return reply.status(401).send({ status: "FAILURE", message: "User not found" });
+        }
+        const tokens = await generateAccessAndRefereshTokens(decodedRefreshToken._id)
+
+        return reply.status(200).send({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          userdata: user.toSafeObject()
+        });
+      } catch (refreshTokenError) {
+        if (refreshTokenError.name === 'TokenExpiredError') {
+          return reply.status(401).send({ status: "FAILURE", message: 'Refresh token expired, please log in again.' });
+        } else {
+          return reply.status(401).send({ status: "FAILURE", message: 'Invalid refresh token.' });
+        }
+      }
+    } else {
+      return reply.status(401).send({ status: "FAILURE", message: "Invalid access token" });
+    }
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -647,5 +679,6 @@ module.exports = {
   updateUserProfileDetails,
   GetuserDetails,
   careerCounsellingEligibility,
-  changePassword
+  changePassword,
+  verifyToken
 };

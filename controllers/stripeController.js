@@ -1,9 +1,10 @@
 const { Payment } = require('../models/PaymentModel');
 const { User } = require('../models/userModel');
-
+const path = require('path')
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
+const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
 
 
 const createSubscriptionPayment = async (request, reply) => {
@@ -14,7 +15,6 @@ const createSubscriptionPayment = async (request, reply) => {
         let amount, stripeCheckoutUrl;
         let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0;
         let currentPeriodEnd;
-
         // Determine plan amount and tokens
         switch (plan) {
             case 'free':
@@ -130,16 +130,9 @@ const webhook = async (request, reply) => {
                     }
                 });
 
-                console.log('Subscription status updated to Active.');
-
-                const invoice = await stripe.invoices.create({
-                    customer_email: customerEmail,
-                    auto_advance: true // Auto-finalize this draft after ~1 hour
-                });
-
-                await stripe.invoices.sendInvoice(invoice.id);
-
-                console.log('Invoice sent to customer\'s email.');
+                const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
+                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', payment.plan).replace('{payment_amount}', payment.amount).replace('{validity_date}', payment.expiryDate)
+                await sendEmail(customerEmail, "Genie's Career Hub: Payment Successful", invoiceBody);
             } catch (err) {
                 console.error('Error updating subscription status to Active:', err);
             }
