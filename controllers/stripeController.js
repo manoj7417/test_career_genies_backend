@@ -131,9 +131,12 @@ const webhook = async (request, reply) => {
                         'subscription.careerCounsellingTokens': payment.careerCounsellingTokens
                     }
                 });
-
+                const templateAmount = "$" + payment.amount * 0.01
+                const date = new Date(payment.expiryDate);
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                const formattedDate = date.toLocaleDateString('en-US', options);
                 const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
-                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', payment.plan).replace('{payment_amount}', payment.amount).replace('{validity_date}', payment.expiryDate)
+                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', payment.plan).replace('{payment_amount}', templateAmount).replace('{validity_date}', formattedDate)
                 await sendEmail(customerEmail, "Genie's Career Hub: Payment Successful", invoiceBody);
             } catch (err) {
                 console.error('Error updating subscription status to Active:', err);
