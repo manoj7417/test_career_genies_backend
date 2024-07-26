@@ -241,8 +241,8 @@ const forgetPassword = async (request, reply) => {
       });
     }
     const token = await user.generateResetPassowordToken();
-    const url = `http://localhost:3000/reset-password?token=${token}`;
-    // const url = `https://geniescareerhub.com/reset-password?token=${token}`;
+    // const url = `http://localhost:3000/reset-password?token=${token}`;
+    const url = `https://geniescareerhub.com/reset-password?token=${token}`;
     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
     const emailBody = emailtemplate
       .replace("{userName}", user.fullname)

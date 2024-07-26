@@ -1,6 +1,7 @@
 const { Payment } = require('../models/PaymentModel');
 const { User } = require('../models/userModel');
 const path = require('path')
+const fs = require('fs');
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
