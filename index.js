@@ -19,6 +19,7 @@ const { webhook } = require('./controllers/stripeController');
 const AnalysisRoute = require('./routes/AnalysisRoute');
 const SummaryRoute = require('./routes/SummaryRoute');
 const EmailRoute = require('./routes/EmailRoute');
+const BlogRoute = require('./routes/BlogRoute');
 
 require('dotenv').config();
 
@@ -93,6 +94,7 @@ fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
 fastify.register(AnalysisRoute, { prefix: "/api/analysis", before: apiKeyAuth });
 fastify.register(SummaryRoute, { prefix: "/api/summary", before: apiKeyAuth });
 fastify.register(EmailRoute, { prefix: "/api/message", before: apiKeyAuth })
+fastify.register(BlogRoute, { prefix: "/api/blog", before: apiKeyAuth })
 
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
