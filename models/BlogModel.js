@@ -1,15 +1,29 @@
 const mongoose = require('mongoose');
 
 const blogSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    mainImage: { type: String, required: true },
-    author: { type: String, required: true },
-    description: { type: String, required: true },
+    slug: { type: String, required: true },
+    meta: {
+        title: { type: String, default: '' , required: true },
+        description: { type: String, default: ''  , required: true },
+        keywords: [{ type: String, default: '', required: true }]
+    },
+    header: { type: String, required: false },
+    body: { type: String, required: false },
+    maintitle: { type: String, required: true },
+    mainImage: {
+        url: { type: String, required: true },
+        altText: { type: String, required: true },
+        caption: { type: String, required: false }
+    },
+    author: { type: String, required: false },
+    description: { type: String, required: false },
     sections: [{
-        title: { type: String, required: true },
+        title: { type: String, required: false },
         description: { type: String, required: true },
         images: [{
-            type: String , required : false
+            url: { type: String, required: true },
+            altText: { type: String, required: true },
+            caption: { type: String, required: true }
         }]
     }]
 }, {
