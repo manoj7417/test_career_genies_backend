@@ -53,8 +53,8 @@ const createBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
     try {
         const { id } = req.params
-        const { title, mainImage, author, description, sections } = req.body
-        const updatedBlog = await Blog.findByIdAndUpdate(id, { title, mainImage, author, description, sections }, { new: true })
+        const { slug, meta, header, body, maintitle, mainImage, author, description, sections } = req.body
+        const updatedBlog = await Blog.findByIdAndUpdate(id, { slug, meta, header, body, maintitle, mainImage, author, description, sections }, { new: true })
         if (!updatedBlog) {
             return res.status(404).send({
                 status: "FAILURE",
