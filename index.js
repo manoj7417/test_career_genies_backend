@@ -15,11 +15,12 @@ const PrintResume = require('./routes/PrintResume');
 const cors = require('@fastify/cors');
 const cookie = require('@fastify/cookie');
 const multer = require('fastify-multer');
-const { webhook } = require('./controllers/stripeController');
+const { webhook, razorpayWebhook } = require('./controllers/stripeController');
 const AnalysisRoute = require('./routes/AnalysisRoute');
 const SummaryRoute = require('./routes/SummaryRoute');
 const EmailRoute = require('./routes/EmailRoute');
 const BlogRoute = require('./routes/BlogRoute');
+const PaymentRoute = require('./routes/PaymentRoute');
 
 require('dotenv').config();
 
@@ -95,6 +96,7 @@ fastify.register(AnalysisRoute, { prefix: "/api/analysis", before: apiKeyAuth })
 fastify.register(SummaryRoute, { prefix: "/api/summary", before: apiKeyAuth });
 fastify.register(EmailRoute, { prefix: "/api/message", before: apiKeyAuth })
 fastify.register(BlogRoute, { prefix: "/api/blog", before: apiKeyAuth })
+fastify.register(PaymentRoute, { prefix: "/api/payment", before: apiKeyAuth })
 
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
@@ -106,7 +108,10 @@ fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function
     }
 });
 
-fastify.post("/webhook", webhook);
+// fastify.post("/webhook", webhook);
+
+//razorpay webhook
+fastify.post("/webhook", razorpayWebhook);
 
 const start = async () => {
     try {
