@@ -199,9 +199,9 @@ const razorpayWebhook = async (request, reply) => {
 
 
     if (event == 'order.paid') {
-        const status = payload.order.entity.status;
+
         const order = payload.order.entity;
-        console.log("payload:", payload);
+
         if(order.status == 'paid'){
         try {
             // Find the payment record by orderId
@@ -211,7 +211,7 @@ const razorpayWebhook = async (request, reply) => {
                 return reply.status(404).send('Payment record not found');
             }
 
-            payment.status = 'paid';
+            payment.status = 'Completed';
             await payment.save();
 
             // Find the user associated with the payment
