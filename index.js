@@ -111,7 +111,7 @@ fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function
 // fastify.post("/webhook", webhook);
 
 //razorpay webhook
-fastify.post("/webhook", razorpayWebhook);
+fastify.post("/webhookrazorpay", razorpayWebhook);
 
 const start = async () => {
     try {
