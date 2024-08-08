@@ -178,7 +178,7 @@ const razorpayWebhook = async (request, reply) => {
     const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html');
 
     // Log the incoming request for debugging
-    console.log('Received Razorpay webhook:', request.body);
+
 
     // Verify the webhook signature
     const shasum = crypto.createHmac('sha256', secret);
@@ -186,8 +186,7 @@ const razorpayWebhook = async (request, reply) => {
     const digest = shasum.digest('hex');
 
     // Log the signature verification process
-    console.log('Computed digest:', digest);
-    console.log('Received signature:', request.headers['x-razorpay-signature']);
+
 
     if (digest !== request.headers['x-razorpay-signature']) {
         console.error('Invalid signature');
@@ -198,9 +197,10 @@ const razorpayWebhook = async (request, reply) => {
     const event = request.body.event;
     const payload = request.body.payload;
 
-    if (event === 'payment.captured') {
+    if (event === 'order.paid') {
         const paymentDetails = payload.payment.entity;
-
+        console.log("details:", paymentDetails);
+        console.log("payload:", payload);
         try {
             // Find the payment record by orderId
             const payment = await Payment.findOne({ orderId: paymentDetails.order_id });
