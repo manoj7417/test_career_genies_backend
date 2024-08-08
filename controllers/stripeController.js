@@ -196,11 +196,12 @@ const razorpayWebhook = async (request, reply) => {
     // Handle the payment captured event
     const event = request.body.event;
     const payload = request.body.payload;
+    console.log("payload:", payload);
 
-    if (event === 'payment.captured') {
+    if (event == 'order.paid') {
         const status = payload.order.entity.status;
         const order = payload.order.entity;
-       console.log("details:", payload);
+        if(order.status == 'paid'){
         try {
             // Find the payment record by orderId
             const payment = await Payment.findOne({ orderId: order.id });
@@ -252,6 +253,7 @@ const razorpayWebhook = async (request, reply) => {
             console.error('Error processing payment captured event:', err);
             return reply.status(500).send({ message: 'Internal Server Error' });
         }
+    }
     } else {
         console.log(`Unhandled event type ${event}`);
     }
