@@ -197,12 +197,10 @@ const razorpayWebhook = async (request, reply) => {
     const event = request.body.event;
     const payload = request.body.payload;
 
-    if (event === 'order.paid') {
+    if (event === 'payment.captured') {
         const status = payload.order.entity.status;
         const order = payload.order.entity;
-        if(status === 'paid'){
-            console.log("details:", paymentDetails);
-        }
+       console.log("details:", payload);
         try {
             // Find the payment record by orderId
             const payment = await Payment.findOne({ orderId: order.id });
