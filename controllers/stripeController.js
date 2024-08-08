@@ -7,6 +7,7 @@ require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
+const crypto = require('crypto');
 
 
 const createSubscriptionPayment = async (request, reply) => {
@@ -176,12 +177,20 @@ const razorpayWebhook = async (request, reply) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html');
 
+    // Log the incoming request for debugging
+    console.log('Received Razorpay webhook:', request.body);
+
     // Verify the webhook signature
     const shasum = crypto.createHmac('sha256', secret);
     shasum.update(JSON.stringify(request.body));
     const digest = shasum.digest('hex');
 
+    // Log the signature verification process
+    console.log('Computed digest:', digest);
+    console.log('Received signature:', request.headers['x-razorpay-signature']);
+
     if (digest !== request.headers['x-razorpay-signature']) {
+        console.error('Invalid signature');
         return reply.code(400).send({ message: 'Invalid signature' });
     }
 
