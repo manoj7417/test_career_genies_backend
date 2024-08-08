@@ -205,7 +205,7 @@ const razorpayWebhook = async (request, reply) => {
         if(order.status == 'paid'){
         try {
             // Find the payment record by orderId
-            const payment = await Payment.findOne({ orderId: order.id });
+            const payment = await Payment.findOne({ sessionId: order.id });
             if (!payment) {
                 console.error(`Payment record not found for order ID: ${order.id}`);
                 return reply.status(404).send('Payment record not found');
