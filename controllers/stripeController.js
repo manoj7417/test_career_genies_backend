@@ -198,20 +198,20 @@ const razorpayWebhook = async (request, reply) => {
     const payload = request.body.payload;
 
     if (event === 'order.paid') {
-        const paymentDetails = payload.payment.entity;
-        console.log("details:", paymentDetails);
-        console.log("payload:", payload);
+        const status = payload.order.entity.status;
+        const order = payload.order.entity;
+        if(status === 'paid'){
+            console.log("details:", paymentDetails);
+        }
         try {
             // Find the payment record by orderId
-            const payment = await Payment.findOne({ orderId: paymentDetails.order_id });
+            const payment = await Payment.findOne({ orderId: order.id });
             if (!payment) {
-                console.error(`Payment record not found for order ID: ${paymentDetails.order_id}`);
+                console.error(`Payment record not found for order ID: ${order.id}`);
                 return reply.status(404).send('Payment record not found');
             }
 
-            // Update payment status to 'Captured'
-            payment.status = 'Captured';
-            payment.paymentId = paymentDetails.id;
+            payment.status = 'paid';
             await payment.save();
 
             // Find the user associated with the payment
