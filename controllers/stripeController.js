@@ -236,7 +236,7 @@ const razorpayWebhook = async (request, reply) => {
             await user.save();
 
             // Send confirmation email to the user
-            const templateAmount = "₹" + (payment.amount / 100).toFixed(2);
+            const templateAmount = "₹" + payment.amount;
             const date = new Date(payment.expiryDate);
             const options = { year: 'numeric', month: 'short', day: 'numeric' };
             const formattedDate = date.toLocaleDateString('en-US', options);

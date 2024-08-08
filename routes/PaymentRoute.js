@@ -44,7 +44,7 @@ async function PaymentRoute(fastify, options) {
         }
 
         const orderOptions = {
-            amount: 1 * 100, 
+            amount: amount * 100, 
             currency: "INR",
             receipt: `receipt_order_${userId}`,
             payment_capture: 1 // auto capture
