@@ -109,7 +109,8 @@ const UserSchema = new mongoose.Schema({
     createdResumes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
-    }]
+    }],
+    emailVerified: { type: Boolean, default: false }
 },
     {
         timestamps: true

@@ -413,6 +413,24 @@ ul.social li {
     color: #1e3a8a !important;
 }
 
+.button{
+    background-color:  #0275d8;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.note{
+    color: #525252;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+
+
 @media screen and (min-width: 500px) {
     .pname {
         font-size: 18px !important;
@@ -446,18 +464,22 @@ ul.social li {
                             
                             <tr>
                                 <td class="hero bg_white" style="padding: 3rem 0rem;">
-                                     <h1>Login password</h1>
-        <div class="subject">
-       
-    </div>
-    <p>Your password is <span class="password">{password}</span></p>
-    <p>If you have any questions, feel free to <a href="mailto:support@careergenie.com">contact us</a>.</p>   
-    <p>We're excited to have you with us.</p>
+                                     <h1>Verify Email</h1>
+                                     <div class="section">
+                                        <h2>Hi , {username}</h2>
+                                        <p>We are happy you signed up of Genie's career hub. To start exploring the Genie's career hub please confirm your email address.</p>
+                                        <a href="{verify-link}">
+                                            <button class="button">
+                                                Verfiy Now
+                                            </button>
+                                        </a>
+                                        <p class="note">This link is valid for 24hrs</p>
+                                     </div>
+   <p>Welcome to Genie's career hub!</p>
+   <p>The Genie's career hub team</p>
     </div>
                                 </td>
                             </tr>
-
-
                         </tbody>
                     </table>
                 </td>

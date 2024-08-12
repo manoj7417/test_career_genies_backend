@@ -9,7 +9,7 @@ const resetPasswordTemplatePath = path.join(
   "resetPassword.html"
 );
 const welcomeTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'WelcomeTemplate.html');
-const passwordTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'password.html');
+const VerfiyEmailPath = path.join(__dirname, '..', 'emailTemplates', 'VerifyEmail.html');
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
@@ -40,37 +40,16 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 
-const generateRandomPassword = (email, fullname) => {
-  const allCharacters = (email + fullname).split('').filter(char => char !== ' ');
-  const specialCharacters = '!@#$'; // User-friendly special characters
-  const numbers = '0123456789';
-  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-  const passwordLength = Math.floor(Math.random() * 3) + 10; // Generates a length between 10 and 12
-  let passwordCharacters = [];
-
-  // Ensure the password contains at least one number and exactly one special character
-  passwordCharacters.push(numbers[Math.floor(Math.random() * numbers.length)]);
-  passwordCharacters.push(specialCharacters[Math.floor(Math.random() * specialCharacters.length)]);
-
-  // Fill the remaining characters
-  for (let i = 2; i < passwordLength; i++) {
-    const randomIndex = Math.floor(Math.random() * allCharacters.length);
-    passwordCharacters.push(allCharacters[randomIndex]);
-  }
-
-  // Shuffle the selected characters
-  for (let i = passwordCharacters.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [passwordCharacters[i], passwordCharacters[j]] = [passwordCharacters[j], passwordCharacters[i]];
-  }
-
-  return passwordCharacters.join('');
-};
+const getVerificationToken = (userId) => {
+  const token = jwt.sign({ _id: userId }, process.env.EMAIL_VERIFICATION_SECRET, {
+    expiresIn: process.env.EMAIL_VERIFICATION_EXPIRY
+  })
+  return token;
+}
 
 // register the user 
 const register = async (request, reply) => {
-  const { email, fullname } = request.body;
+  const { email, fullname, password } = request.body;
   try {
     const findExistingUser = await User.findOne({ email });
     if (findExistingUser) {
@@ -78,19 +57,20 @@ const register = async (request, reply) => {
         .code(409)
         .send({ status: "FAILURE", error: "Account already exists" });
     }
-    const password = generateRandomPassword(email, fullname);
-    const emailtemplate = fs.readFileSync(passwordTemplatePath, "utf-8");
+    const user = new User({ email, fullname, password });
+    await user.save();
+    const verificationToken = await getVerificationToken(user._id);
+    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
+    const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
     const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
-    const emailBody = emailtemplate.replace("{password}", password)
     const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
     await sendEmail(
       email,
-      "Genie's Career Hub: Login password",
-      emailBody,
+      "Genie's Career Hub: Email verification",
+      VerfiyEmailBody,
     );
     await sendEmail(email, "Welcome to Genie's Career Hub", welcomeEmailBody);
-    const user = new User({ email, fullname, password });
-    await user.save();
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
@@ -202,6 +182,12 @@ const login = async (request, reply) => {
         error: "Account with email address doesn't exist",
       });
     }
+    if (!user.emailVerified) {
+      return reply.code(403).send({
+        status: "FAILURE",
+        error: "Email verification is required",
+      });
+    }
     const isPasswordcorrect = await user.comparePassword(password);
     if (!isPasswordcorrect) {
       return reply.code(401).send({
@@ -272,7 +258,7 @@ const resetPassword = async (request, reply) => {
       });
     }
 
-    const { userId } = await decodeToken(token);
+    const { userId } = await decodeToken(token, process.env.RESET_PASSWORD_SECRET);
     if (!userId) {
       return reply.code(401).send({
         status: "FAILURE",
@@ -337,9 +323,6 @@ const changePassword = async (req, reply) => {
 }
 
 // update the user role and subsription status  for the specific user 
-
-
-
 //get all users data
 const getAllUsers = async (request, reply) => {
   const { startDate, endDate, order, isSubscribed } = request.query;
@@ -493,9 +476,9 @@ const updateUserDetails = async (req, reply) => {
 }
 
 //decode the reset password token and return the decode result
-async function decodeToken(token) {
+async function decodeToken(token, secret) {
   try {
-    const decoded = await jwt.verify(token, process.env.RESET_PASSWORD_SECRET);
+    const decoded = await jwt.verify(token, secret);
     return decoded;
   } catch (error) {
     throw new Error(error?.message);
@@ -665,6 +648,55 @@ const verifyToken = async (res, reply) => {
   }
 }
 
+const verifyEmail = async (req, res) => {
+  const { token } = req.body;
+  try {
+    if (!token) {
+      return res.status(400).send({ status: "FAILURE", message: "Token is missing" });
+    }
+    const secret = process.env.EMAIL_VERIFICATION_SECRET
+    const decoded = await decodeToken(token, secret);
+    if (!decoded) {
+      return res.status(404).send({ status: "FAILURE", message: "Token not found" });
+    }
+    const user = await User.findByIdAndUpdate(decoded._id, { emailVerified: true }, { new: true });
+    await user.save()
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
+    res.status(200).send({ status: "SUCCESS", message: "Email verified successfully", accessToken, refreshToken, userdata: user?.toSafeObject() });
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while verifying email" });
+  }
+}
+
+
+const resendVerificationEmail = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return reply.code(404).send({
+        status: "FAILURE",
+        message: "User not found",
+      });
+    }
+    const verificationToken = await getVerificationToken(user._id);
+    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
+    const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
+    await sendEmail(
+      email,
+      "Genie's Career Hub: Email verification",
+      VerfiyEmailBody,
+    );
+    res.status(200).send({ status: "SUCCESS", message: "Verification email sent successfully" });
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while sending verification email" });
+  }
+}
+
+
 module.exports = {
   register,
   login,
@@ -680,5 +712,7 @@ module.exports = {
   GetuserDetails,
   careerCounsellingEligibility,
   changePassword,
-  verifyToken
+  verifyToken,
+  verifyEmail,
+  resendVerificationEmail
 };

@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, checkUserTemplate, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails,  GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail } = require("../controllers/UserController");
 const upload = require('../config/multer')
 
 
@@ -57,15 +57,12 @@ async function UserRoute(fastify, options) {
     fastify.post("/upload/profile", { preHandler: [fastify.verifyJWT, upload.single('file')] }, UploadProfilePic)
     // verfiy user password and send access token in cookies
     fastify.post("/login", { schema: loginSchema }, login)
-
-
     // generate token for the user and email the user  the frontend link with token to reset the password 
     fastify.post("/forgetPassword", { schema: forgetPasswordSchema }, forgetPassword)
 
 
     //decode user token from response token and update the user password accordingly
     fastify.post("/resetPassword", { schema: resetPasswordSchema }, resetPassword)
-
 
     // update the user role and subsription status  for the specific user 
     fastify.route({
@@ -93,10 +90,12 @@ async function UserRoute(fastify, options) {
     fastify.post('/changepassword', {
         preHandler: fastify.verifyJWT
     }, changePassword)
- 
-    fastify.post('/verify-token',verifyToken)
 
+    fastify.post('/verify-token', verifyToken)
 
+    fastify.post('/verify-email', verifyEmail)
+
+    fastify.post('/resend-verificationEmail',resendVerificationEmail)
 }
 
 module.exports = UserRoute
