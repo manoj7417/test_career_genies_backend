@@ -7,6 +7,7 @@ require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
+const crypto = require('crypto');
 
 
 const createSubscriptionPayment = async (request, reply) => {
@@ -172,7 +173,99 @@ const webhook = async (request, reply) => {
     reply.status(200).send();
 }
 
+const razorpayWebhook = async (request, reply) => {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html');
+
+    // Log the incoming request for debugging
+
+
+    // Verify the webhook signature
+    const shasum = crypto.createHmac('sha256', secret);
+    shasum.update(JSON.stringify(request.body));
+    const digest = shasum.digest('hex');
+
+    // Log the signature verification process
+
+
+    if (digest !== request.headers['x-razorpay-signature']) {
+        console.error('Invalid signature');
+        return reply.code(400).send({ message: 'Invalid signature' });
+    }
+
+    // Handle the payment captured event
+    const event = request.body.event;
+    const payload = request.body.payload;
+
+
+    if (event == 'order.paid') {
+
+        const order = payload.order.entity;
+
+        if(order.status == 'paid'){
+        try {
+            // Find the payment record by orderId
+            const payment = await Payment.findOne({ sessionId: order.id });
+            if (!payment) {
+                console.error(`Payment record not found for order ID: ${order.id}`);
+                return reply.status(404).send('Payment record not found');
+            }
+
+            payment.status = 'Completed';
+            await payment.save();
+
+            // Find the user associated with the payment
+            const user = await User.findById(payment.user);
+            if (!user) {
+                console.error(`User not found for ID: ${payment.user}`);
+                return reply.status(404).send('User not found');
+            }
+
+            // Update user subscription status
+            user.subscription.status = 'Active';
+            user.subscription.plan = payment.plan;
+            user.subscription.planType = payment.planType;
+            user.subscription.currentPeriodStart = new Date();
+            user.subscription.currentPeriodEnd = payment.expiryDate;
+            user.subscription.razorpayOrderId = payment.orderId;
+            user.subscription.paymentId = payment._id;
+            user.subscription.analyserTokens = payment.analyserTokens;
+            user.subscription.optimizerTokens = payment.optimizerTokens;
+            user.subscription.JobCVTokens = payment.jobCVTokens;
+            user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+            await user.save();
+
+            // Send confirmation email to the user
+            const templateAmount = "₹" + payment.amount;
+            const date = new Date(payment.expiryDate);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('en-US', options);
+            const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
+            const invoiceBody = invoiceTemplate
+                .replace('{fullname}', user.fullname)
+                .replace('{plan_type}', payment.plan)
+                .replace('{payment_amount}', templateAmount)
+                .replace('{validity_date}', formattedDate);
+
+            await sendEmail(user.email, "Genie's Career Hub: Payment Successful", invoiceBody);
+
+            return reply.code(200).send({ message: 'Payment captured successfully' });
+        } catch (err) {
+            console.error('Error processing payment captured event:', err);
+            return reply.status(500).send({ message: 'Internal Server Error' });
+        }
+    }
+    } else {
+        console.log(`Unhandled event type ${event}`);
+    }
+
+    reply.status(200).send();
+};
+
+             
+
 module.exports = {
     createSubscriptionPayment,
-    webhook
+    webhook,
+    razorpayWebhook
 };
