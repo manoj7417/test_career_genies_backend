@@ -60,7 +60,7 @@ const register = async (request, reply) => {
     const user = new User({ email, fullname, password });
     await user.save();
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
     const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
@@ -77,7 +77,7 @@ const register = async (request, reply) => {
     });
   } catch (error) {
     console.log(error);
-    reply.code(500).json({
+    reply.code(500).send({
       status: "FAILURE",
       error: error.message || "Internal server error",
     });
@@ -554,7 +554,7 @@ const GetuserDetails = async (req, reply) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ status: "FAILURE", message: "User not found" });
+      return res.code(404).send({ status: "FAILURE", message: "User not found" });
     }
     const userData = user.toSafeObject();
     return reply.code(200).send({
@@ -611,39 +611,39 @@ const careerCounsellingEligibility = async (req, reply) => {
 const verifyToken = async (res, reply) => {
   const { accessToken, refreshToken } = res.body;
   if (!accessToken || !refreshToken) {
-    return reply.status(400).send({ status: "FAILURE", message: "Missing access token or refresh token" });
+    return reply.code(400).send({ status: "FAILURE", message: "Missing access token or refresh token" });
   }
   try {
     const decodedAccessToken = await jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
     const user = await User.findById(decodedAccessToken._id);
     if (!user) {
-      return reply.status(401).send({ status: "FAILURE", message: "User not found" });
+      return reply.code(401).send({ status: "FAILURE", message: "User not found" });
     }
-    return reply.status(200).send({ valid: true, userdata: user.toSafeObject(), accessToken, refreshToken });
+    return reply.code(200).send({ valid: true, userdata: user.toSafeObject(), accessToken, refreshToken });
   } catch (accessTokenError) {
     if (accessTokenError.name === 'TokenExpiredError') {
       try {
         const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
         const user = await User.findById(decodedRefreshToken._id);
         if (!user) {
-          return reply.status(401).send({ status: "FAILURE", message: "User not found" });
+          return reply.code(401).send({ status: "FAILURE", message: "User not found" });
         }
         const tokens = await generateAccessAndRefereshTokens(decodedRefreshToken._id)
 
-        return reply.status(200).send({
+        return reply.code(200).send({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           userdata: user.toSafeObject()
         });
       } catch (refreshTokenError) {
         if (refreshTokenError.name === 'TokenExpiredError') {
-          return reply.status(401).send({ status: "FAILURE", message: 'Refresh token expired, please log in again.' });
+          return reply.code(401).send({ status: "FAILURE", message: 'Refresh token expired, please log in again.' });
         } else {
-          return reply.status(401).send({ status: "FAILURE", message: 'Invalid refresh token.' });
+          return reply.code(401).send({ status: "FAILURE", message: 'Invalid refresh token.' });
         }
       }
     } else {
-      return reply.status(401).send({ status: "FAILURE", message: "Invalid access token" });
+      return reply.code(401).send({ status: "FAILURE", message: "Invalid access token" });
     }
   }
 }
@@ -652,20 +652,20 @@ const verifyEmail = async (req, res) => {
   const { token } = req.body;
   try {
     if (!token) {
-      return res.status(400).send({ status: "FAILURE", message: "Token is missing" });
+      return res.code(400).send({ status: "FAILURE", message: "Token is missing" });
     }
     const secret = process.env.EMAIL_VERIFICATION_SECRET
     const decoded = await decodeToken(token, secret);
     if (!decoded) {
-      return res.status(404).send({ status: "FAILURE", message: "Token not found" });
+      return res.code(404).send({ status: "FAILURE", message: "Token not found" });
     }
     const user = await User.findByIdAndUpdate(decoded._id, { emailVerified: true }, { new: true });
     await user.save()
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
-    res.status(200).send({ status: "SUCCESS", message: "Email verified successfully", accessToken, refreshToken, userdata: user?.toSafeObject() });
+    res.code(200).send({ status: "SUCCESS", message: "Email verified successfully", accessToken, refreshToken, userdata: user?.toSafeObject() });
   } catch (error) {
     console.error("Error verifying email:", error);
-    res.status(500).send({ status: "FAILURE", message: "An error occurred while verifying email" });
+    res.code(500).send({ status: "FAILURE", message: "An error occurred while verifying email" });
   }
 }
 
@@ -681,9 +681,9 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
-    const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
+    const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink)
     await sendEmail(
       email,
       "Genie's Career Hub: Email verification",
