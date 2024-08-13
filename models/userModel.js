@@ -100,7 +100,8 @@ const UserSchema = new mongoose.Schema({
         analyserTokens: { type: Number, default: 1 },
         optimizerTokens: { type: Number, default: 0 },
         JobCVTokens: { type: Number, default: 1 },
-        careerCounsellingTokens: { type: Number, default: 1 }
+        careerCounsellingTokens: { type: Number, default: 1 },
+        downloadCVTokens: { type: Number, default: 0 }
     },
     payments: [{
         type: mongoose.Schema.Types.ObjectId,

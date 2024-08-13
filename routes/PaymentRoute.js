@@ -8,14 +8,14 @@ const razorpay = new Razorpay({
 });
 
 async function PaymentRoute(fastify, options) {
-   
+
     fastify.post("/upgradePlan", { preHandler: [fastify.verifyJWT] }, async (request, reply) => {
-        
+
         const { plan, duration } = request.body;
         const userId = request.user.id;
         let amount, analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0;
         let currentPeriodEnd;
-      
+
         switch (plan) {
             case 'free':
                 amount = 0;
@@ -25,15 +25,17 @@ async function PaymentRoute(fastify, options) {
                 analyserTokens = duration === 'monthly' ? 10 : 10 * 12;
                 optimizerTokens = duration === 'monthly' ? 10 : 10 * 12;
                 JobCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 10 : 10 * 12; // Example value
+                careerCounsellingTokens = duration === 'monthly' ? 10 : 10 * 12;
+                downloadCVTokens = duration === 'monthly' ? 10 : 10 * 12;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             case 'premium':
                 amount = duration === 'monthly' ? 999 : 9999;
-                analyserTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                optimizerTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                JobCVTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 1000 : 1000 * 12;
+                analyserTokens = duration === 'monthly' ? 20 : 20 * 12;
+                optimizerTokens = duration === 'monthly' ? 20 : 20 * 12;
+                JobCVTokens = duration === 'monthly' ? 20 : 20 * 12;
+                careerCounsellingTokens = duration === 'monthly' ? 20 : 20 * 12;
+                downloadCVTokens = duration === 'monthly' ? 20 : 20 * 12;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             default:
@@ -44,7 +46,7 @@ async function PaymentRoute(fastify, options) {
         }
 
         const orderOptions = {
-            amount: amount * 100, 
+            amount: amount * 100,
             currency: "INR",
             receipt: `receipt_order_${userId}`,
             payment_capture: 1 // auto capture
@@ -73,7 +75,7 @@ async function PaymentRoute(fastify, options) {
             await payment.save();
             // Save the order details to your database if necessary
 
-            return reply.code(200).send({ 
+            return reply.code(200).send({
                 message: "success",
                 orderId: order.id,
                 amount: order.amount,
@@ -89,8 +91,6 @@ async function PaymentRoute(fastify, options) {
 
 
 }
-
-
 
 
 module.exports = PaymentRoute;

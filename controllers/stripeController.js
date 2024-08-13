@@ -33,10 +33,10 @@ const createSubscriptionPayment = async (request, reply) => {
                 break;
             case 'premium':
                 amount = duration === 'monthly' ? 699 : 69.99;
-                analyserTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                optimizerTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                JobCVTokens = duration === 'monthly' ? 1000 : 1000 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 1000 : 1000 * 12;
+                analyserTokens = duration === 'monthly' ? 20 : 20 * 12;
+                optimizerTokens = duration === 'monthly' ? 20 : 20 * 12;
+                JobCVTokens = duration === 'monthly' ? 20 : 20 * 12;
+                careerCounsellingTokens = duration === 'monthly' ? 20 : 20 * 12;
                 currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
                 break;
             default:
