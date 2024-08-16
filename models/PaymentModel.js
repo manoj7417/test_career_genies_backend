@@ -19,6 +19,7 @@ const PaymentSchema = new mongoose.Schema({
     optimizerTokens: { type: Number, default: 0 },
     jobCVTokens: { type: Number, default: 0 },
     careerCounsellingTokens: { type: Number, default: 0 },
+    downloadCVTokens: { type: Number, default: 0 },
     expiryDate: { type: Date, required: true }
 });
 

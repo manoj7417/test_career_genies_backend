@@ -11,7 +11,6 @@ const printResumePath = path.join(
 
 const printResume = async (request, reply) => {
     const userId = request.user._id;
-    
     try {
         const user = await User.findById(userId);
         if (!user) {
@@ -22,7 +21,7 @@ const printResume = async (request, reply) => {
             return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
         }
 
-        if (user.subscription.plan !== 'free' && user.subscription.status === 'Active') {
+        if (user.subscription.plan !== 'free' && user.subscription.status === 'Active' && user.downloadCVTokens > 0) {
             const htmlbody = request.body.html;
             const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
             const html = htmlPage.replace('{{content}}', htmlbody);
@@ -57,13 +56,15 @@ const printResume = async (request, reply) => {
                 printBackground: true,
             });
             await browser.close();
+            user.downloadCVTokens -= 1;
+            await user.save();
             reply.header('Content-Type', 'application/pdf');
             reply.header('Content-Disposition', 'attachment; filename="generated.pdf"');
             return reply.status(200).send(pdfBuffer);
         }
         return reply.status(400).send({
             status: "FAILURE",
-            message: "Invalid subscription plan or status"
+            message: "Tokens exausted. Please buy a plan to continue"
         })
 
     } catch (error) {
