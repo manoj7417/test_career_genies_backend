@@ -70,7 +70,20 @@ fastify.register(cors, {
         "https://sea-turtle-app-2-e6fjt.ondigitalocean.app",
         "https://geniescareerhub.com"
     ],
-    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key", "Access-Control-Allow-Origin"],
+    allowedHeaders: [
+        "Content-Type",
+        "Accept",
+        "Authorization",
+        "x-api-key",
+        "Access-Control-Allow-Origin",
+        "X-Requested-With",
+        "Referer",
+        "Origin",
+        "Cache-Control",
+        "X-CSRF-Token",
+        "User-Agent",
+        "Accept-Language"
+    ],
     credentials: true,
     preflightContinue: true
 });
