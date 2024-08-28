@@ -515,10 +515,6 @@ async function atsCheck(req, reply) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
         }
 
-        if (user.subscription.analyserTokens.credits === 0) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
-        }
-
         const currentDate = new Date();
 
         if (user.subscription.analyserTokens.expiry <= currentDate) {
@@ -527,6 +523,10 @@ async function atsCheck(req, reply) {
                 message: 'Your analyser tokens have expired'
             });
         }
+        if (user.subscription.analyserTokens.credits === 0) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You have no analyser tokens' });
+        }
+
 
         const thread = await createThread();
         const threadId = thread.id;
@@ -709,8 +709,6 @@ async function generateResumeOnFeeback(req, reply) {
                 error: "Insufficient JobCV tokens"
             });
         }
-
-
 
         // Check if user has enough optimizer tokens
         if (type === 'optimizer' && user.subscription.optimizerTokens.credits <= 0) {
