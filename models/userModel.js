@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
         trim: true,
-        default: 'https://static.vecteezy.com/system/resources/previews/004/991/321/original/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-vector.jpg'
+        default: 'https://i.sstatic.net/l60Hf.png'
     },
     address: {
         type: String,
@@ -65,18 +65,18 @@ const UserSchema = new mongoose.Schema({
         default: 'user',
     },
     subscription: {
-        plan: {
-            type: String,
-            enum: ['free', 'basic', 'premium'],
-            default: 'free'
-        },
         amount: { type: Number, default: 0 },
+        currency: { type: String, required: true, default: 'USD' },
+        date: { type: Date, default: Date.now },
+        status: { type: String, enum: ['Pending', 'Completed', 'Failed'], default: 'Pending' },
+        plan: [
+            {
+                type: String,
+                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools'
+                ]
+            }
+        ],
         planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
-        status: {
-            type: String,
-            enum: ['Pending', 'Active', 'Canceled', 'Incomplete', 'Incomplete_expired', 'Trialing', 'Unpaid', 'Past_due'],
-            default: 'Active'
-        },
         currentPeriodStart: {
             type: Date
         },
@@ -97,11 +97,26 @@ const UserSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: "Payment"
         },
-        analyserTokens: { type: Number, default: 1 },
-        optimizerTokens: { type: Number, default: 0 },
-        JobCVTokens: { type: Number, default: 1 },
-        careerCounsellingTokens: { type: Number, default: 1 },
-        downloadCVTokens: { type: Number, default: 0 }
+        analyserTokens: {
+            credits: { type: Number, default: 1 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+        },
+        optimizerTokens: {
+            credits: { type: Number, default: 1 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+        },
+        JobCVTokens: {
+            credits: { type: Number, default: 1 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+        },
+        careerCounsellingTokens: {
+            credits: { type: Number, default: 1 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+        },
+        downloadCVTokens: {
+            credits: { type: Number, default: 0 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+        }
     },
     payments: [{
         type: mongoose.Schema.Types.ObjectId,

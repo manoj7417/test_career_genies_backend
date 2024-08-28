@@ -13,20 +13,28 @@ const printResume = async (request, reply) => {
     const userId = request.user._id;
     try {
         const user = await User.findById(userId);
+        const currentDate = new Date();
         if (!user) {
             return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
         }
 
-        if (user.subscription.plan === 'free') {
+        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
         }
 
-        if (user.subscription.plan !== 'free' && user.subscription.status === 'Active' && user.downloadCVTokens > 0) {
-            const htmlbody = request.body.html;
-            const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
-            const html = htmlPage.replace('{{content}}', htmlbody);
-            // Add CSS for page-specific margins
-            const styledHtml = `     
+        if (user.subscription.downloadCVTokens.expiry <= currentDate) {
+            return reply.code(403).send({
+                status: 'FAILURE',
+                message: 'Your download CV tokens have expired'
+            });
+        }
+        if (user.subscription.plan.includes('CVSTUDIO') && user.subscription.downloadCVTokens.credits === 0) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
+        }
+        const htmlbody = request.body.html;
+        const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
+        const html = htmlPage.replace('{{content}}', htmlbody);
+        const styledHtml = `     
             <style>
             @page :first{
                 size: A4;
@@ -40,33 +48,27 @@ const printResume = async (request, reply) => {
         </style>
                 ${html}
             `;
-            const browser = await puppeteer.launch({
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--single-process',
-                    "--no-zygote",
-                ],
-                executablePath: '/usr/bin/google-chrome-stable',
-            });
-            const page = await browser.newPage();
-            await page.setContent(styledHtml);
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-            });
-            await browser.close();
-            user.downloadCVTokens -= 1;
-            await user.save();
-            reply.header('Content-Type', 'application/pdf');
-            reply.header('Content-Disposition', 'attachment; filename="generated.pdf"');
-            return reply.status(200).send(pdfBuffer);
-        }
-        return reply.status(400).send({
-            status: "FAILURE",
-            message: "Tokens exausted. Please buy a plan to continue"
-        })
-
+        const browser = await puppeteer.launch({
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--single-process',
+                "--no-zygote",
+            ],
+            executablePath: '/usr/bin/google-chrome-stable',
+        });
+        const page = await browser.newPage();
+        await page.setContent(styledHtml);
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+        });
+        await browser.close();
+        user.subscription.downloadCVTokens.credits -= 1;
+        await user.save();
+        reply.header('Content-Type', 'application/pdf');
+        reply.header('Content-Disposition', 'attachment; filename="generated.pdf"');
+        return reply.status(200).send(pdfBuffer);
     } catch (error) {
         console.error('Error generating PDF:', error);
         reply.status(500).send('Error generating PDF');

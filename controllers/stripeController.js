@@ -8,46 +8,27 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
 const crypto = require('crypto');
+const { pricing } = require('../constants/pricing');
 
 
-const createSubscriptionPayment = async (request, reply) => {
-    const userId = request.user._id;
-    let { email, plan, duration, success_url, cancel_url, currency, amount } = request.body;
+const getPricing = (currency, planName) => {
+    const plan = pricing[planName]?.[currency] || null;
+    return plan
+}
+
+const getPlanName = (planName) => {
+    const plan = pricing[planName] || null;
+    return plan?.name
+}
+
+const createSubscriptionPayment = async (req, res) => {
+    const userId = req.user._id;
+    let { email, success_url, cancel_url, currency, planName, duration } = req.body;
     try {
-        let stripeCheckoutUrl;
         let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0;
-        let currentPeriodEnd;
-        // Determine plan amount and tokens
-        switch (plan) {
-            case 'free':
-                amount = 0;
-                break;
-            case 'basic':
-                amount = amount * 100;
-                analyserTokens = duration === 'monthly' ? 10 : 10 * 12;
-                optimizerTokens = duration === 'monthly' ? 10 : 10 * 12;
-                JobCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 10 : 10 * 12;
-                downloadCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-                break;
-            case 'premium':
-                amount = amount * 100;
-                analyserTokens = duration === 'monthly' ? 20 : 20 * 12;
-                optimizerTokens = duration === 'monthly' ? 20 : 20 * 12;
-                JobCVTokens = duration === 'monthly' ? 20 : 20 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 20 : 20 * 12;
-                downloadCVTokens = duration === 'monthly' ? 20 : 20 * 12;
-                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-                break;
-            default:
-                return reply.code(400).send({
-                    status: "FAILURE",
-                    error: "Invalid plan selected"
-                });
-        }
-
-        // Create Stripe Checkout session
+        const price = getPricing(currency, planName)
+        const amount = price.price
+        const plan = getPlanName(planName)
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'payment',
@@ -57,7 +38,7 @@ const createSubscriptionPayment = async (request, reply) => {
                     product_data: {
                         name: `Subscription Plan - ${plan}`,
                     },
-                    unit_amount: amount,
+                    unit_amount: amount * 100,
                 },
                 quantity: 1,
             }],
@@ -65,29 +46,54 @@ const createSubscriptionPayment = async (request, reply) => {
             success_url,
             cancel_url
         });
-        stripeCheckoutUrl = session.url;
+        if (planName === 'CVSTUDIO') {
+            analyserTokens = 20
+            optimizerTokens = 20
+            JobCVTokens = 20,
+                downloadCVTokens = 20
+        }
+        if (planName === 'AICareerCoach') {
+            careerCounsellingTokens = 1
+        }
+        const currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1))
         const payment = new Payment({
             user: userId,
             amount: amount,
             status: 'Pending',
-            plan: plan,
+            plan: planName,
             planType: duration,
             sessionId: session.id,
-            analyserTokens: analyserTokens,
-            optimizerTokens: optimizerTokens,
-            jobCVTokens: JobCVTokens,
-            careerCounsellingTokens: careerCounsellingTokens,
-            downloadCVTokens,
+            analyserTokens: {
+                credits: analyserTokens,
+                expiry: currentPeriodEnd
+            },
+            optimizerTokens: {
+                credits: optimizerTokens,
+                expiry: currentPeriodEnd
+            },
+            jobCVTokens: {
+                credits: JobCVTokens,
+                expiry: currentPeriodEnd
+            },
+            careerCounsellingTokens: {
+                credits: careerCounsellingTokens,
+                expiry: currentPeriodEnd
+            },
+            downloadCVTokens: downloadCVTokens,
             expiryDate: currentPeriodEnd
         });
-
         await payment.save();
-        reply.status(200).send({ url: stripeCheckoutUrl })
-    } catch (err) {
-        console.log(err);
-        reply.status(500).send({ error: err.message });
+        return res.status(200).send({
+            url: session.url
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            status: "FAILURE",
+            error: error.message || "Internal server error"
+        })
     }
-};
+}
 
 
 const webhook = async (request, reply) => {
@@ -111,16 +117,30 @@ const webhook = async (request, reply) => {
             try {
                 const payment = await Payment.findOne({ sessionId });
                 if (!payment) {
-                    console.error(`Payment record not found for session ID: ${sessionId}`);
                     return reply.status(404).send('Payment record not found');
+                }
+                if (payment.plan === 'ADD-CREDITS') {
+                    const user = await User.findById(payment.user);
+                    if (payment.addCredits.serviceName === 'CVCreator') {
+                        user.subscription.downloadCVTokens.credits += payment.addCredits.credits
+                    }
+                    if (payment.addCredits.serviceName === 'CVOptimiser') {
+                        user.subscription.optimizerTokens.credits += payment.addCredits.credits
+                        user.subscription.analyserTokens.credits += payment.addCredits.credits
+                    }
+                    if (payment.addCredits.serviceName === 'CVMatch') {
+                        user.subscription.JobCVTokens.credits += payment.addCredits.credits
+                    }
+                    await user.save();
+                    break;
                 }
                 const user = await User.findById(payment.user);
                 const customerEmail = user.email;
 
                 await User.findByIdAndUpdate(payment.user, {
                     $set: {
-                        'subscription.status': 'Active',
-                        'subscription.plan': payment.plan,
+                        'subscription.status': 'Completed',
+                        'subscription.plan': [...user.subscription.plan, payment.plan],
                         'subscription.planType': payment.planType,
                         'subscription.currentPeriodStart': new Date(),
                         'subscription.currentPeriodEnd': payment.expiryDate,
@@ -130,16 +150,19 @@ const webhook = async (request, reply) => {
                         'subscription.optimizerTokens': payment.optimizerTokens,
                         'subscription.JobCVTokens': payment.jobCVTokens,
                         'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                        'subscription.downloadCVTokens' : payment.downloadCVTokens
+                        'subscription.downloadCVTokens': payment.downloadCVTokens
                     }
                 });
-                const templateAmount = "$" + payment.amount * 0.01
                 const date = new Date(payment.expiryDate);
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 const formattedDate = date.toLocaleDateString('en-US', options);
                 const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
-                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', payment.plan).replace('{payment_amount}', templateAmount).replace('{validity_date}', formattedDate)
+                const planName = getPlanName(payment.plan)
+                const { symbol } = getPricing(payment.currency, planName)
+                const price = `${symbol}-${payment.amount}`
+                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', planName).replace('{payment_amount}', price).replace('{validity_date}', formattedDate)
                 await sendEmail(customerEmail, "Genie's Career Hub: Payment Successful", invoiceBody);
+                break;
             } catch (err) {
                 console.error('Error updating subscription status to Active:', err);
             }
@@ -177,10 +200,7 @@ const webhook = async (request, reply) => {
 const razorpayWebhook = async (request, reply) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html');
-
     // Log the incoming request for debugging
-
-
     // Verify the webhook signature
     const shasum = crypto.createHmac('sha256', secret);
     shasum.update(JSON.stringify(request.body));
@@ -264,9 +284,62 @@ const razorpayWebhook = async (request, reply) => {
 };
 
 
+const buyCredits = async (request, reply) => {
+    const userId = request.user._id;
+    let { email, success_url, cancel_url, currency, serviceName, amount, credits } = request.body;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return reply.status(404).send('User not found');
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'payment',
+            line_items: [{
+                price_data: {
+                    currency: currency,
+                    product_data: {
+                        name: `Add Credits`,
+                    },
+                    unit_amount: amount * 100,
+                },
+                quantity: 1,
+            }],
+            customer_email: email,
+            success_url,
+            cancel_url
+        });
+
+        const payment = new Payment({
+            user: userId,
+            sessionId: session.id,
+            status: 'Pending',
+            currency: currency,
+            amount: amount,
+            plan: "ADD-CREDITS",
+            planType: 'monthly',
+            addCredits: {
+                serviceName,
+                credits: Number(credits)
+            },
+            expiryDate: Date.now()
+        })
+        await payment.save();
+        console.log(session.url)
+        return reply.status(200).send({ url: session.url });
+    } catch (error) {
+        console.log("Error adding credits", error)
+        return reply.status(500).send('Error processing payment');
+    }
+}
+
+
 
 module.exports = {
     createSubscriptionPayment,
     webhook,
-    razorpayWebhook
+    razorpayWebhook,
+    getPricing,
+    buyCredits
 };

@@ -6,20 +6,40 @@ const PaymentSchema = new mongoose.Schema({
         required: true
     },
     amount: { type: Number, required: true },
+    currency: { type: String, required: true, default: 'USD' },
     date: { type: Date, default: Date.now },
     status: { type: String, enum: ['Pending', 'Completed', 'Failed'], default: 'Pending' },
     plan: {
         type: String,
-        enum: ['basic', 'premium'],
-        default: 'basic'
+        enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'ADD-CREDITS'
+        ]
     },
-    planType: { type: String, enum: ['monthly', 'yearly'], default: '' },
+    planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
     sessionId: { type: String, required: true },
-    analyserTokens: { type: Number, default: 0 },
-    optimizerTokens: { type: Number, default: 0 },
-    jobCVTokens: { type: Number, default: 0 },
-    careerCounsellingTokens: { type: Number, default: 0 },
-    downloadCVTokens: { type: Number, default: 0 },
+    analyserTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
+    optimizerTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
+    jobCVTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
+    careerCounsellingTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
+    downloadCVTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
+    addCredits: {
+        serviceName: { type: String, default: '' },
+        credits: { type: Number, default: 0 }
+    },
     expiryDate: { type: Date, required: true }
 });
 

@@ -511,18 +511,20 @@ async function atsCheck(req, reply) {
             });
         }
 
-        const currentDate = new Date();
-        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
-            return reply.code(400).send({
-                status: "FAILURE",
-                error: "Subscription is inactive or expired"
-            });
+        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
         }
 
-        if (user.subscription.analyserTokens <= 0) {
-            return reply.code(400).send({
-                status: "FAILURE",
-                error: "Insufficient tokens"
+        if (user.subscription.analyserTokens.credits === 0) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
+        }
+
+        const currentDate = new Date();
+
+        if (user.subscription.analyserTokens.expiry <= currentDate) {
+            return reply.code(403).send({
+                status: 'FAILURE',
+                message: 'Your analyser tokens have expired'
             });
         }
 
@@ -558,7 +560,7 @@ async function atsCheck(req, reply) {
         const feedback = JSON.parse(response[0].text.value)
         const newAnalyserFeedback = new Analysis({ userId, ...feedback, resumeContent: message })
         await newAnalyserFeedback.save();
-        user.subscription.analyserTokens -= 1;
+        user.subscription.analyserTokens.credits -= 1
         await user.save();
         reply.status(201).send({
             status: "SUCCESS",
@@ -653,7 +655,7 @@ async function generateBetterResume(req, reply) {
 
 async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
-    let { analysisId, type , message } = await req.body;
+    let { analysisId, type, message } = await req.body;
     try {
         const user = await User.findById(userId);
         if (!user) {
@@ -662,6 +664,11 @@ async function generateResumeOnFeeback(req, reply) {
                 error: "User not found"
             });
         }
+
+        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
+        }
+
         if (analysisId) {
             const analysis = await Analysis.findById(analysisId);
             if (!analysis) {
@@ -673,14 +680,22 @@ async function generateResumeOnFeeback(req, reply) {
             message = analysis?.resumeContent;
         }
 
-
         const currentDate = new Date();
-        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
-            return reply.code(400).send({
+
+        if (type === 'JobCV' && user.subscription.JobCVTokens.expiry < currentDate) {
+            return reply.code(403).send({
                 status: "FAILURE",
-                error: "Subscription is inactive or expired"
+                error: "Service expired , please renue service and try again"
             });
         }
+
+        if (type === 'optimizer' && user.subscription.optimizerTokens.expiry < currentDate) {
+            return reply.code(403).send({
+                status: "FAILURE",
+                error: "Service expired , please renue service and try again"
+            });
+        }
+
 
         if (!type) {
             return reply.code(400).send({
@@ -688,25 +703,27 @@ async function generateResumeOnFeeback(req, reply) {
                 error: "Type of resume not provided"
             });
         }
-        if (type === 'JobCV' && user.subscription.JobCVTokens <= 0) {
-            return reply.code(400).send({
+        if (type === 'JobCV' && user.subscription.JobCVTokens.credits <= 0) {
+            return reply.code(403).send({
                 status: "FAILURE",
                 error: "Insufficient JobCV tokens"
             });
         }
 
+
+
         // Check if user has enough optimizer tokens
-        if (type === 'optimizer' && user.subscription.optimizerTokens <= 0) {
-            return reply.code(400).send({
+        if (type === 'optimizer' && user.subscription.optimizerTokens.credits <= 0) {
+            return reply.code(403).send({
                 status: "FAILURE",
                 error: "Insufficient optimizer tokens"
             });
         }
+
         const thread = await createThread();
         const threadId = thread.id;
 
-
-        // message = message + "applying for job of software developer"
+        // messag = message + "applying for job of software developer"
         const createMessage = await openai.beta.threads.messages.create(threadId, {
             role: 'user',
             content: message
@@ -756,9 +773,9 @@ async function generateResumeOnFeeback(req, reply) {
             await resume.save();
 
             if (type === 'JobCV') {
-                user.subscription.JobCVTokens -= 1;
+                user.subscription.JobCVTokens.credits -= 1;
             } else if (type === 'optimizer') {
-                user.subscription.optimizerTokens -= 1;
+                user.subscription.optimizerTokens.credits -= 1;
             }
 
             await user.save();
@@ -794,14 +811,12 @@ async function generateFreshResume(req, reply) {
             });
         }
 
+        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
+        }
+
 
         const currentDate = new Date();
-        if (user.subscription.status !== 'Active' || currentDate > user.subscription.currentPeriodEnd) {
-            return reply.code(400).send({
-                status: "FAILURE",
-                error: "Subscription is inactive or expired"
-            });
-        }
 
         if (!type) {
             return reply.code(400).send({
@@ -809,16 +824,32 @@ async function generateFreshResume(req, reply) {
                 error: "Type of resume not provided"
             });
         }
-        if (type === 'JobCV' && user.subscription.JobCVTokens <= 0) {
-            return reply.code(400).send({
+
+        if (type === 'JobCV' && user.subscription.JobCVTokens.expiry < currentDate) {
+            return reply.code(403).send({
+                status: "FAILURE",
+                error: "Service expired , please renue service and try again"
+            });
+        }
+
+        if (type === 'optimizer' && user.subscription.optimizerTokens.expiry < currentDate) {
+            return reply.code(403).send({
+                status: "FAILURE",
+                error: "Service expired , please renue service and try again"
+            });
+        }
+
+
+        if (type === 'JobCV' && user.subscription.JobCVTokens.credits <= 0) {
+            return reply.code(403).send({
                 status: "FAILURE",
                 error: "Insufficient JobCV tokens"
             });
         }
 
         // Check if user has enough optimizer tokens
-        if (type === 'optimizer' && user.subscription.optimizerTokens <= 0) {
-            return reply.code(400).send({
+        if (type === 'optimizer' && user.subscription.optimizerTokens.credits <= 0) {
+            return reply.code(403).send({
                 status: "FAILURE",
                 error: "Insufficient optimizer tokens"
             });
@@ -846,8 +877,6 @@ async function generateFreshResume(req, reply) {
             if (run.status === 'completed') {
                 const messages = await openai.beta.threads.messages.list(threadId);
                 const response = messages.body.data.find(message => message.role === 'assistant');
-                console.log(response.content)
-                // Try to parse the JSON content from the assistant's response
                 return response.content;
             } else {
 
@@ -878,9 +907,9 @@ async function generateFreshResume(req, reply) {
             await resume.save();
 
             if (type === 'JobCV') {
-                user.subscription.JobCVTokens -= 1;
+                user.subscription.JobCVTokens.credits -= 1;
             } else if (type === 'optimizer') {
-                user.subscription.optimizerTokens -= 1;
+                user.subscription.optimizerTokens.credits -= 1;
             }
 
             await user.save();
@@ -994,8 +1023,6 @@ async function generateCareerAdvice(req, reply) {
         if (user.subscription.careerCounsellingTokens <= 0) {
             return reply.status(400).send({ error: "Insufficient career counselling tokens" });
         }
-
-
 
         const thread = await createThread();
         const threadId = thread.id;

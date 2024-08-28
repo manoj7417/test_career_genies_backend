@@ -487,7 +487,7 @@ async function decodeToken(token, secret) {
 
 const updateUserProfileDetails = async (req, reply) => {
   const userId = req.user._id;
-  const { fullname, email, password, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
+  const { fullname,  phoneNumber, profilePicture, address, occupation, links, role } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -499,8 +499,6 @@ const updateUserProfileDetails = async (req, reply) => {
     }
 
     if (fullname !== undefined) user.fullname = fullname;
-    if (email !== undefined) user.email = email;
-    if (password !== undefined) user.password = password;
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
     if (profilePicture !== undefined) user.profilePicture = profilePicture;
     if (address !== undefined) user.address = address;
@@ -510,33 +508,12 @@ const updateUserProfileDetails = async (req, reply) => {
 
     // Save the updated user
     await user.save();
-
-    const generateAccessAndRefereshTokens = async (userId) => {
-      try {
-        const user = await User.findById(userId);
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
-
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-
-        return { accessToken, refreshToken };
-      } catch (error) {
-        throw new Error(
-          "Something went wrong while generating refresh and access token"
-        );
-      }
-    };
-    // Generate new tokens
-    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
     let userdata = await user.toSafeObject()
 
     return reply.code(200).send({
       status: "SUCCESS",
       message: "User details updated successfully",
       data: {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
         userdata
       }
     });

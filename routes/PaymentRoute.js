@@ -1,6 +1,8 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const { Payment } = require("../models/PaymentModel");
+const { getPricing } = require('../controllers/stripeController');
+
 
 const razorpay = new Razorpay({
     key_id: 'rzp_live_RhRPNiv9OEVxtr',
@@ -10,59 +12,35 @@ const razorpay = new Razorpay({
 async function PaymentRoute(fastify, options) {
 
     fastify.post("/upgradePlan", { preHandler: [fastify.verifyJWT] }, async (request, reply) => {
-
-        const { plan, duration } = request.body;
+        const { planName, duration } = request.body;
         const userId = request.user.id;
-        let amount, analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0;
-        let currentPeriodEnd;
-
-        switch (plan) {
-            case 'free':
-                amount = 0;
-                break;
-            case 'basic':
-                amount = duration === 'monthly' ? 449 : 4999;
-                analyserTokens = duration === 'monthly' ? 10 : 10 * 12;
-                optimizerTokens = duration === 'monthly' ? 10 : 10 * 12;
-                JobCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 10 : 10 * 12;
-                downloadCVTokens = duration === 'monthly' ? 10 : 10 * 12;
-                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-                break;
-            case 'premium':
-                amount = duration === 'monthly' ? 999 : 9999;
-                analyserTokens = duration === 'monthly' ? 20 : 20 * 12;
-                optimizerTokens = duration === 'monthly' ? 20 : 20 * 12;
-                JobCVTokens = duration === 'monthly' ? 20 : 20 * 12;
-                careerCounsellingTokens = duration === 'monthly' ? 20 : 20 * 12;
-                downloadCVTokens = duration === 'monthly' ? 20 : 20 * 12;
-                currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-                break;
-            default:
-                return reply.code(400).send({
-                    status: "FAILURE",
-                    error: "Invalid plan selected"
-                });
+        let  analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0;
+        const amount = getPricing(currency, planName)
+        if (planName === 'CVSTUDIO') {
+            analyserTokens = 20
+            optimizerTokens = 20
+            JobCVTokens = 20,
+                downloadCVTokens = 20
         }
+        if (planName === 'AICareerCoach') {
+            careerCounsellingTokens = 1
+        }
+        const currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1))
 
         const orderOptions = {
-            amount: amount * 100,
+            amount: amount ,
             currency: "INR",
             receipt: `receipt_order_${userId}`,
-            payment_capture: 1 // auto capture
+            payment_capture: 1
         };
-
-
 
         try {
             const order = await razorpay.orders.create(orderOptions);
-            console.log('Order created:', order);
-
             const payment = new Payment({
                 user: userId,
                 amount: amount,
                 status: 'Pending',
-                plan: plan,
+                plan: planName,
                 planType: duration,
                 sessionId: order.id,
                 analyserTokens: analyserTokens,
