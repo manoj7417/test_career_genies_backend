@@ -73,7 +73,8 @@ const UserSchema = new mongoose.Schema({
             {
                 type: String,
                 enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools'
-                ]
+                ],
+                default: "CVSTUDIO"
             }
         ],
         planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
