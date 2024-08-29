@@ -9,6 +9,7 @@ const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
 const crypto = require('crypto');
 const { pricing } = require('../constants/pricing');
+const { symbols } = require('../constants/symbols');
 
 
 const getPricing = (currency, planName) => {
@@ -25,6 +26,10 @@ const createSubscriptionPayment = async (req, res) => {
     const userId = req.user._id;
     let { email, success_url, cancel_url, currency, planName, duration } = req.body;
     try {
+        const user = await User.findById(userId)
+        if (!user) {
+            return res.code(404).send({ status: "FAILURE", message: "User not found" });
+        }
         let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0;
         const price = getPricing(currency, planName)
         const amount = price.price
@@ -79,7 +84,10 @@ const createSubscriptionPayment = async (req, res) => {
                 credits: careerCounsellingTokens,
                 expiry: currentPeriodEnd
             },
-            downloadCVTokens: downloadCVTokens,
+            downloadCVTokens: {
+                credits: downloadCVTokens,
+                expiry: currentPeriodEnd
+            },
             expiryDate: currentPeriodEnd
         });
         await payment.save();
@@ -119,8 +127,14 @@ const webhook = async (request, reply) => {
                 if (!payment) {
                     return reply.status(404).send('Payment record not found');
                 }
+                payment.status = 'Completed';
+                await payment.save();
+                const user = await User.findById(payment.user);
+                if (!user) {
+                    return reply.status(404).send('User not found');
+                }
+                const customerEmail = user.email;
                 if (payment.plan === 'ADD-CREDITS') {
-                    const user = await User.findById(payment.user);
                     if (payment.addCredits.serviceName === 'CVCreator') {
                         user.subscription.downloadCVTokens.credits += payment.addCredits.credits
                     }
@@ -131,38 +145,36 @@ const webhook = async (request, reply) => {
                     if (payment.addCredits.serviceName === 'CVMatch') {
                         user.subscription.JobCVTokens.credits += payment.addCredits.credits
                     }
+                    user.payments.push(payment._id)
                     await user.save();
-                    break;
+                } else {
+                    const UpdatedUserData = await User.findByIdAndUpdate(payment.user, {
+                        $set: {
+                            'subscription.status': 'Completed',
+                            'subscription.plan': [...user.subscription.plan, payment.plan],
+                            'subscription.planType': payment.planType,
+                            'subscription.currentPeriodStart': new Date(),
+                            'subscription.currentPeriodEnd': payment.expiryDate,
+                            'subscription.stripeCheckoutSessionId': sessionId,
+                            'subscription.paymentId': payment._id,
+                            'subscription.analyserTokens': payment.analyserTokens,
+                            'subscription.optimizerTokens': payment.optimizerTokens,
+                            'subscription.JobCVTokens': payment.jobCVTokens,
+                            'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+                            'subscription.downloadCVTokens': payment.downloadCVTokens,
+                            payments: [...user.payments, payment._id]
+                        }
+                    });
                 }
-                const user = await User.findById(payment.user);
-                const customerEmail = user.email;
-
-                await User.findByIdAndUpdate(payment.user, {
-                    $set: {
-                        'subscription.status': 'Completed',
-                        'subscription.plan': [...user.subscription.plan, payment.plan],
-                        'subscription.planType': payment.planType,
-                        'subscription.currentPeriodStart': new Date(),
-                        'subscription.currentPeriodEnd': payment.expiryDate,
-                        'subscription.stripeCheckoutSessionId': sessionId,
-                        'subscription.paymentId': payment._id,
-                        'subscription.analyserTokens': payment.analyserTokens,
-                        'subscription.optimizerTokens': payment.optimizerTokens,
-                        'subscription.JobCVTokens': payment.jobCVTokens,
-                        'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                        'subscription.downloadCVTokens': payment.downloadCVTokens
-                    }
-                });
                 const date = new Date(payment.expiryDate);
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 const formattedDate = date.toLocaleDateString('en-US', options);
                 const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
-                const planName = getPlanName(payment.plan)
-                const { symbol } = getPricing(payment.currency, planName)
-                const price = `${symbol}-${payment.amount}`
+                const planName = getPlanName(payment.plan) || "Credits Added"
+                const price = `${symbols[payment.currency]} ${payment.amount}`
                 const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', planName).replace('{payment_amount}', price).replace('{validity_date}', formattedDate)
                 await sendEmail(customerEmail, "Genie's Career Hub: Payment Successful", invoiceBody);
-                break;
+                return
             } catch (err) {
                 console.error('Error updating subscription status to Active:', err);
             }

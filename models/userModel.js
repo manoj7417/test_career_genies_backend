@@ -114,7 +114,7 @@ const UserSchema = new mongoose.Schema({
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
         downloadCVTokens: {
-            credits: { type: Number, default: 0 },
+            credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         }
     },
