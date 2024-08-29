@@ -25,7 +25,7 @@ const printResume = async (request, reply) => {
                 message: 'Your download CV tokens have expired'
             });
         }
-        if (user.subscription.plan.includes('CVSTUDIO') && user.subscription.downloadCVTokens.credits === 0) {
+        if (user.subscription.downloadCVTokens.credits <= 0) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
         }
         const htmlbody = request.body.html;

@@ -520,7 +520,7 @@ async function atsCheck(req, reply) {
                 message: 'Your analyser tokens have expired'
             });
         }
-        if (user.subscription.analyserTokens.credits === 0) {
+        if (user.subscription.analyserTokens.credits <= 0) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You have no analyser tokens' });
         }
 
