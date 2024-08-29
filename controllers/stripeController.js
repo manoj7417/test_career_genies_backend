@@ -346,8 +346,6 @@ const buyCredits = async (request, reply) => {
     }
 }
 
-
-
 module.exports = {
     createSubscriptionPayment,
     webhook,

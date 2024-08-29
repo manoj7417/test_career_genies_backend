@@ -70,7 +70,9 @@ const register = async (request, reply) => {
       "Genie's Career Hub: Email verification",
       VerfiyEmailBody,
     );
-    await sendEmail(email, "Welcome to Genie's Career Hub", welcomeEmailBody);
+    setTimeout(async () => {
+      await sendEmail(email, "Welcome to Genie's Career Hub", welcomeEmailBody);
+    }, 100000)
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
@@ -487,7 +489,7 @@ async function decodeToken(token, secret) {
 
 const updateUserProfileDetails = async (req, reply) => {
   const userId = req.user._id;
-  const { fullname,  phoneNumber, profilePicture, address, occupation, links, role } = req.body;
+  const { fullname, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
 
   try {
     const user = await User.findById(userId);

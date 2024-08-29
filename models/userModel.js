@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
         trim: true,
-        default: 'https://i.sstatic.net/l60Hf.png'
+        default: ''
     },
     address: {
         type: String,
