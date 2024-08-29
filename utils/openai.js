@@ -511,9 +511,6 @@ async function atsCheck(req, reply) {
             });
         }
 
-        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
-        }
 
         const currentDate = new Date();
 
@@ -665,9 +662,6 @@ async function generateResumeOnFeeback(req, reply) {
             });
         }
 
-        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
-        }
 
         if (analysisId) {
             const analysis = await Analysis.findById(analysisId);
@@ -808,11 +802,6 @@ async function generateFreshResume(req, reply) {
                 error: "User not found"
             });
         }
-
-        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
-        }
-
 
         const currentDate = new Date();
 

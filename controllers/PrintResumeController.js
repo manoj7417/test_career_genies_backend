@@ -18,9 +18,6 @@ const printResume = async (request, reply) => {
             return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
         }
 
-        if (!user.subscription?.plan?.includes('CVSTUDIO')) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You are not eligible for this feature' });
-        }
 
         if (user.subscription.downloadCVTokens.expiry <= currentDate) {
             return reply.code(403).send({
