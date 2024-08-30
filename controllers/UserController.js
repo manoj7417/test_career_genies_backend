@@ -67,11 +67,11 @@ const register = async (request, reply) => {
     const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
     await sendEmail(
       email,
-      "Genie's Career Hub: Email verification",
+      "Genies Career Hub: Email verification",
       VerfiyEmailBody,
     );
     setTimeout(async () => {
-      await sendEmail(email, "Welcome to Genie's Career Hub", welcomeEmailBody);
+      await sendEmail(email, "Welcome to Genies Career Hub", welcomeEmailBody);
     }, 100000)
     return reply.code(201).send({
       status: "SUCCESS",
