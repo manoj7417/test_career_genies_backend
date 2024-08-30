@@ -123,9 +123,8 @@ fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function
     }
 });
 
-// fastify.post("/webhook", webhook);
+fastify.post("/webhook", webhook);
 
-//razorpay webhook
 fastify.post("/webhookrazorpay", razorpayWebhook);
 
 const start = async () => {
