@@ -22,44 +22,46 @@ const EmailRoute = require('./routes/EmailRoute');
 const BlogRoute = require('./routes/BlogRoute');
 const PaymentRoute = require('./routes/PaymentRoute');
 const NewsletterRoute = require('./routes/NewsLetterRoute');
+const CoachRoute = require('./routes/CoachRoute');
+const coachAuth = require('./middlewares/coachAuth');
 
 require('dotenv').config();
 
 // Register plugins
 fastify.register(cookie);
-fastify.register(require('@fastify/swagger'), {
-    openapi: {
-        openapi: '3.0.0',
-        info: {
-            title: 'Test swagger',
-            description: 'Testing the Fastify swagger API',
-            version: '0.1.0'
-        },
-        servers: [
-            {
-                url: `http://localhost:${process.env.PORT}/docs`,
-                description: 'Development server'
-            }
-        ],
-        tags: [
-            { name: 'user', description: 'User related end-points' },
-            { name: 'code', description: 'Code related end-points' }
-        ],
-        components: {
-            securitySchemes: {
-                apiKey: {
-                    type: 'apiKey',
-                    name: 'apiKey',
-                    in: 'header'
-                }
-            }
-        },
-        externalDocs: {
-            url: 'https://swagger.io',
-            description: 'Find more info here'
-        }
-    }
-});
+// fastify.register(require('@fastify/swagger'), {
+//     openapi: {
+//         openapi: '3.0.0',
+//         info: {
+//             title: 'Test swagger',
+//             description: 'Testing the Fastify swagger API',
+//             version: '0.1.0'
+//         },
+//         servers: [
+//             {
+//                 url: `http://localhost:${process.env.PORT}/docs`,
+//                 description: 'Development server'
+//             }
+//         ],
+//         tags: [
+//             { name: 'user', description: 'User related end-points' },
+//             { name: 'code', description: 'Code related end-points' }
+//         ],
+//         components: {
+//             securitySchemes: {
+//                 apiKey: {
+//                     type: 'apiKey',
+//                     name: 'apiKey',
+//                     in: 'header'
+//                 }
+//             }
+//         },
+//         externalDocs: {
+//             url: 'https://swagger.io',
+//             description: 'Find more info here'
+//         }
+//     }
+// });
 
 fastify.register(cors, {
     origin: [
@@ -93,9 +95,10 @@ fastify.register(require('@fastify/static'), {
     root: path.join(__dirname, 'uploads'),
     prefix: '/uploads',
 });
-
 fastify.decorate('verifyJWT', verifyJWT);
 fastify.decorate('roleCheck', roleCheck);
+fastify.decorate('coachAuth', coachAuth);
+fastify.decorate('coachRoleCheck',)
 
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);
@@ -112,6 +115,7 @@ fastify.register(EmailRoute, { prefix: "/api/message", before: apiKeyAuth })
 fastify.register(BlogRoute, { prefix: "/api/blog", before: apiKeyAuth })
 fastify.register(PaymentRoute, { prefix: "/api/payment", before: apiKeyAuth })
 fastify.register(NewsletterRoute, { prefix: "/api/newsletter", before: apiKeyAuth })
+fastify.register(CoachRoute, { prefix: "/api/coach", before: apiKeyAuth })
 
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
