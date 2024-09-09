@@ -99,6 +99,14 @@ const coachLogin = async (req, res) => {
     }
 }
 
+const uploadCoachDocuments = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 const getAllCoaches = async (req, res) => {
     try {
         const coaches = await Coach.find()
@@ -235,5 +243,6 @@ module.exports = {
     getCoachDetails,
     setCoachAvailability,
     forgotCoachPassword,
-    resetCoachPassword
+    resetCoachPassword,
+    uploadCoachDocuments
 }

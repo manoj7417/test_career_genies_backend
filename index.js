@@ -98,7 +98,7 @@ fastify.register(require('@fastify/static'), {
 fastify.decorate('verifyJWT', verifyJWT);
 fastify.decorate('roleCheck', roleCheck);
 fastify.decorate('coachAuth', coachAuth);
-fastify.decorate('coachRoleCheck',)
+// fastify.decorate('coachRoleCheck',)
 
 const storage = multer.memoryStorage();
 fastify.register(multer.contentParser);

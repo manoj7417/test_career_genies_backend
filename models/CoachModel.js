@@ -20,13 +20,7 @@ const coachSchema = new mongoose.Schema({
         trim: true
     },
     phoneNumber: {
-        countryCode: {
-            type: String,
-            required: true
-        },
-        number: {
-            type: Number, required: true
-        }
+        type: String, required: true
     },
     picture: {
         type: String,
