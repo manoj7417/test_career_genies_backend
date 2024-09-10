@@ -47,7 +47,7 @@ const coachSchema = new mongoose.Schema({
         required: false
     },
     coachingType: {
-        type: [String],
+        type: String,
         required: false
     },
     coachingDescription: {
@@ -120,8 +120,22 @@ const coachSchema = new mongoose.Schema({
         default: false
     },
     documents: [{
-        name: { type: String }
-    }]
+        name: { type: String },
+        link: { type: String },
+        isVerified: { type: Boolean, default: false }
+    }],
+    signedAggrement: {
+        link: { type: String },
+        isVerified: {
+            type: Boolean, default: false
+        }
+    },
+    address: {
+        type: String
+    },
+    coachCV: {
+        type: String
+    }
 }, {
     timestamps: true
 });

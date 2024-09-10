@@ -69,11 +69,6 @@ const coachLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
         const coach = await Coach.findOne({ email });
-        if (!coach.isApproved) {
-            return res.status(401).send({
-                message: "Coach not approved yet"
-            })
-        }
         const isPasswordCorrect = await coach.comparePassword(password);
         if (!isPasswordCorrect) {
             return reply.code(401).send({
