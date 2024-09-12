@@ -16,39 +16,37 @@ async function uploadImage(fastify, options) {
     if (!data) {
       return reply.code(400).send({ error: 'No file uploaded' });
     }
-
     // Generate a unique file name
     const fileName = `${Date.now()}_${data.filename}`;
-    
     // Prepare params for uploading to DigitalOcean Spaces
     const uploadParams = {
       Bucket: process.env.DO_SPACES_BUCKET || 'geniescareerhubbucket',
       Key: fileName,
       Body: data.file,
-      ACL: 'public-read' // Make the file publicly accessible (optional)
+      ACL: 'public-read'
     };
 
     try {
-      // Upload the file to DigitalOcean Spaces
       const result = await s3.upload(uploadParams).promise();
-
-      return reply.code(200).send({ message: 'File uploaded successfully', url: result.Location });
+      return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}` });
     } catch (error) {
       console.error('Error uploading file: ', error);
       return reply.code(500).send({ error: 'Failed to upload file' });
     }
   });
+
+
   fastify.get('/getfile', async (request, reply) => {
     const { fileName } = request.query;
     if (!fileName) {
       return reply.code(400).send({ error: 'File name is required' });
     }
-    
-  
+
+
     try {
       // Construct the file URL or retrieve it from your storage (e.g., DigitalOcean Spaces)
       const fileUrl = `https://your-space-name.digitaloceanspaces.com/${fileName}`;
-      console.log(fileUrl);
+
       // Redirect or send back the file URL to the client
       return reply.code(200).send({ message: 'File URL', url: fileUrl });
     } catch (error) {
@@ -56,7 +54,7 @@ async function uploadImage(fastify, options) {
       return reply.code(500).send({ error: 'Failed to fetch the file' });
     }
   });
-  
+
 }
 
 
