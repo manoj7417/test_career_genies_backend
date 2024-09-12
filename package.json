@@ -26,6 +26,7 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
     "fastify-multer": "^2.0.3",
+    "fastify-multipart": "^5.4.0",
     "fastify-plugin": "^4.5.1",
     "fastify-raw-body": "^4.3.0",
     "fastify-static": "^4.7.0",
