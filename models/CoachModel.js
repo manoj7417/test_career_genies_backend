@@ -19,19 +19,54 @@ const coachSchema = new mongoose.Schema({
         minlength: 8,
         trim: true
     },
-    phoneNumber: {
+    phone: {
         type: String, required: true
     },
-    picture: {
+    profileImage: {
         type: String,
         required: false
+    },
+    address: {
+        type: String
+    },
+    country: {
+        type: String
+    },
+    city: {
+        type: String
+    },
+    zip: {
+        type: String
+    },
+    cv: {
+        link: { type: String },
+        isVerified: { type: Boolean, default: false }
+    },
+    signedAggrement: {
+        link: { type: String },
+        isVerified: { type: Boolean, default: false }
+    },
+    experience: {
+        type: Number
+    },
+    typeOfCoaching: {
+        type: String
+    },
+    skills: {
+        type: String
+    },
+    dateofBirth: {
+        type: Date
+    },
+    placeofBirth: {
+        type: String
     },
     profession: {
         type: String,
         required: false,
         trim: true
     },
-    bioInfo: {
+    bio: {
         type: String,
         required: false
     },
@@ -43,10 +78,6 @@ const coachSchema = new mongoose.Schema({
         }
     },
     categories: {
-        type: [String],
-        required: false
-    },
-    coachingType: {
         type: String,
         required: false
     },
@@ -54,8 +85,11 @@ const coachSchema = new mongoose.Schema({
         type: String,
         trim: false
     },
+    address: {
+        type: String
+    },
     ratesPerHour: {
-        amount: { type: Number, required: false },
+        charges: { type: Number, required: false },
         currency: { type: String, required: false, enum: ['USD', 'EUR', 'GBP', 'INR'] }
     },
     ratings: {
@@ -119,22 +153,14 @@ const coachSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    documents: [{
-        name: { type: String },
-        link: { type: String },
-        isVerified: { type: Boolean, default: false }
-    }],
-    signedAggrement: {
-        link: { type: String },
-        isVerified: {
-            type: Boolean, default: false
-        }
+    approvalStatus : {
+    type : String ,
+    enum : ['pending','approved','rejected'],
+    default : 'pending'
     },
-    address: {
-        type: String
-    },
-    coachCV: {
-        type: String
+    formFilled: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true
@@ -207,6 +233,8 @@ coachSchema.methods.toSafeObject = function () {
         availability: this.availability,
         isApproved: this.isApproved,
         createdAt: this.createdAt,
+        formFilled: this.formFilled,
+        profileImage: this.profileImage
     };
 };
 
@@ -221,7 +249,6 @@ coachSchema.methods.generateResetPasswordToken = function () {
         }
     )
 }
-
 
 const Coach = mongoose.model("Coach", coachSchema);
 
