@@ -26,6 +26,7 @@ const coachAuth = require('./middlewares/coachAuth');
 const UploadRoute = require('./routes/UploadRoute');
 const uploadImage = require('./routes/UploadsRoute');
 const multipart = require('fastify-multipart');
+const AdminRoute = require('./routes/AdminRoute');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
@@ -66,8 +67,9 @@ fastify.decorate('roleCheck', roleCheck);
 fastify.decorate('coachAuth', coachAuth);
 
 // Register the routes
-fastify.register(UploadRoute , { prefix: '/api/upload', before: apiKeyAuth });
+fastify.register(UploadRoute, { prefix: '/api/upload', before: apiKeyAuth });
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
+fastify.register(AdminRoute, { prefix: '/api/admin', before: apiKeyAuth })
 fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
 fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
 fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });

@@ -15,7 +15,8 @@ const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
-const axios = require('axios')
+const axios = require('axios');
+const { uploadfile } = require('../utils/s3Client');
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -528,6 +529,28 @@ const updateUserProfileDetails = async (req, reply) => {
   }
 };
 
+const udpateProfileImage = async (req, reply) => {
+  const data = await req.file();
+  const user = req.user
+  console.log(data)
+  try {
+    const fileName = `GeniesCareerHub/${Date.now()}_${data.filename}`;
+    const response = await uploadfile(fileName, data.file);
+    if (!response) {
+      return res.status(400).send({
+        status: "FAILURE",
+        error: "Error uploading profile image"
+      })
+    }
+    console.log(response)
+    user.profilePicture = `${process.env.DO_CDN_URL}/${fileName}`
+    return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}`, userdata : user.toSafeObject() });
+  } catch (error) {
+    console.error('Error uploading file: ', error);
+    return reply.code(500).send({ error: 'Failed to upload image' });
+  }
+}
+
 const GetuserDetails = async (req, reply) => {
   const userId = req.user._id;
   try {
@@ -693,5 +716,6 @@ module.exports = {
   changePassword,
   verifyToken,
   verifyEmail,
-  resendVerificationEmail
+  resendVerificationEmail,
+  udpateProfileImage
 };

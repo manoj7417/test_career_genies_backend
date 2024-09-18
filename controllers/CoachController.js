@@ -38,7 +38,7 @@ const registerCoach = async (req, res) => {
     const { name,
         password,
         email,
-        phoneNumber
+        phone
     } = req.body;
     try {
         const findExistingUser = await Coach.findOne({ email })
@@ -51,7 +51,7 @@ const registerCoach = async (req, res) => {
             name,
             password,
             email,
-            phoneNumber
+            phone
         })
         await coach.save();
         res.status(201).send({
@@ -96,9 +96,9 @@ const coachLogin = async (req, res) => {
 
 const uploadCoachDocuments = async (req, res) => {
     try {
-        
+
     } catch (error) {
-        
+
     }
 }
 

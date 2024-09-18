@@ -1,33 +1,26 @@
 const AWS = require('aws-sdk');
-const fs = require('fs');
-const path = require('path');
+const { uploadfile } = require('../utils/s3Client');
 
 // Initialize S3 compatible API using DigitalOcean Spaces credentials
 const s3 = new AWS.S3({
-  endpoint: new AWS.Endpoint(process.env.DO_SPACES_ENDPOINT || 'https://lon1.digitaloceanspaces.com'),
-  accessKeyId: process.env.DO_SPACES_KEY || 'DO00ND68CJRPGZFB6MZL',
-  secretAccessKey: process.env.DO_SPACES_SECRET || 'YufP8+PARoVRuWBT4lmugdur0GvtKnZ7Qzq9kz7PE78'
+  endpoint: new AWS.Endpoint(process.env.DO_SPACES_ENDPOINT),
+  accessKeyId: process.env.DO_SPACES_KEY,
+  secretAccessKey: process.env.DO_SPACES_SECRET
 });
 
 async function uploadImage(fastify, options) {
   fastify.post('/upload', async (request, reply) => {
-    const data = await request.file(); // Assuming you're using fastify-multipart for file uploads
-
+    const data = await request.file();
     if (!data) {
       return reply.code(400).send({ error: 'No file uploaded' });
     }
-    // Generate a unique file name
-    const fileName = `${Date.now()}_${data.filename}`;
-    // Prepare params for uploading to DigitalOcean Spaces
-    const uploadParams = {
-      Bucket: process.env.DO_SPACES_BUCKET || 'geniescareerhubbucket',
-      Key: fileName,
-      Body: data.file,
-      ACL: 'public-read'
-    };
+    const fileName = `GeniesCareerHub/${Date.now()}_${data.filename}`;
 
     try {
-      const result = await s3.upload(uploadParams).promise();
+      const response = await uploadfile(fileName, data.file);
+      if (!response) {
+        return reply.code(400).send({ message: 'Error uploading file to DigitalOcean Spaces' });
+      }
       return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}` });
     } catch (error) {
       console.error('Error uploading file: ', error);
@@ -41,12 +34,9 @@ async function uploadImage(fastify, options) {
     if (!fileName) {
       return reply.code(400).send({ error: 'File name is required' });
     }
-
-
     try {
       // Construct the file URL or retrieve it from your storage (e.g., DigitalOcean Spaces)
       const fileUrl = `https://your-space-name.digitaloceanspaces.com/${fileName}`;
-
       // Redirect or send back the file URL to the client
       return reply.code(200).send({ message: 'File URL', url: fileUrl });
     } catch (error) {
