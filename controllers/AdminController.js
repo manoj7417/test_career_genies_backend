@@ -1,10 +1,28 @@
+const { Coach } = require("../models/CoachModel")
 
 const verifyCoach = async (req, res) => {
     const { coachId } = req.params
     try {
-
+        const coach = await Coach.findById(coachId)
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach not found"
+            })
+        }
+        coach.cv.isVerified = true;
+        coach.signedAggrement.isVerified = true;
+        coach.isApproved = true;
+        coach.approvalStatus = 'approved'
+        await coach.save()
+        res.status(200).send({
+            status: "SUCCESS",
+            message: "Coach found",
+            coach
+        })
     } catch (error) {
-
+        console.log("Error", error)
+        res.status(500).send({ status: "FAILURE", error })
     }
 }
 

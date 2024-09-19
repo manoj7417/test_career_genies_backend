@@ -108,26 +108,20 @@ const coachSchema = new mongoose.Schema({
     description: { type: String, required: false, trim: true },
     blogs: [],
     availability: {
-        dayOfWeek: {
-            type: [String],
-            enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-        },
-        slots: [{
-            startTime: {
-                type: String
+        dates: [{
+            dayOfWeek: {
+                type: String,
+                enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             },
-            endTime: {
-                type: String
-            },
+            slots: [{
+                startTime: {
+                    type: String
+                },
+                endTime: {
+                    type: String
+                },
+            }],
         }],
-        isRecurring: {
-            type: Boolean,
-            default: false
-        },
-        unavailableDates: {
-            type: [Date],
-            default: []
-        },
         customSlots: [{
             date: { type: Date },
             slots: [{
@@ -153,10 +147,10 @@ const coachSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    approvalStatus : {
-    type : String ,
-    enum : ['pending','approved','rejected'],
-    default : 'pending'
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
     },
     formFilled: {
         type: Boolean,

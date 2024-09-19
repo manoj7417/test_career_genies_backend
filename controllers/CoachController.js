@@ -8,6 +8,8 @@ const resetPasswordTemplatePath = path.join(
     "resetPassword.html"
 );
 const { sendEmail } = require("../utils/nodemailer");
+const jwt = require("jsonwebtoken");
+require('dotenv').config();
 
 async function decodeToken(token, secret) {
     try {
@@ -93,6 +95,67 @@ const coachLogin = async (req, res) => {
         })
     }
 }
+
+const authVerification = async (req, res) => {
+    const { accessToken, refreshToken } = req.body;
+
+    try {
+        const decoded = await verifyAccessToken(accessToken);
+        if (decoded) {
+            const newTokens = await generateAccessAndRefereshTokens(decoded._id);
+            const user = await Coach.findById({ _id: decoded._id })
+            return res.status(200).send({
+                status: "SUCCESS",
+                message: "Token verified successfully",
+                data: {
+                    accessToken: newTokens.accessToken,
+                    refreshToken: newTokens.refreshToken,
+                    userdata: user.toSafeObject()
+                }
+            });
+        } else {
+            const decodedRefreshToken = await verifyRefreshToken(refreshToken);
+            if (decodedRefreshToken) {
+                const tokens = await generateAccessAndRefereshTokens(decodedRefreshToken._id);
+                const user = await Coach.findById({ _id: decodedRefreshToken._id })
+                return res.status(200).send({
+                    status: "SUCCESS",
+                    message: "Token refreshed successfully",
+                    data: {
+                        accessToken: tokens.accessToken,
+                        refreshToken: tokens.refreshToken,
+                        userdata: user.toSafeObject()
+                    }
+                });
+            } else {
+                return res.status(401).send({ status: "FAILURE", message: "Invalid token" });
+            }
+        }
+    } catch (error) {
+        console.log("Error verifying token", error);
+        return res.status(500).send({ status: "FAILURE", message: "An error occurred while verifying token" });
+    }
+};
+
+const verifyAccessToken = async (accessToken) => {
+    try {
+        return await jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    } catch (error) {
+        if (error.message === 'jwt expired') {
+            return null;
+        } else {
+            throw error;
+        }
+    }
+};
+
+const verifyRefreshToken = async (refreshToken) => {
+    try {
+        return await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (error) {
+        throw error;
+    }
+};
 
 const uploadCoachDocuments = async (req, res) => {
     try {
@@ -239,5 +302,6 @@ module.exports = {
     setCoachAvailability,
     forgotCoachPassword,
     resetCoachPassword,
-    uploadCoachDocuments
+    uploadCoachDocuments,
+    authVerification
 }

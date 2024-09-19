@@ -5,9 +5,9 @@ async function AdminRoute(fastify, options) {
 
     fastify.addHook('preHandler', fastify.verifyJWT);
 
-    fastify.post("/verifyCoach/:coachId", verifyCoach)
+    fastify.post("/verifyCoach/:coachId", { preHandler: fastify.roleCheck(['admin']) }, verifyCoach)
 
-    fastify.get("/auth" , { preHandler: fastify.roleCheck(['admin']) }, auth)
+    fastify.get("/auth", { preHandler: fastify.roleCheck(['admin']) }, auth)
 }
 
 module.exports = AdminRoute;
