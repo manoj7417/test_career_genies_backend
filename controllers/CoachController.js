@@ -73,7 +73,7 @@ const coachLogin = async (req, res) => {
         const coach = await Coach.findOne({ email });
         const isPasswordCorrect = await coach.comparePassword(password);
         if (!isPasswordCorrect) {
-            return reply.code(401).send({
+            return res.code(401).send({
                 status: "FAILURE",
                 error: "Invalid password",
             });
