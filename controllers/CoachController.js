@@ -71,6 +71,12 @@ const coachLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
         const coach = await Coach.findOne({ email });
+        if (!coach) {
+            return res.code(404).send({
+                status: "FAILURE",
+                error: "Coach not found",
+            })
+        }
         const isPasswordCorrect = await coach.comparePassword(password);
         if (!isPasswordCorrect) {
             return res.code(401).send({
