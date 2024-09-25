@@ -113,6 +113,7 @@ const coachSchema = new mongoose.Schema({
                 type: String,
                 enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             },
+            isAvailable: { type: Boolean, default: false },
             slots: [{
                 startTime: {
                     type: String
@@ -122,7 +123,8 @@ const coachSchema = new mongoose.Schema({
                 },
             }],
         }],
-        customSlots: [{
+        timeZone: { type: String },
+        dateOverrides: [{
             date: { type: Date },
             slots: [{
                 startTime: {
@@ -130,15 +132,11 @@ const coachSchema = new mongoose.Schema({
                 },
                 endTime: {
                     type: String
-                },
-                isBooked: {
-                    type: Boolean,
-                    default: false
                 }
             }]
         }]
     },
-    bookedSlots: {
+    bookings: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: "Booking",
         default: []

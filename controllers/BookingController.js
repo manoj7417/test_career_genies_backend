@@ -1,132 +1,11 @@
 const { Booking } = require("../models/BookingModel");
 const { Coach } = require("../models/CoachModel");
-const { User } = require("../models/userModel");
-const moment = require('moment')
+const { sendEmail } = require("../utils/nodemailer");
 
-const BookSlot = async (req, res) => {
+const bookSlots = async (req, res) => {
+    const user = req.user;
     const userId = req.user._id;
-    const { coachId } = req.params;
-    const { date, startTime, endTime, timezone } = req.body;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send({
-                status: "FAILURE",
-                message: "User not found"
-            });
-        }
-        const coach = await Coach.findById(coachId)
-        if (!coach) {
-            return res.status(404).send({
-                status: "FAILURE",
-                message: "Coach not found"
-            });
-        }
-
-        const existingBooking = await Booking.findOne({
-            coachId,
-            date,
-            $or: [
-                { "slotTime.startTime": { $lt: endTime, $gte: startTime } },
-                { "slotTime.endTime": { $gt: startTime, $lte: endTime } },
-                {
-                    $and: [
-                        { "slotTime.startTime": { $lte: startTime } },
-                        { "slotTime.endTime": { $gte: endTime } }
-                    ]
-                }
-            ]
-        });
-
-        if (existingBooking) {
-            return res.status(409).send({
-                status: "FAILURE",
-                message: "Time slot is already booked"
-            });
-        }
-
-        const startTimeUTC = moment.tz(`${date} ${startTime}`, timezone).utc();
-        const endTimeUTC = moment.tz(`${date} ${endTime}`, timezone).utc();
-
-        const booking = new Booking({
-            coachId,
-            userId,
-            date: startTimeUTC.toDate(),
-            slotTime: {
-                startTime: startTimeUTC.format('HH:mm'),
-                endTime: endTimeUTC.format('HH:mm')
-            }
-        });
-        return res.status(201).send({
-            status: "SUCCESS",
-            message: "Booking confirmed",
-            booking
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({
-            status: "FAILURE",
-            message: "An error occurred while booking the slot"
-        });
-    }
-}
-
-const checkSlotAvailability = async (req, res) => {
-    const { coachId, date, startTime, endTime, timezone } = req.body;
-    try {
-        const startTimeUTC = moment.tz(`${date} ${startTime}`, timezone).utc();
-        const endTimeUTC = moment.tz(`${date} ${endTime}`, timezone).utc();
-
-        if (endTimeUTC.isBefore(startTimeUTC) || endTimeUTC.isSame(startTimeUTC)) {
-            return res.status(400).send({
-                status: "FAILURE",
-                message: "End time must be after start time"
-            });
-        }
-
-        const conflictingBooking = await Booking.findOne({
-            coachId,
-            date: startTimeUTC.toDate(),
-            $or: [
-
-                {
-                    "slotTime.startTime": { $lt: endTimeUTC.format('HH:mm'), $gte: startTimeUTC.format('HH:mm') }
-                },
-                {
-                    "slotTime.endTime": { $gt: startTimeUTC.format('HH:mm'), $lte: endTimeUTC.format('HH:mm') }
-                },
-                {
-                    $and: [
-                        { "slotTime.startTime": { $lte: startTimeUTC.format('HH:mm') } },
-                        { "slotTime.endTime": { $gte: endTimeUTC.format('HH:mm') } }
-                    ]
-                }
-            ]
-        });
-
-        if (conflictingBooking) {
-            return res.status(409).send({
-                status: "FAILURE",
-                message: "The time slot is already booked"
-            });
-        }
-
-        return res.status(200).send({
-            status: "SUCCESS",
-            message: "The time slot is available"
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send({
-            status: "FAILURE",
-            message: "An error occurred while checking slot availability"
-        });
-    }
-}
-
-const getCoachSlots = async (req, res) => {
-    const { coachId } = req.params;
-    const { date, timezone } = req.query; 
+    const { slotTime, coachId, timezone, country, state, city, notes, date } = req.body;
     try {
         const coach = await Coach.findById(coachId);
         if (!coach) {
@@ -135,87 +14,77 @@ const getCoachSlots = async (req, res) => {
                 message: "Coach not found"
             });
         }
-        const dayOfWeek = moment(date).tz(timezone).format('dddd'); 
-        const availability = coach.availability.dayOfWeek.includes(dayOfWeek)
-            ? {
-                startTime: coach.availability.startTime,
-                endTime: coach.availability.endTime,
-                unavailableDates: coach.availability.unavailableDates
-            }
-            : null;
-
-        if (!availability) {
-            return res.status(200).send({
-                status: "SUCCESS",
-                message: "Coach is not available on this date"
+        const isSlotBooked = await Booking.findOne({ coachId, slotTime, date });
+        if (isSlotBooked) {
+            return res.status(409).send({
+                status: "FAILURE",
+                message: "Slot is already booked"
             });
         }
-
-        // Check if the date is within unavailable dates
-        if (availability.unavailableDates.some(unavailableDate => moment(unavailableDate).isSame(date, 'day'))) {
-            return res.status(200).send({
-                status: "SUCCESS",
-                message: "Coach is unavailable on this date"
-            });
-        }
-
-        // Get Booked Slots for the Date
-        const bookedSlots = await Booking.find({
+        const newBooking = new Booking({
+            userId,
             coachId,
-            date: moment(date).tz(timezone).toDate()
-        }).select('slotTime');
-
-        // Prepare available slots
-        const availableSlots = [];
-        const startTime = moment.tz(`${date} ${availability.startTime}`, timezone);
-        const endTime = moment.tz(`${date} ${availability.endTime}`, timezone);
-        let currentSlot = startTime.clone();
-
-        while (currentSlot.isBefore(endTime)) {
-            const slotEndTime = currentSlot.clone().add(1, 'hour'); // Assume 1-hour slots
-
-            // Check if this slot is booked
-            const isBooked = bookedSlots.some(slot =>
-                moment.tz(`${date} ${slot.slotTime.startTime}`, timezone).isSameOrBefore(slotEndTime) &&
-                moment.tz(`${date} ${slot.slotTime.endTime}`, timezone).isAfter(currentSlot)
-            );
-
-            if (!isBooked) {
-                availableSlots.push({
-                    startTime: currentSlot.format('HH:mm'),
-                    endTime: slotEndTime.format('HH:mm')
-                });
-            }
-
-            currentSlot = slotEndTime;
-        }
-
-        return res.status(200).send({
-            status: "SUCCESS",
-            data: {
-                availability: {
-                    startTime: availability.startTime,
-                    endTime: availability.endTime,
-                    unavailableDates: availability.unavailableDates
-                },
-                availableSlots,
-                bookedSlots: bookedSlots.map(slot => ({
-                    startTime: moment.tz(`${date} ${slot.slotTime.startTime}`, timezone).format('HH:mm'),
-                    endTime: moment.tz(`${date} ${slot.slotTime.endTime}`, timezone).format('HH:mm')
-                }))
-            }
+            slotTime,
+            timezone,
+            country,
+            state,
+            city,
+            notes,
+            date
         });
+        await newBooking.save();
+        const updatedCoach = await Coach.findByIdAndUpdate(
+            coachId,
+            { $push: { bookings: newBooking._id } },
+            { new: true }
+        );
 
+        const coachHtml = `<div>
+        <h2>Meeting Details</h2>
+        <p>User: ${user.fullname}</p>
+        <p>Date: ${date}</p>
+        <p>Slot Time: ${slotTime}</p>
+        <p>Notes: ${notes}</p>
+        <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
+        <p>To join the meeting, please visit the following link:</p>
+        </div>`
+
+        await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
+
+        const userHtml = `<div>
+        <h2>Meeting Details</h2>
+        <p>Coach: ${coach.name}</p>
+        <p>Date: ${date}</p>
+        <p>Slot Time: ${slotTime}</p>
+        <p>Notes: ${notes}</p>
+        <p>To join the meeting, please visit the following link:</p>`
+
+        await sendEmail(user.email, "Career coaching meeting scheduled", userHtml)
+
+        res.status(201).send({
+            status: "SUCCESS",
+            message: "Slot booked successfully",
+            data: newBooking
+        });
     } catch (error) {
-        console.error(error);
-        return res.status(500).send({
+        console.error("Error booking slot", error);
+        res.status(500).send({
             status: "FAILURE",
-            message: "An error occurred while fetching coach slots"
+            message: "An error occurred while booking slot"
         });
     }
-};
+}
+
+const cancelSlot = async (req, res) => {
+    try {
+        
+    } catch (error) {
+
+    }
+}
+
 
 module.exports = {
-    BookSlot,
-    checkSlotAvailability
+    bookSlots,
+    cancelSlot
 }

@@ -1,5 +1,5 @@
 
-const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments,  authVerification } = require("../controllers/CoachController");
+const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification } = require("../controllers/CoachController");
 
 
 async function CoachRoute(fastify, options) {
@@ -11,7 +11,7 @@ async function CoachRoute(fastify, options) {
 
     fastify.patch("/add-documents", { preHandler: fastify.coachAuth }, uploadCoachDocuments)
 
-    fastify.post("/set-availability", {
+    fastify.patch("/set-availability", {
         preHandler: fastify.coachAuth,
     }, setCoachAvailability)
 

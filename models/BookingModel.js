@@ -13,7 +13,7 @@ const BookingSchema = new mongoose.Schema({
     },
     date: {
         type: Date,
-        required: true
+        required: true,
     },
     slotTime: {
         startTime: {
@@ -24,6 +24,23 @@ const BookingSchema = new mongoose.Schema({
             type: String,
             required: true
         }
+    },
+    timezone: {
+        type: String, required: true
+    },
+    country: {
+        type: String, required: true
+    },
+    city: {
+        type: String, required: true
+    },
+    notes: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'completed', 'cancelled'],
+        default: 'pending'
     }
 });
 

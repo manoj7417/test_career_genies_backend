@@ -1,11 +1,11 @@
-const { BookSlot } = require("../controllers/BookingController");
+const { bookSlots } = require("../controllers/BookingController");
+
 
 
 async function BookingRoute(fastify, options) {
-
-    fastify.get('/book/:coachId', { preHandler: fastify.verifyJWT }, BookSlot)
+    fastify.post('/bookSlot', { preHandler: fastify.verifyJWT }, bookSlots)
 
     
 }
 
-module.exports = BookingRoute; 
+module.exports = BookingRoute;

@@ -27,6 +27,7 @@ const UploadRoute = require('./routes/UploadRoute');
 const uploadImage = require('./routes/UploadsRoute');
 const multipart = require('fastify-multipart');
 const AdminRoute = require('./routes/AdminRoute');
+const BookingRoute = require('./routes/BookingRoute');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
@@ -82,7 +83,9 @@ fastify.register(PaymentRoute, { prefix: "/api/payment", before: apiKeyAuth });
 fastify.register(NewsletterRoute, { prefix: "/api/newsletter", before: apiKeyAuth });
 fastify.register(CoachRoute, { prefix: "/api/coach", before: apiKeyAuth });
 fastify.register(uploadImage, { prefix: "/api/uploadimage" });
-
+fastify.register(BookingRoute, {
+    prefix: "/api/booking", before: apiKeyAuth
+})
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
     if (req.url === '/webhook') {

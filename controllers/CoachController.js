@@ -74,14 +74,14 @@ const coachLogin = async (req, res) => {
         if (!coach) {
             return res.code(404).send({
                 status: "FAILURE",
-                error: "Coach not found",
+                error: "Email does not exist",
             })
         }
         const isPasswordCorrect = await coach.comparePassword(password);
         if (!isPasswordCorrect) {
             return res.code(401).send({
                 status: "FAILURE",
-                error: "Invalid password",
+                error: "Invalid credentials",
             });
         }
         const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(coach._id);
@@ -104,7 +104,6 @@ const coachLogin = async (req, res) => {
 
 const authVerification = async (req, res) => {
     const { accessToken, refreshToken } = req.body;
-
     try {
         const decoded = await verifyAccessToken(accessToken);
         if (decoded) {
@@ -228,14 +227,19 @@ const updateCoachDetails = async (req, res) => {
 
 const setCoachAvailability = async (req, res) => {
     const coachId = req.coach._id;
-    const { dayOfWeek, slots, isRecurring, unavailableDates } = req.body;
+    const { dates, timeZone, dateOverrides } = req.body;
     try {
         const coach = await Coach.findById(coachId);
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach does not exist"
+            });
+        }
         coach.availability = {
-            dayOfWeek,
-            slots,
-            isRecurring,
-            unavailableDates
+            dates,
+            timeZone,
+            dateOverrides
         }
         await coach.save();
         res.status(200).send({
