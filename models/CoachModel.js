@@ -81,6 +81,9 @@ const coachSchema = new mongoose.Schema({
         code: {
             name: { type: String },
             value: { type: String }
+        },
+        bankName: {
+            type: String
         }
     },
     categories: {
@@ -155,6 +158,14 @@ const coachSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
+    },
+    rejectionReason: {
+        type: String,
+        required: false
+    },
+    rejectionStep: {
+        type: String,
+
     },
     formFilled: {
         type: Boolean,

@@ -26,6 +26,33 @@ const verifyCoach = async (req, res) => {
     }
 }
 
+const rejectCoach = async (req, res) => {
+    const { coachId } = req.params
+    const { reason } = req.body
+    try {
+        const coach = await Coach.findById(coachId)
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach not found"
+            })
+        }
+        coach.approvalStatus = 'rejected'
+        coach.rejectionReason = reason
+        coach.isApproved = false
+        
+        await coach.save()
+        res.status(200).send({
+            status: "SUCCESS",
+            message: "Coach found",
+            coach
+        })
+    } catch (error) {
+        console.log("Error", error)
+        res.status(500).send({ status: "FAILURE", error })
+    }
+}
+
 const auth = async (req, res) => {
     const user = req.user
     try {
@@ -40,5 +67,6 @@ const auth = async (req, res) => {
 
 module.exports = {
     verifyCoach,
-    auth
+    auth,
+    rejectCoach
 }
