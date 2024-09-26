@@ -6,6 +6,7 @@ const bookSlots = async (req, res) => {
     const user = req.user;
     const userId = req.user._id;
     const { slotTime, coachId, timezone, country, state, city, notes, date } = req.body;
+    console.log(slotTime)
     try {
         const coach = await Coach.findById(coachId);
         if (!coach) {
@@ -38,12 +39,16 @@ const bookSlots = async (req, res) => {
             { $push: { bookings: newBooking._id } },
             { new: true }
         );
+        user.bookings.push(newBooking._id);
+        await user.save();
+        const startTime = slotTime.startTime;
+        const endTime = slotTime.endTime;
 
         const coachHtml = `<div>
         <h2>Meeting Details</h2>
         <p>User: ${user.fullname}</p>
         <p>Date: ${date}</p>
-        <p>Slot Time: ${slotTime}</p>
+        <p>Slot Time: ${startTime}-${endTime} , ${timezone}</p>
         <p>Notes: ${notes}</p>
         <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
         <p>To join the meeting, please visit the following link:</p>
@@ -55,7 +60,7 @@ const bookSlots = async (req, res) => {
         <h2>Meeting Details</h2>
         <p>Coach: ${coach.name}</p>
         <p>Date: ${date}</p>
-        <p>Slot Time: ${slotTime}</p>
+        <p>Slot Time: ${startTime}-${endTime} , ${timezone}</p>
         <p>Notes: ${notes}</p>
         <p>To join the meeting, please visit the following link:</p>`
 
@@ -77,7 +82,7 @@ const bookSlots = async (req, res) => {
 
 const cancelSlot = async (req, res) => {
     try {
-        
+
     } catch (error) {
 
     }

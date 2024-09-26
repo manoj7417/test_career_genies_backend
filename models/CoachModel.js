@@ -26,6 +26,12 @@ const coachSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    profileVideo: {
+        url: { type: String, required: false },
+        isApproved: {
+            type: Boolean, default: false
+        }
+    },
     address: {
         type: String
     },
@@ -207,26 +213,35 @@ coachSchema.methods.toSafeObject = function () {
     return {
         name: this.name,
         email: this.email,
-        _id: this._id,
-        picture: this.picture,
+        phone: this.phone,
+        profileImage: this.profileImage,
+        profileVideo: this.profileVideo,
+        address: this.address,
+        country: this.country,
+        city: this.city,
+        zip: this.zip,
+        cv: this.cv,
+        signedAggrement: this.signedAggrement,
+        experience: this.experience,
+        typeOfCoaching: this.typeOfCoaching,
+        skills: this.skills,
+        dateofBirth: this.dateofBirth,
+        placeofBirth: this.placeofBirth,
         profession: this.profession,
-        bioInfo: this.bioInfo,
+        bio: this.bio,
         bankDetails: this.bankDetails,
-        coachingType: this.coachingType,
+        categories: this.categories,
         coachingDescription: this.coachingDescription,
+        address: this.address,
         ratesPerHour: this.ratesPerHour,
-        phoneNumber: this.phoneNumber,
         ratings: this.ratings,
-        students: this.students,
-        courses: this.courses,
+        courses: this?.courses,
         socialLinks: this.socialLinks,
         description: this.description,
-        blogs: this.blogs,
         availability: this.availability,
         isApproved: this.isApproved,
-        createdAt: this.createdAt,
-        formFilled: this.formFilled,
-        profileImage: this.profileImage
+        approvalStatus: this.approvalStatus,
+        formFilled: this.formFilled
     };
 };
 

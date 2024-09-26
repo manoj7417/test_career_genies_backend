@@ -35,6 +35,10 @@ const UserSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    bookings: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "Booking"
+    },
     address: {
         type: String,
         trim: true,
@@ -117,7 +121,8 @@ const UserSchema = new mongoose.Schema({
         downloadCVTokens: {
             credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
-        }
+        },
+
     },
     payments: [{
         type: mongoose.Schema.Types.ObjectId,
