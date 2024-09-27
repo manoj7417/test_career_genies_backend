@@ -28,9 +28,7 @@ const coachSchema = new mongoose.Schema({
     },
     profileVideo: {
         url: { type: String, required: false },
-        isApproved: {
-            type: Boolean, default: false
-        }
+        isApproved: { type: Boolean, default: false }
     },
     address: {
         type: String
@@ -228,7 +226,7 @@ coachSchema.methods.toSafeObject = function () {
         profileImage: this.profileImage,
         profileVideo: this.profileVideo,
         address: this.address,
-        country: this.country,
+        country: this.country,  
         city: this.city,
         zip: this.zip,
         cv: this.cv,

@@ -9,6 +9,7 @@ const resetPasswordTemplatePath = path.join(
 );
 const { sendEmail } = require("../utils/nodemailer");
 const jwt = require("jsonwebtoken");
+const { Booking } = require("../models/BookingModel");
 require('dotenv').config();
 
 async function decodeToken(token, secret) {
@@ -303,6 +304,19 @@ const resetCoachPassword = async (req, res) => {
     }
 }
 
+const getBookings = async (req, res) => {
+    const coachId = req.coach._id;
+    try {
+        const bookings = await Booking.find({ coachId }).populate('userId' , 'fullname  email phoneNumber profilePicture');
+        res.status(200).send({ status: "SUCCESS", bookings });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings" });
+    }
+}
+
+
 module.exports = {
     registerCoach,
     coachLogin,
@@ -313,5 +327,6 @@ module.exports = {
     forgotCoachPassword,
     resetCoachPassword,
     uploadCoachDocuments,
-    authVerification
+    authVerification,
+    getBookings
 }

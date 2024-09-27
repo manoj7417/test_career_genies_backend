@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails,  GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, updateUserDetails, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage, getUserBookingsDetails } = require("../controllers/UserController");
 const upload = require('../config/multer')
 
 
@@ -83,7 +83,7 @@ async function UserRoute(fastify, options) {
 
     fastify.patch('/update/userprofiledetails', { preHandler: fastify.verifyJWT }, updateUserProfileDetails)
 
-    fastify.patch("/udpate/profilImage",{ preHandler: fastify.verifyJWT }, udpateProfileImage)
+    fastify.patch("/udpate/profilImage", { preHandler: fastify.verifyJWT }, udpateProfileImage)
 
     fastify.get('/getUserProfile', { preHandler: fastify.verifyJWT }, GetuserDetails)
 
@@ -99,7 +99,9 @@ async function UserRoute(fastify, options) {
 
     fastify.post('/verify-email', verifyEmail)
 
-    fastify.post('/resend-verificationEmail',resendVerificationEmail)
+    fastify.post('/resend-verificationEmail', resendVerificationEmail)
+
+    fastify.get('/bookings', { preHandler: fastify.verifyJWT }, getUserBookingsDetails)
 }
 
 module.exports = UserRoute

@@ -17,6 +17,7 @@ const { Transaction } = require("../models/TransactionModel");
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
 const axios = require('axios');
 const { uploadfile } = require('../utils/s3Client');
+const { Booking } = require('../models/BookingModel');
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -544,7 +545,7 @@ const udpateProfileImage = async (req, reply) => {
     }
     console.log(response)
     user.profilePicture = `${process.env.DO_CDN_URL}/${fileName}`
-    return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}`, userdata : user.toSafeObject() });
+    return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}`, userdata: user.toSafeObject() });
   } catch (error) {
     console.error('Error uploading file: ', error);
     return reply.code(500).send({ error: 'Failed to upload image' });
@@ -698,6 +699,17 @@ const resendVerificationEmail = async (req, res) => {
   }
 }
 
+const getUserBookingsDetails = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const bookings = await Booking.find({ userId }).populate('coachId' , 'name email phone profileImage country city experience typeOfCoaching skills ratesPerHour');
+    res.status(200).send({ status: "SUCCESS", bookings });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings" });
+  }
+}
+
 
 module.exports = {
   register,
@@ -717,5 +729,6 @@ module.exports = {
   verifyToken,
   verifyEmail,
   resendVerificationEmail,
-  udpateProfileImage
+  udpateProfileImage,
+  getUserBookingsDetails
 };
