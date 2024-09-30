@@ -173,7 +173,7 @@ const uploadCoachDocuments = async (req, res) => {
 
 const getAllCoaches = async (req, res) => {
     try {
-        const coaches = await Coach.find()
+        const coaches = await Coach.find().populate('bookings')
         res.status(200).send({
             status: "SUCCESS",
             coaches
@@ -187,7 +187,7 @@ const getAllCoaches = async (req, res) => {
 const getCoachDetails = async (req, res) => {
     const { coachId } = req.params
     try {
-        const coach = await Coach.findById(coachId)
+        const coach = await Coach.findById(coachId).populate('bookings')
         if (!coach) {
             return res.status(404).send({
                 status: "FAILURE",
@@ -307,7 +307,7 @@ const resetCoachPassword = async (req, res) => {
 const getBookings = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const bookings = await Booking.find({ coachId }).populate('userId' , 'fullname  email phoneNumber profilePicture');
+        const bookings = await Booking.find({ coachId }).populate('userId', 'fullname  email phoneNumber profilePicture');
         res.status(200).send({ status: "SUCCESS", bookings });
 
     } catch (error) {

@@ -100,14 +100,45 @@ const updateUserResume = async (request, reply) => {
         })
     }
 }
+
+
+const updateUserResumeTitle = async (req, res) => {
+    const { resumeId } = req.params;
+    const userId = req.user._id;
+    const { title } = req.body;
+    try {
+        if (!resumeId) {
+            return res.status(400).send({
+                status: "FAILURE",
+                error: "Resume Id not found"
+            })
+        }
+        const resume = await Resume.findOne({ _id: resumeId, userId })
+        if (!resume) {
+            return res.status(404).send({ status: "FAILURE", error: 'Resume not found' });
+        }
+        resume.title = title
+        resume.updatedAt = new Date()
+        await resume.save()
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Resume udpated successfully", data: resume
+        })
+    } catch (e) {
+        console.error(e)
+        return res.status(500).send({
+            status: "FAILURE",
+            error: e.message || "Internal server error"
+        })
+    }
+}
 // create a new resume for the user
 const createResume = async (request, reply) => {
     const userId = request.user._id;
     const { template } = request.body;
     try {
         const count = await Resume.countDocuments({ userId });
-        const username = request.user.fullname.split(" ")[0];
-        const title = `${username}_resume` + uuidv4();
+        const title = `Untitled` + uuidv4();
         const resume = new Resume({ userId, title, 'data.metadata.template': template })
         await resume.save()
         return reply.code(201).send({
@@ -182,4 +213,4 @@ const createNewJobResume = async (request, reply) => {
 
 
 
-module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume }
+module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume, updateUserResumeTitle }

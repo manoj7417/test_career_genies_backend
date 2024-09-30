@@ -1,4 +1,4 @@
-const { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume } = require("../controllers/ResumeController");
+const { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume, updateUserResumeTitle } = require("../controllers/ResumeController");
 
 
 async function ResumeRoute(fastify, options) {
@@ -14,6 +14,9 @@ async function ResumeRoute(fastify, options) {
 
     // udpate the resume fields of the user based on the resumeId 
     fastify.patch("/update/:resumeId", updateUserResume)
+
+    // udpate the resume fields of the user based on the resumeId 
+    fastify.patch("/updateTitle/:resumeId", updateUserResumeTitle)
 
     // create a new resume for the user
     fastify.post("/create", createResume)

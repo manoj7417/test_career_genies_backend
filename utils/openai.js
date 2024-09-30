@@ -662,7 +662,6 @@ async function generateResumeOnFeeback(req, reply) {
             });
         }
 
-
         if (analysisId) {
             const analysis = await Analysis.findById(analysisId);
             if (!analysis) {
