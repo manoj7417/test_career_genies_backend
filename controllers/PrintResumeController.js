@@ -54,8 +54,9 @@ const printResume = async (request, reply) => {
             ],
             executablePath: '/usr/bin/google-chrome-stable',
         });
+        
         const page = await browser.newPage();
-        await page.setContent(styledHtml);
+        await page.setContent(styledHtml, { waitUntil: 'networkidle0' });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,

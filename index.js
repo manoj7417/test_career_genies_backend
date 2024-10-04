@@ -3,6 +3,7 @@ const fastify = require('fastify')({
 });
 fastify.register(require('@fastify/formbody'));
 const path = require('path');
+const fs = require('fs');
 const DBConnection = require('./config/db');
 const { apiKeyAuth } = require('./middlewares/auth');
 const roleCheck = require('./middlewares/RoleBasedAccessControl');
@@ -28,6 +29,7 @@ const uploadImage = require('./routes/UploadsRoute');
 const multipart = require('fastify-multipart');
 const AdminRoute = require('./routes/AdminRoute');
 const BookingRoute = require('./routes/BookingRoute');
+const { sendEmail } = require('./utils/nodemailer');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
@@ -43,7 +45,7 @@ fastify.register(cors, {
         'https://career-genies-frontend.vercel.app',
         'https://testing-cg-frontend.vercel.app',
         "https://sea-turtle-app-2-e6fjt.ondigitalocean.app",
-        "https://geniescareerhub.com"
+        "https://www.geniescareerhub.com"
     ],
     allowedHeaders: [
         "Content-Type",
@@ -68,6 +70,16 @@ fastify.decorate('roleCheck', roleCheck);
 fastify.decorate('coachAuth', coachAuth);
 
 // Register the routes
+// fastify.get('/sendEmail', async (request, reply) => {
+//     const resetPasswordTemplatePath = path.join(
+//         __dirname,
+//         "emailTemplates",
+//         "index.html"
+//     );
+//     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
+//     await sendEmail('anujrawat@glassfrog.design', "Test", emailtemplate);
+//     reply.status(200).send({ message: "Email sent successfully" });
+// })
 fastify.register(UploadRoute, { prefix: '/api/upload', before: apiKeyAuth });
 fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
 fastify.register(AdminRoute, { prefix: '/api/admin', before: apiKeyAuth })

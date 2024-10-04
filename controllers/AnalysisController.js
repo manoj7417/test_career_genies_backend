@@ -1,9 +1,17 @@
 const { Analysis } = require("../models/AnalysisModel");
+const mongoose = require('mongoose');
 
 const getAnalysisScore = async (req, reply) => {
     const { id } = req.params;
     const userId = req.user._id
     try {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return reply.code(400).send({
+                status: "FAILURE",
+                error: "Invalid ID format"
+            });
+        }
+
         const analysisScore = await Analysis.findOne({ _id: id, userId });
         if (!analysisScore) {
             return reply.code(404).send({
@@ -17,7 +25,8 @@ const getAnalysisScore = async (req, reply) => {
         });
 
     } catch (error) {
-        console.log("Error getting user analysis score")
+        console.log(error)
+        reply.status(500).send(error);
     }
 }
 

@@ -440,44 +440,7 @@ const logout = async (request, reply) => {
 }
 
 
-const updateUserDetails = async (req, reply) => {
-  const userId = req.user._id;
-  const { fullname, email, password, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return reply.code(404).send({
-        status: "FAILURE",
-        error: "User not found",
-      });
-    }
 
-    if (fullname !== undefined) user.fullname = fullname;
-    if (email !== undefined) user.email = email;
-    if (password !== undefined) user.password = password;
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
-    if (profilePicture !== undefined) user.profilePicture = profilePicture;
-    if (address !== undefined) user.address = address;
-    if (occupation !== undefined) user.occupation = occupation;
-    if (links !== undefined) user.links = links;
-    if (role !== undefined) user.role = role;
-
-    // Save the updated user
-    await user.save();
-
-    return reply.code(200).send({
-      status: "SUCCESS",
-      message: "User details updated successfully",
-      user,
-    });
-  } catch (error) {
-    console.error("Error updating user details:", error);
-    return reply.code(500).send({
-      status: "FAILURE",
-      error: "An error occurred while updating user details",
-    });
-  }
-}
 
 //decode the reset password token and return the decode result
 async function decodeToken(token, secret) {
@@ -543,7 +506,6 @@ const udpateProfileImage = async (req, reply) => {
         error: "Error uploading profile image"
       })
     }
-    console.log(response)
     user.profilePicture = `${process.env.DO_CDN_URL}/${fileName}`
     return reply.code(200).send({ message: 'File uploaded successfully', url: `${process.env.DO_CDN_URL}/${fileName}`, userdata: user.toSafeObject() });
   } catch (error) {
@@ -721,7 +683,6 @@ module.exports = {
   logout,
   templatepurchase,
   analyserCreditsPurchase,
-  updateUserDetails,
   updateUserProfileDetails,
   GetuserDetails,
   careerCounsellingEligibility,

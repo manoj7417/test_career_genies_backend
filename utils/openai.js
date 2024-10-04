@@ -784,7 +784,7 @@ async function generateResumeOnFeeback(req, reply) {
             message: "Feedback not generated"
         })
     } catch (error) {
-        console.log(error)
+        console.log("error" , error)
         reply.status(500).send(error);
     }
 }
