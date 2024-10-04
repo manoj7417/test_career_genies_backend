@@ -69,35 +69,23 @@ fastify.decorate('verifyJWT', verifyJWT);
 fastify.decorate('roleCheck', roleCheck);
 fastify.decorate('coachAuth', coachAuth);
 
-// Register the routes
-// fastify.get('/sendEmail', async (request, reply) => {
-//     const resetPasswordTemplatePath = path.join(
-//         __dirname,
-//         "emailTemplates",
-//         "index.html"
-//     );
-//     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
-//     await sendEmail('anujrawat@glassfrog.design', "Test", emailtemplate);
-//     reply.status(200).send({ message: "Email sent successfully" });
-// })
-fastify.register(UploadRoute, { prefix: '/api/upload', before: apiKeyAuth });
-fastify.register(UserRoute, { prefix: '/api/user', before: apiKeyAuth });
-fastify.register(AdminRoute, { prefix: '/api/admin', before: apiKeyAuth })
-fastify.register(ResumeRoute, { prefix: '/api/resume', before: apiKeyAuth });
-fastify.register(OpenaiRoute, { prefix: '/api/openai', before: apiKeyAuth });
-fastify.register(PrintResume, { prefix: "/api/print", before: apiKeyAuth });
-fastify.register(StripeRoute, { prefix: "/api/stripe", before: apiKeyAuth });
-fastify.register(AnalysisRoute, { prefix: "/api/analysis", before: apiKeyAuth });
-fastify.register(SummaryRoute, { prefix: "/api/summary", before: apiKeyAuth });
-fastify.register(EmailRoute, { prefix: "/api/message", before: apiKeyAuth });
-fastify.register(BlogRoute, { prefix: "/api/blog", before: apiKeyAuth });
-fastify.register(PaymentRoute, { prefix: "/api/payment", before: apiKeyAuth });
-fastify.register(NewsletterRoute, { prefix: "/api/newsletter", before: apiKeyAuth });
-fastify.register(CoachRoute, { prefix: "/api/coach", before: apiKeyAuth });
+fastify.addHook('preHandler', apiKeyAuth);
+fastify.register(UploadRoute, { prefix: '/api/upload' });
+fastify.register(UserRoute, { prefix: '/api/user' });
+fastify.register(AdminRoute, { prefix: '/api/admin' })
+fastify.register(ResumeRoute, { prefix: '/api/resume' });
+fastify.register(OpenaiRoute, { prefix: '/api/openai' });
+fastify.register(PrintResume, { prefix: "/api/print" });
+fastify.register(StripeRoute, { prefix: "/api/stripe" });
+fastify.register(AnalysisRoute, { prefix: "/api/analysis" });
+fastify.register(SummaryRoute, { prefix: "/api/summary" });
+fastify.register(EmailRoute, { prefix: "/api/message" });
+fastify.register(BlogRoute, { prefix: "/api/blog" });
+fastify.register(PaymentRoute, { prefix: "/api/payment" });
+fastify.register(NewsletterRoute, { prefix: "/api/newsletter" });
+fastify.register(CoachRoute, { prefix: "/api/coach" });
 fastify.register(uploadImage, { prefix: "/api/uploadimage" });
-fastify.register(BookingRoute, {
-    prefix: "/api/booking", before: apiKeyAuth
-})
+fastify.register(BookingRoute, { prefix: "/api/booking" })
 // Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
     if (req.url === '/webhook') {

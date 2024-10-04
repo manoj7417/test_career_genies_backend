@@ -580,12 +580,9 @@ async function askBot(req, reply) {
             role: 'user',
             content: message
         });
-
-
         const run = await openai.beta.threads.runs.create(threadId, {
             assistant_id: "asst_59D0873JevaZMUSOMPLun1KV",
         });
-
         const checkStatusAndGenerateResponse = async (threadId, runId) => {
             const run = await openai.beta.threads.runs.retrieve(threadId, runId);
             if (run.status === 'completed') {
@@ -596,9 +593,7 @@ async function askBot(req, reply) {
                 return checkStatusAndGenerateResponse(threadId, runId);
             }
         };
-
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-
         reply.send(response);
 
     }
