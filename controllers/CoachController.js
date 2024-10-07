@@ -10,6 +10,7 @@ const resetPasswordTemplatePath = path.join(
 const { sendEmail } = require("../utils/nodemailer");
 const jwt = require("jsonwebtoken");
 const { Booking } = require("../models/BookingModel");
+const { Program } = require("../models/ProgramModel");
 require('dotenv').config();
 
 async function decodeToken(token, secret) {
@@ -317,6 +318,114 @@ const getBookings = async (req, res) => {
     }
 }
 
+const createProgram = async (req, res) => {
+    try {
+        const coachId  = await req.coach._id;
+        const { title, description, prerequisites, days } = req.body;
+        const program = new Program({
+            coachId,
+            title,
+            description,
+            prerequisites,
+            days
+        });
+        await program.save();
+        res.status(200).send({ status: "SUCCESS", message: "Program created successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while creating program" });
+    }
+}
+
+const getAllPrograms = async (req, res) => {
+    try {
+        const programs = await Program.find();
+        res.status(200).send({ status: "SUCCESS", programs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching programs" });
+    }
+}
+
+const getCoachPrograms = async (req, res) => {
+    const coachId = req.coach._id;
+    try {
+        const programs = await Program.find({ coachId }).populate('coachId');
+        res.status(200).send({ status: "SUCCESS", programs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching programs" });
+    }
+}
+
+const updateProgram = async (req, res) => {
+    const coachId = req.coach._id;  // Extract the coach's ID from the authenticated user
+    const { _id, title, description, prerequisites, days } = req.body;  // Destructure fields from the request body
+
+    try {
+        // Perform a single database call to find and update the program
+        const program = await Program.findOneAndUpdate(
+            { _id: _id, coachId: coachId },  // Ensure program exists and belongs to the coach
+            { 
+                ...(title && { title }),              // Update only if the field is provided
+                ...(description && { description }),
+                ...(prerequisites && { prerequisites }),
+                ...(days && { days })
+            },
+            { new: true, lean: true }  // Return the updated document in a plain JavaScript object format for faster read
+        );
+
+        // If the program is not found or doesn't belong to the coach
+        if (!program) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Program not found or unauthorized"
+            });
+        }
+
+        // Successfully updated, return the updated program
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Program updated successfully",
+            program
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            status: "FAILURE",
+            message: "An error occurred while updating the program"
+        });
+    }
+};
+
+const deleteProgram = async (req, res) => {
+    const coachId = req.coach._id;
+    const { _id } = req.body;
+
+    try {
+      
+        const program = await Program.findOneAndDelete({ _id: _id, coachId: coachId });
+        if (!program) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Program not found or unauthorized"
+            });
+        }
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Program deleted successfully"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            status: "FAILURE",
+            message: "An error occurred while deleting the program"
+        });
+    }
+};
+
+module.exports = { updateProgram };
+
 
 module.exports = {
     registerCoach,
@@ -329,5 +438,10 @@ module.exports = {
     resetCoachPassword,
     uploadCoachDocuments,
     authVerification,
-    getBookings
+    getBookings,
+    createProgram,
+    getAllPrograms,
+    getCoachPrograms,
+    updateProgram,
+    deleteProgram
 }

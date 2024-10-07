@@ -2,6 +2,7 @@
 require('dotenv').config()
 async function apiKeyAuth(request, reply) {
     const excludedRoutes = ['/webhook', '/webhookrazorpay'];
+    
     if (excludedRoutes.includes(request.raw.url)) {
         return;
     }
