@@ -266,13 +266,14 @@ const forgotCoachPassword = async (req, res) => {
             });
         }
         const token = await coach.generateResetPasswordToken();
+        // const url = `http://localhost:3000/reset-password?token=${token}&type=coach`;
         const url = `https://geniescareerhub.com/reset-password?token=${token}&type=coach`;
         const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
         const emailBody = emailtemplate
             .replace("{userName}", coach.name)
             .replace("{reset-password-link}", url);
         await sendEmail(coach.email, "Reset Password", emailBody);
-        res.code(201).send({
+        res.code(200).send({
             status: "SUCCESS",
             message: "Reset password link has been sent to your email",
         });
@@ -292,15 +293,15 @@ const resetCoachPassword = async (req, res) => {
             return res.code(404).send({ status: "FAILURE", message: "Token is missing" });
         }
         const { userId } = await decodeToken(token, process.env.RESET_PASSWORD_SECRET);
-        const coach = await Coach.findOne({ resetPasswordToken: token });
+        const coach = await Coach.findOne({ _id: userId });
         if (!coach) {
-            return res.code(404).send({ status: "FAILURE", message: "Token not found" });
+            return res.code(404).send({ status: "FAILURE", message: "Invalid token" });
         }
         coach.password = newPassword;
         await coach.save();
         return res.code(200).send({ status: "SUCCESS", message: "Password reset successfully" });
     } catch (error) {
-
+        return res.code(500).send({ status: "FAILURE", message: "An error occurred while resetting password" });
     }
 }
 

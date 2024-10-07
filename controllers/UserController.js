@@ -18,6 +18,7 @@ const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : 
 const axios = require('axios');
 const { uploadfile } = require('../utils/s3Client');
 const { Booking } = require('../models/BookingModel');
+const { Payment } = require('../models/PaymentModel');
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -669,6 +670,17 @@ const getUserBookingsDetails = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings" });
+  }
+}
+
+const PaymentHistory = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const payments = await Payment.find({ userId }).populate();
+    res.status(200).send({ status: "SUCCESS", payments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching payment history" });
   }
 }
 
