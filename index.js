@@ -86,7 +86,6 @@ fastify.register(NewsletterRoute, { prefix: "/api/newsletter" });
 fastify.register(CoachRoute, { prefix: "/api/coach" });
 fastify.register(uploadImage, { prefix: "/api/uploadimage" });
 fastify.register(BookingRoute, { prefix: "/api/booking" })
-// Custom content type parser for webhook route
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
     if (req.url === '/webhook') {
         req.rawBody = body;
