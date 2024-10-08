@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword,  getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage, getUserBookingsDetails } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword,  getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage, getUserBookingsDetails, scheduleProgram, scheduleProgramDay, getEnrollmentDetails, getAllEnrollmentDetailsofUser, updateScheduleProgramDay } = require("../controllers/UserController");
 const upload = require('../config/multer')
 
 
@@ -101,6 +101,16 @@ async function UserRoute(fastify, options) {
     fastify.post('/resend-verificationEmail', resendVerificationEmail)
 
     fastify.get('/bookings', { preHandler: fastify.verifyJWT }, getUserBookingsDetails)
+
+    fastify.post('/scheduleProgram', { preHandler: fastify.verifyJWT }, scheduleProgram)
+
+    fastify.post('/scheduleProgramDay', {preHandler: fastify.verifyJWT},  scheduleProgramDay)
+
+    fastify.put('/updateScheduleProgramDay', { preHandler: fastify.verifyJWT }, updateScheduleProgramDay)
+
+    fastify.get('/getEnrollmentDetails/:programId', { preHandler: fastify.verifyJWT }, getEnrollmentDetails)
+    
+    fastify.get('/getAllEnrollmentDetails',{ preHandler: fastify.verifyJWT}, getAllEnrollmentDetailsofUser)
 }
 
 module.exports = UserRoute

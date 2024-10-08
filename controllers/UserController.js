@@ -18,6 +18,7 @@ const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : 
 const axios = require('axios');
 const { uploadfile } = require('../utils/s3Client');
 const { Booking } = require('../models/BookingModel');
+const { Enrollment, Appointment } = require('../models/EnrollmentModel');
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -672,6 +673,184 @@ const getUserBookingsDetails = async (req, res) => {
   }
 }
 
+const scheduleProgram = async (req, res) => {
+    try {
+        const { programId } = req.body;
+
+        const userId = req.user._id;
+
+        // Check if the user is already enrolled in the program
+        let enrollment = await Enrollment.findOne({ userId, programId });
+
+        if (enrollment) {
+            return res.status(400).json({ message: "You are already enrolled in this program." });
+        }
+
+        // Create a new enrollment
+        enrollment = new Enrollment({
+            userId,
+            programId,
+            enrollmentDate: new Date(),
+            status: 'active',
+            progress: 0,  // Initial progress
+            appointments: []  // No appointments yet
+        });
+
+        await enrollment.save();
+
+        return res.status(200).json({
+            message: 'Successfully enrolled in the program',
+            enrollment
+        });
+    } catch (error) {
+        console.error('Error enrolling in program:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const scheduleProgramDay = async (req, res) => {
+  try {
+      const { programId, dayId, coachId, scheduledDate, notes } = req.body;
+
+      const userId = req.user._id;
+
+      // Check if the user is enrolled in the program
+      let enrollment = await Enrollment.findOne({ userId, programId });
+
+      if (!enrollment) {
+          return res.status(400).json({ message: "You are not enrolled in this program." });
+      }
+
+      // Check if there is a conflicting appointment for the same day
+      const conflictingAppointment = await Appointment.findOne({
+          programId,
+          userId,
+          coachId,
+          dayId,
+          scheduledDate
+      });
+
+      if (conflictingAppointment) {
+          return res.status(400).json({ message: "You already have an appointment scheduled for this day." });
+      }
+
+      // Create a new appointment
+      const appointment = new Appointment({
+          programId,
+          userId,
+          coachId,
+          dayId,
+          scheduledDate,
+          status: 'scheduled',
+          notes
+      });
+
+      // Save the appointment and add it to the enrollment record
+      await appointment.save();
+      enrollment.appointments.push(appointment);  // Add the appointment to the user's enrollment
+      await enrollment.save();
+
+      return res.status(200).json({
+          message: 'Appointment successfully scheduled',
+          appointment
+      });
+
+  } catch (error) {
+      console.error('Error scheduling appointment:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const getEnrollmentDetails = async (req, res) => {
+  try {
+      const { programId } = req.params;  // Extract userId and programId from the request parameters
+
+      const userId = req.user.id;
+
+      // Find the enrollment for the given user and program
+      const enrollment = await Enrollment.findOne({ userId, programId })
+          .populate('programId')  // Populate program details
+          .populate('appointments.coachId')  // Populate coach details in appointments
+          .populate('appointments.dayId')  // Populate day details in appointments
+          .populate('userId');  // Populate user details
+
+      if (!enrollment) {
+          return res.status(404).json({ message: 'Enrollment not found.' });
+      }
+
+      return res.status(200).json({
+          message: 'Enrollment details fetched successfully',
+          enrollment
+      });
+  } catch (error) {
+      console.error('Error fetching enrollment details:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const getAllEnrollmentDetailsofUser = async (req,res)=>{
+
+  try {
+    const userId  = req.user.id;
+
+    // Find all enrollments for the given user
+    const enrollments = await Enrollment.find({ userId })
+        .populate('programId')  // Populate program details
+        .populate('appointments.coachId')  // Populate coach details in appointments
+        .populate('appointments.dayId')  // Populate day details in appointments
+        .populate('userId');  // Populate user details
+
+    if (!enrollments || enrollments.length === 0) {
+        return res.status(404).json({ message: 'No enrollments found for this user.' });
+    }
+
+    return res.status(200).json({
+        message: 'User enrollments fetched successfully',
+        enrollments
+    });
+} catch (error) {
+    console.error('Error fetching user enrollments:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+}
+
+}
+
+const updateScheduleProgramDay = async (req, res) => {
+    try {
+        const { appointmentId, scheduledDate, notes, status } = req.body;  // Extract fields to update from the request body
+
+        // Step 1: Find the appointment by its ID
+        let appointment = await Appointment.findById(appointmentId);
+
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found." });
+        }
+
+        // Step 2: Update the appointment details (only if provided in the request)
+        if (scheduledDate) {
+            // Optionally, you could add logic to check for conflicts with other appointments
+            appointment.scheduledDate = scheduledDate;
+        }
+        if (notes) {
+            appointment.notes = notes;
+        }
+        if (status && ['scheduled', 'completed', 'canceled'].includes(status)) {
+            appointment.status = status;
+        }
+
+        // Step 3: Save the updated appointment
+        await appointment.save();
+
+        return res.status(200).json({
+            message: 'Appointment updated successfully',
+            appointment
+        });
+
+    } catch (error) {
+        console.error('Error updating appointment:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 module.exports = {
   register,
@@ -691,5 +870,10 @@ module.exports = {
   verifyEmail,
   resendVerificationEmail,
   udpateProfileImage,
-  getUserBookingsDetails
+  getUserBookingsDetails,
+  scheduleProgram,
+  scheduleProgramDay,
+  getEnrollmentDetails,
+  getAllEnrollmentDetailsofUser,
+  updateScheduleProgramDay
 };
