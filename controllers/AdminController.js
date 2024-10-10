@@ -1,3 +1,4 @@
+const { CoachEdit } = require("../models/CoachEditModel")
 const { Coach } = require("../models/CoachModel")
 
 const verifyCoach = async (req, res) => {
@@ -40,7 +41,7 @@ const rejectCoach = async (req, res) => {
         coach.approvalStatus = 'rejected'
         coach.rejectionReason = reason
         coach.isApproved = false
-        
+
         await coach.save()
         res.status(200).send({
             status: "SUCCESS",
@@ -64,11 +65,47 @@ const auth = async (req, res) => {
     }
 }
 
+const GeteditCoachRequests = async (req, res) => {
+    try {
+        const editCoaches = await CoachEdit.find();
+        res.status(200).send({
+            status: "SUCCESS",
+            editCoaches
+        })
+    } catch (error) {
+        console.log("Error", error)
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while getting edit coach details" })
+    }
+}
 
+const approveEditCoach = async (req, res) => {
+    const { coachId } = req.params;
+    try {
+        const coachEdit = await CoachEdit.findByIdAndUpdate(coachId, { isApproved: true }, { new: true });
+        if (!coachEdit) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Edit coach not found"
+            });
+        }
+        console.log(coachEdit);
+        const coach = await Coach.findById(coachId);
+
+        res.status(200).send({
+            status: "SUCCESS",
+            coachEdit
+        });
+    } catch (error) {
+        console.log("Error", error)
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while approving edit coach details" })
+    }
+}
 
 
 module.exports = {
     verifyCoach,
     auth,
-    rejectCoach
+    rejectCoach,
+    GeteditCoachRequests,
+    approveEditCoach
 }

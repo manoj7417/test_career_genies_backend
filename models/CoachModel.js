@@ -168,6 +168,11 @@ const coachSchema = new mongoose.Schema({
     formFilled: {
         type: Boolean,
         default: false
+    },
+    isEditRequestSent: {
+        type: Boolean,
+        default: false,
+        required: true
     }
 }, {
     timestamps: true
@@ -226,7 +231,7 @@ coachSchema.methods.toSafeObject = function () {
         profileImage: this.profileImage,
         profileVideo: this.profileVideo,
         address: this.address,
-        country: this.country,  
+        country: this.country,
         city: this.city,
         zip: this.zip,
         cv: this.cv,
@@ -250,7 +255,8 @@ coachSchema.methods.toSafeObject = function () {
         availability: this.availability,
         isApproved: this.isApproved,
         approvalStatus: this.approvalStatus,
-        formFilled: this.formFilled
+        formFilled: this.formFilled,
+        isEditRequestSent: this.isEditRequestSent
     };
 };
 
