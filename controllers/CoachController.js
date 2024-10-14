@@ -186,24 +186,32 @@ const getAllCoaches = async (req, res) => {
 }
 
 const getCoachDetails = async (req, res) => {
-    const { coachId } = req.params
+    const { coachId } = req.params;
+
     try {
-        const coach = await Coach.findById(coachId).populate('bookings')
+        // Find the coach by ID and populate both bookings and the virtual programs field
+        const coach = await Coach.findById(coachId)
+            .populate('bookings')  // Populate bookings
+            .populate('programs');  // Populate programs via virtual field
+
         if (!coach) {
             return res.status(404).send({
                 status: "FAILURE",
                 message: "Coach not found"
-            })
+            });
         }
+
+        // Respond with the coach object, including populated programs
         res.status(200).send({
             status: "SUCCESS",
-            coach: coach.toSafeObject()
-        })
+            coach: coach.toSafeObject()  // Ensure toSafeObject includes virtual fields
+        });
     } catch (error) {
-        console.log("Error", error)
-        res.status(500).send({ status: "FAILURE", error })
+        console.error("Error", error);
+        res.status(500).send({ status: "FAILURE", error });
     }
-}
+};
+
 
 const updateCoachDetails = async (req, res) => {
     const coachId = req.coach._id;

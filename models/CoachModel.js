@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// Define the schema for the Coach
 const coachSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -20,7 +21,8 @@ const coachSchema = new mongoose.Schema({
         trim: true
     },
     phone: {
-        type: String, required: true
+        type: String,
+        required: true
     },
     profileImage: {
         type: String,
@@ -92,9 +94,6 @@ const coachSchema = new mongoose.Schema({
         type: String,
         trim: false
     },
-    address: {
-        type: String
-    },
     ratesPerHour: {
         charges: { type: Number, required: false },
         currency: { type: String, required: false, enum: ['USD', 'EUR', 'GBP', 'INR'] }
@@ -162,8 +161,7 @@ const coachSchema = new mongoose.Schema({
         required: false
     },
     rejectionStep: {
-        type: String,
-
+        type: String
     },
     formFilled: {
         type: Boolean,
@@ -178,26 +176,41 @@ const coachSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Virtual field for programs
+coachSchema.virtual('programs', {
+    ref: 'Program',  // The Program model to reference
+    localField: '_id',  // The field in Coach schema
+    foreignField: 'coachId',  // The field in Program schema that refers to the coach
+    justOne: false  // Since a coach can have multiple programs
+});
+
+coachSchema.set('toObject', { virtuals: true });
+coachSchema.set('toJSON', { virtuals: true });
+
+// Pre-save hook to hash the password
 coachSchema.pre("save", async function (next) {
     try {
         if (this.isModified('password') || this.isNew) {
-            const salt = await bcrypt.genSalt(10)
-            this.password = await bcrypt.hash(this.password, salt)
+            const salt = await bcrypt.genSalt(10);
+            this.password = await bcrypt.hash(this.password, salt);
         }
+        next();
     } catch (error) {
-        next(error)
+        next(error);
     }
-})
+});
 
+// Method to compare password during login
 coachSchema.methods.comparePassword = async function (password) {
     try {
-        return await bcrypt.compare(password, this.password)
+        return await bcrypt.compare(password, this.password);
     } catch (error) {
-        console.log(error)
+        console.error(error);
         throw error;
     }
-}
+};
 
+// Method to generate an access token
 coachSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
@@ -207,59 +220,63 @@ coachSchema.methods.generateAccessToken = function () {
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
         }
-    )
-}
+    );
+};
 
+// Method to generate a refresh token
 coachSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
-            _id: this._id,
-
+            _id: this._id
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
-    )
-}
+    );
+};
 
 coachSchema.methods.toSafeObject = function () {
+    const coachObject = this.toObject({ virtuals: true });  // Ensure virtual fields are included
+
     return {
-        name: this.name,
-        email: this.email,
-        phone: this.phone,
-        profileImage: this.profileImage,
-        profileVideo: this.profileVideo,
-        address: this.address,
-        country: this.country,
-        city: this.city,
-        zip: this.zip,
-        cv: this.cv,
-        signedAggrement: this.signedAggrement,
-        experience: this.experience,
-        typeOfCoaching: this.typeOfCoaching,
-        skills: this.skills,
-        dateofBirth: this.dateofBirth,
-        placeofBirth: this.placeofBirth,
-        profession: this.profession,
-        bio: this.bio,
-        bankDetails: this.bankDetails,
-        categories: this.categories,
-        coachingDescription: this.coachingDescription,
-        address: this.address,
-        ratesPerHour: this.ratesPerHour,
-        ratings: this.ratings,
-        courses: this?.courses,
-        socialLinks: this.socialLinks,
-        description: this.description,
-        availability: this.availability,
-        isApproved: this.isApproved,
-        approvalStatus: this.approvalStatus,
-        formFilled: this.formFilled,
-        isEditRequestSent: this.isEditRequestSent
+        name: coachObject.name,
+        email: coachObject.email,
+        phone: coachObject.phone,
+        profileImage: coachObject.profileImage,
+        profileVideo: coachObject.profileVideo,
+        address: coachObject.address,
+        country: coachObject.country,
+        city: coachObject.city,
+        zip: coachObject.zip,
+        cv: coachObject.cv,
+        signedAggrement: coachObject.signedAggrement,
+        experience: coachObject.experience,
+        typeOfCoaching: coachObject.typeOfCoaching,
+        skills: coachObject.skills,
+        dateofBirth: coachObject.dateofBirth,
+        placeofBirth: coachObject.placeofBirth,
+        profession: coachObject.profession,
+        bio: coachObject.bio,
+        bankDetails: coachObject.bankDetails,
+        categories: coachObject.categories,
+        coachingDescription: coachObject.coachingDescription,
+        ratesPerHour: coachObject.ratesPerHour,
+        ratings: coachObject.ratings,
+        courses: coachObject.courses,
+        socialLinks: coachObject.socialLinks,
+        description: coachObject.description,
+        availability: coachObject.availability,
+        bookings: coachObject.bookings,  // Ensure bookings are included
+        programs: coachObject.programs,  // Add programs to the output
+        isApproved: coachObject.isApproved,
+        approvalStatus: coachObject.approvalStatus,
+        formFilled: coachObject.formFilled,
+        isEditRequestSent: coachObject.isEditRequestSent
     };
 };
 
+// Method to generate a reset password token
 coachSchema.methods.generateResetPasswordToken = function () {
     return jwt.sign(
         {
@@ -269,9 +286,10 @@ coachSchema.methods.generateResetPasswordToken = function () {
         {
             expiresIn: process.env.RESET_PASSWORD_EXPIRY
         }
-    )
-}
+    );
+};
 
+// Create the Coach model
 const Coach = mongoose.model("Coach", coachSchema);
 
 module.exports = { Coach };
