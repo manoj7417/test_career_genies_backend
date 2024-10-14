@@ -30,6 +30,8 @@ const programSchema = new mongoose.Schema({
     description: { type: String, required: true },  // Program description
     prerequisites: [prerequisiteSchema],  // Optional program-level prerequisites
     days: [daySchema],  // Array of days in the program
+    programImage: {type: String, required: true},  // URL to the program image
+    programVideo: {type: String},  // URL to the program video
 }, {
     timestamps: true
 });

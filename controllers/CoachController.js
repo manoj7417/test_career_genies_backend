@@ -320,22 +320,31 @@ const getBookings = async (req, res) => {
 
 const createProgram = async (req, res) => {
     try {
-        const coachId  = await req.coach._id;
-        const { title, description, prerequisites, days } = req.body;
+        const coachId = req.coach._id;
+        const { title, description, prerequisites, days, programImage, programVideo } = req.body;
+
+        // Validate required fields
+        if (!programImage) {
+            return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
+        }
+
         const program = new Program({
             coachId,
             title,
             description,
             prerequisites,
-            days
+            days,
+            programImage,  // Now required
+            programVideo  // Optional
         });
+
         await program.save();
         res.status(200).send({ status: "SUCCESS", message: "Program created successfully" });
     } catch (error) {
         console.error(error);
-        res.status(500).send({ status: "FAILURE", message: "An error occurred while creating program" });
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while creating the program" });
     }
-}
+};
 
 const getAllPrograms = async (req, res) => {
     try {
