@@ -350,7 +350,18 @@ const getAllPrograms = async (req, res) => {
 const getCoachPrograms = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const programs = await Program.find({ coachId }).populate('coachId');
+        const programs = await Program.find({ coachId });
+        res.status(200).send({ status: "SUCCESS", programs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching programs" });
+    }
+}
+
+const getCoachProgramById = async (req, res) => {
+    const {coachId} = req.params;
+    try {
+        const programs = await Program.find({ coachId });
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -443,5 +454,6 @@ module.exports = {
     getAllPrograms,
     getCoachPrograms,
     updateProgram,
-    deleteProgram
+    deleteProgram,
+    getCoachProgramById
 }
