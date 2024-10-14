@@ -42,6 +42,7 @@ async function CoachRoute(fastify, options) {
 
     fastify.delete("/deleteProgram",{ preHandler: fastify.coachAuth }, deleteProgram)
 
+    
 }
 
 module.exports = CoachRoute;

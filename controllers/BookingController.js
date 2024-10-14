@@ -6,7 +6,6 @@ const bookSlots = async (req, res) => {
     const user = req.user;
     const userId = req.user._id;
     const { slotTime, coachId, timezone, country, state, city, notes, date } = req.body;
-    console.log(slotTime)
     try {
         const coach = await Coach.findById(coachId);
         if (!coach) {
