@@ -174,7 +174,7 @@ const uploadCoachDocuments = async (req, res) => {
 
 const getAllCoaches = async (req, res) => {
     try {
-        const coaches = await Coach.find().populate('bookings')
+        const coaches = await Coach.find().populate('bookings').populate('programs');
         res.status(200).send({
             status: "SUCCESS",
             coaches
