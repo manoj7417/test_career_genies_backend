@@ -57,7 +57,6 @@ const printResume = async (request, reply) => {
 
         const page = await browser.newPage();
         await page.setContent(styledHtml, { waitUntil: 'networkidle0' });
-        await page.waitForTimeout(1000);
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,

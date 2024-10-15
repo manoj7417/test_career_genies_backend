@@ -342,8 +342,8 @@ const createProgram = async (req, res) => {
             description,
             prerequisites,
             days,
-            programImage,  // Now required
-            programVideo  // Optional
+            programImage,  
+            programVideo  
         });
 
         await program.save();
