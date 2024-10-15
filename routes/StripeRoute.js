@@ -1,10 +1,12 @@
-const { createSubscriptionPayment, buyCredits, testingWebhook } = require("../controllers/stripeController");
+const { createSubscriptionPayment, buyCredits, payCoach } = require("../controllers/stripeController");
 
 
 async function StripeRoute(fastify, options) {
     fastify.post("/createSubscription", { preHandler: [fastify.verifyJWT] }, createSubscriptionPayment)
 
     fastify.post('/buy-credits', { preHandler: [fastify.verifyJWT] }, buyCredits)
+
+    fastify.post('/payCoach', { preHandler: [fastify.verifyJWT] }, payCoach)
 
 }
 
