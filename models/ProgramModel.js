@@ -32,6 +32,7 @@ const programSchema = new mongoose.Schema({
     days: [daySchema],  // Array of days in the program
     programImage: {type: String, required: true},  // URL to the program image
     programVideo: {type: String},  // URL to the program video
+    isapproved: { type: Boolean, default: false },  // Whether the program has been approved by the coach
 }, {
     timestamps: true
 });

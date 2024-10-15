@@ -1,5 +1,5 @@
 
-const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById } = require("../controllers/CoachController");
+const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById, editProgramByadmin } = require("../controllers/CoachController");
 
 
 async function CoachRoute(fastify, options) {
@@ -32,13 +32,15 @@ async function CoachRoute(fastify, options) {
 
     fastify.post("/create-program", { preHandler: fastify.coachAuth }, createProgram)
 
-    fastify.get("/programs", getAllPrograms)
+    fastify.get("/programs", getAllPrograms)  //use this one to get all program details for admin dashboards
 
     fastify.get("/programByCoachId",{ preHandler: fastify.coachAuth }, getCoachPrograms)
 
     fastify.get("/programByCoachId/:coachId", getCoachProgramById)
 
     fastify.put("/editProgram",{ preHandler: fastify.coachAuth }, updateProgram)
+
+    fastify.put("/editProgramByAdmin/:programId", editProgramByadmin) // use this one to approve the program
 
     fastify.delete("/deleteProgram",{ preHandler: fastify.coachAuth }, deleteProgram)
 
