@@ -376,7 +376,7 @@ const getCoachPrograms = async (req, res) => {
 }
 
 const getCoachProgramById = async (req, res) => {
-    const {coachId} = req.params;
+    const { coachId } = req.params;
     try {
         const programs = await Program.find({ coachId });
         res.status(200).send({ status: "SUCCESS", programs });
@@ -394,7 +394,7 @@ const updateProgram = async (req, res) => {
         // Perform a single database call to find and update the program
         const program = await Program.findOneAndUpdate(
             { _id: _id, coachId: coachId },  // Ensure program exists and belongs to the coach
-            { 
+            {
                 ...(title && { title }),              // Update only if the field is provided
                 ...(description && { description }),
                 ...(prerequisites && { prerequisites }),
@@ -431,7 +431,7 @@ const deleteProgram = async (req, res) => {
     const { _id } = req.body;
 
     try {
-      
+
         const program = await Program.findOneAndDelete({ _id: _id, coachId: coachId });
         if (!program) {
             return res.status(404).send({
