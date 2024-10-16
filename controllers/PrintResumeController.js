@@ -17,8 +17,6 @@ const printResume = async (request, reply) => {
         if (!user) {
             return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
         }
-
-
         if (user.subscription.downloadCVTokens.expiry <= currentDate) {
             return reply.code(403).send({
                 status: 'FAILURE',

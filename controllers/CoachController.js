@@ -452,7 +452,6 @@ const deleteProgram = async (req, res) => {
     }
 };
 
-module.exports = { updateProgram };
 
 
 module.exports = {
