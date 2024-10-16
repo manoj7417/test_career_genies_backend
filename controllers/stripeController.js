@@ -10,6 +10,7 @@ const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'Invoic
 const crypto = require('crypto');
 const { pricing } = require('../constants/pricing');
 const { symbols } = require('../constants/symbols');
+const { CoachPayment } = require('../models/CoachPaymentModel');
 
 
 const getPricing = (currency, planName) => {
@@ -108,6 +109,7 @@ const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody;
     let event;
+    
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
     } catch (err) {
@@ -115,40 +117,50 @@ const webhook = async (request, reply) => {
         return reply.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // Handle the event
     switch (event.type) {
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
             const sessions = await stripe.checkout.sessions.list({
                 payment_intent: paymentIntent.id
             });
-            const sessionId = sessions.data[0].id;
+            const session = sessions.data[0];
+            const sessionId = session.id;
+
             try {
-                const payment = await Payment.findOne({ sessionId });
-                if (!payment) {
-                    return reply.status(404).send('Payment record not found');
-                }
-                payment.status = 'Completed';
-                await payment.save();
-                const user = await User.findById(payment.user);
-                if (!user) {
-                    return reply.status(404).send('User not found');
-                }
-                const customerEmail = user.email;
-                if (payment.plan === 'ADD-CREDITS') {
-                    if (payment.addCredits.serviceName === 'CVCreator') {
-                        user.subscription.downloadCVTokens.credits += payment.addCredits.credits
+                // Check if it's a coach payment
+                if (session.metadata?.type === 'coachPayment') {
+                    // Handle coach payment logic
+                    const coachPayment = await CoachPayment.findOne({ sessionId });
+
+                    if (!coachPayment) {
+                        return reply.status(404).send('Coach payment record not found');
                     }
-                    if (payment.addCredits.serviceName === 'CVOptimiser') {
-                        user.subscription.optimizerTokens.credits += payment.addCredits.credits
-                        user.subscription.analyserTokens.credits += payment.addCredits.credits
-                    }
-                    if (payment.addCredits.serviceName === 'CVMatch') {
-                        user.subscription.JobCVTokens.credits += payment.addCredits.credits
-                    }
-                    user.payments.push(payment._id)
-                    await user.save();
+
+                    coachPayment.status = 'Completed';
+                    await coachPayment.save();
+
+                    // Add any other coach-specific actions here
+
+                    return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else {
-                    const UpdatedUserData = await User.findByIdAndUpdate(payment.user, {
+                    // Handle regular subscription payment logic
+                    const payment = await Payment.findOne({ sessionId });
+
+                    if (!payment) {
+                        return reply.status(404).send('Payment record not found');
+                    }
+
+                    payment.status = 'Completed';
+                    await payment.save();
+
+                    const user = await User.findById(payment.user);
+                    if (!user) {
+                        return reply.status(404).send('User not found');
+                    }
+
+                    // Update user subscription
+                    await User.findByIdAndUpdate(payment.user, {
                         $set: {
                             'subscription.status': 'Completed',
                             'subscription.plan': [...user.subscription.plan, payment.plan],
@@ -165,40 +177,30 @@ const webhook = async (request, reply) => {
                             payments: [...user.payments, payment._id]
                         }
                     });
-                }
-                const date = new Date(payment.expiryDate);
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                const formattedDate = date.toLocaleDateString('en-US', options);
-                const invoiceTemplate = fs.readFileSync(invoiceTemplatePath, "utf-8");
-                const planName = getPlanName(payment.plan) || "Credits Added"
-                const price = `${symbols[payment.currency]} ${payment.amount}`
-                const invoiceBody = invoiceTemplate.replace('{fullname}', user.fullname).replace('{plan_type}', planName).replace('{payment_amount}', price).replace('{validity_date}', formattedDate)
-                await sendEmail(customerEmail, "Genie's Career Hub: Payment Successful", invoiceBody);
-                return
-            } catch (err) {
-                console.error('Error updating subscription status to Active:', err);
-            }
-            break;
-        }
 
+                    return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+                }
+            } catch (err) {
+                console.error('Error processing payment:', err);
+                return reply.status(500).send('Internal server error');
+            }
+        }
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
             const sessions = await stripe.checkout.sessions.list({
                 payment_intent: paymentIntent.id
             });
-            const sessionId = sessions.data[0].id;
+            const session = sessions.data[0];
+            const sessionId = session.id;
+
             try {
-                const payment = await Payment.findOne({ sessionId: sessionId });
-
-                if (!payment) {
-                    console.error(`Payment record not found for session ID: ${sessionId}`);
-                    return reply.status(404).send('Payment record not found');
+                if (session.metadata?.type === 'coachPayment') {
+                    await CoachPayment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
+                } else {
+                    await Payment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
                 }
-
-                await Payment.findByIdAndUpdate(payment._id, { status: 'Failed' });
-
             } catch (err) {
-                console.error('Error updating subscription status to Failed:', err);
+                console.error('Error updating payment status to Failed:', err);
             }
             break;
         }
@@ -207,7 +209,8 @@ const webhook = async (request, reply) => {
     }
 
     reply.status(200).send();
-}
+};
+
 
 const razorpayWebhook = async (request, reply) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -346,10 +349,56 @@ const buyCredits = async (request, reply) => {
     }
 }
 
+const payCoach = async (request, reply) => {
+    const { amount, currency, orderId, userId, coachId, programId } = request.body;
+
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency,
+                    unit_amount: amount * 100,  // Amount should be multiplied by 100 for Stripe
+                    product_data: {
+                        name: 'Coach Subscription'
+                    }
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url: `${process.env.FRONTEND_URL}/checkout/success`,
+            cancel_url: `${process.env.FRONTEND_URL}/checkout/cancel`,
+            metadata: {
+                orderId,
+                type: 'coachPayment'  // Add a metadata field to indicate this is a coach payment
+            }
+        });
+
+        console.log(session.url);
+
+        const payment = new CoachPayment({
+            user: userId,
+            amount,
+            currency,
+            status: 'Pending',
+            coachId,
+            programId: programId,
+            sessionId: session.id
+        });
+        await payment.save();
+        return reply.status(200).send({ url: session.url });
+    } catch (error) {
+        console.log("Error processing coach payment", error);
+        return reply.status(500).send('Error processing payment');
+    }
+};
+
+
 module.exports = {
     createSubscriptionPayment,
     webhook,
     razorpayWebhook,
     getPricing,
-    buyCredits
+    buyCredits,
+    payCoach
 };
