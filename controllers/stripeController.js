@@ -109,7 +109,7 @@ const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody;
     let event;
-    
+
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
     } catch (err) {
@@ -350,8 +350,9 @@ const buyCredits = async (request, reply) => {
 }
 
 const payCoach = async (request, reply) => {
-    const { amount, currency, orderId, userId, coachId, programId } = request.body;
 
+    const { amount, currency, orderId, coachId, programId } = request.body;
+    const userId = request.user._id;
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],

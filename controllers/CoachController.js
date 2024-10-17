@@ -342,12 +342,12 @@ const createProgram = async (req, res) => {
             description,
             prerequisites,
             days,
-            programImage,  
-            programVideo  
+            programImage,
+            programVideo
         });
 
         await program.save();
-        res.status(200).send({ status: "SUCCESS", message: "Program created successfully" });
+        res.status(201).send({ status: "SUCCESS", message: "Program created successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).send({ status: "FAILURE", message: "An error occurred while creating the program" });
@@ -383,6 +383,24 @@ const getCoachProgramById = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching programs" });
+    }
+}
+
+const getCoachProgramByprogramId = async (req, res) => {
+    const { programId } = req.params;
+    const coachId = req.coach._id;
+    try {
+        const program = await Program.findOne({ _id: programId, coachId })
+        if (!program) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Program not found"
+            });
+        }
+        res.status(200).send({ status: "SUCCESS", program });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching program" });
     }
 }
 
@@ -428,18 +446,17 @@ const updateProgram = async (req, res) => {
 
 const deleteProgram = async (req, res) => {
     const coachId = req.coach._id;
-    const { _id } = req.body;
-
+    const { programId } = req.params;
     try {
 
-        const program = await Program.findOneAndDelete({ _id: _id, coachId: coachId });
+        const program = await Program.findOneAndDelete({ _id: programId, coachId });
         if (!program) {
             return res.status(404).send({
                 status: "FAILURE",
                 message: "Program not found or unauthorized"
             });
         }
-        return res.status(200).send({
+        return res.status(204).send({
             status: "SUCCESS",
             message: "Program deleted successfully"
         });
@@ -514,5 +531,6 @@ module.exports = {
     updateProgram,
     deleteProgram,
     getCoachProgramById,
-    editProgramByadmin
+    editProgramByadmin,
+    getCoachProgramByprogramId
 }
