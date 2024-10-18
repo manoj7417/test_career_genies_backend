@@ -351,7 +351,9 @@ const buyCredits = async (request, reply) => {
 
 const payCoach = async (request, reply) => {
 
-    const { amount, currency, orderId, coachId, programId } = request.body;
+    const { amount, currency, coachId, programId } = await request.body;
+
+    console.log(amount, currency, coachId, programId)
     const userId = request.user._id;
     try {
         const session = await stripe.checkout.sessions.create({
@@ -370,7 +372,6 @@ const payCoach = async (request, reply) => {
             success_url: `${process.env.FRONTEND_URL}/checkout/success`,
             cancel_url: `${process.env.FRONTEND_URL}/checkout/cancel`,
             metadata: {
-                orderId,
                 type: 'coachPayment'  // Add a metadata field to indicate this is a coach payment
             }
         });
