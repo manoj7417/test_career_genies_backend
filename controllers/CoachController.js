@@ -391,7 +391,7 @@ const getAllCoachPrograms = async (req, res) => {
 const getCoachProgramById = async (req, res) => {
     const { coachId } = req.params;
     try {
-        const programs = await Program.find({ coachId, isapproved: true });  // Filter by coachId and approved programs
+        const programs = await Program.find({ coachId, isapproved: true });
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
