@@ -356,7 +356,7 @@ const createProgram = async (req, res) => {
 
 const getAllPrograms = async (req, res) => {
     try {
-        const programs = await Program.find();
+        const programs = await Program.find({ isapproved: true });  // Filter by approved programs
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -367,7 +367,7 @@ const getAllPrograms = async (req, res) => {
 const getCoachPrograms = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const programs = await Program.find({ coachId });
+        const programs = await Program.find({ coachId, isapproved: true });  // Filter by coachId and approved programs
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -378,7 +378,7 @@ const getCoachPrograms = async (req, res) => {
 const getCoachProgramById = async (req, res) => {
     const { coachId } = req.params;
     try {
-        const programs = await Program.find({ coachId });
+        const programs = await Program.find({ coachId, isapproved: true });  // Filter by coachId and approved programs
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -390,7 +390,7 @@ const getCoachProgramByprogramId = async (req, res) => {
     const { programId } = req.params;
     const coachId = req.coach._id;
     try {
-        const program = await Program.findOne({ _id: programId, coachId })
+        const program = await Program.findOne({ _id: programId, coachId, isapproved: true })  // Filter by programId, coachId, and approved programs
         if (!program) {
             return res.status(404).send({
                 status: "FAILURE",
