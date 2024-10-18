@@ -329,7 +329,7 @@ const getBookings = async (req, res) => {
 const createProgram = async (req, res) => {
     try {
         const coachId = req.coach._id;
-        const { title, description, prerequisites, days, programImage, programVideo } = req.body;
+        const { title, description, prerequisites, days, programImage, programVideo, amount } = req.body;
 
         // Validate required fields
         if (!programImage) {
@@ -343,7 +343,8 @@ const createProgram = async (req, res) => {
             prerequisites,
             days,
             programImage,
-            programVideo
+            programVideo,
+            amount
         });
 
         await program.save();
@@ -368,6 +369,18 @@ const getCoachPrograms = async (req, res) => {
     const coachId = req.coach._id;
     try {
         const programs = await Program.find({ coachId, isapproved: true });  // Filter by coachId and approved programs
+        console.log(programs)
+        res.status(200).send({ status: "SUCCESS", programs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching programs" });
+    }
+}
+
+const getAllCoachPrograms = async (req, res) => {
+    const coachId = req.coach._id;
+    try {
+        const programs = await Program.find({ coachId });
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -450,6 +463,7 @@ const deleteProgram = async (req, res) => {
     try {
 
         const program = await Program.findOneAndDelete({ _id: programId, coachId });
+
         if (!program) {
             return res.status(404).send({
                 status: "FAILURE",
@@ -532,5 +546,6 @@ module.exports = {
     deleteProgram,
     getCoachProgramById,
     editProgramByadmin,
-    getCoachProgramByprogramId
+    getCoachProgramByprogramId,
+    getAllCoachPrograms
 }
