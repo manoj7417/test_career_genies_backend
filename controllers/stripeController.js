@@ -205,7 +205,7 @@ const webhook = async (request, reply) => {
             break;
         }
         default:
-            
+
     }
 
     reply.status(200).send();
@@ -350,10 +350,7 @@ const buyCredits = async (request, reply) => {
 }
 
 const payCoach = async (request, reply) => {
-
-    const { amount, currency, coachId, programId } = await request.body;
-
-    console.log(amount, currency, coachId, programId)
+    const { amount, currency, coachId, programId, success_url, cancel_url } = await request.body;
     const userId = request.user._id;
     try {
         const session = await stripe.checkout.sessions.create({
@@ -369,14 +366,14 @@ const payCoach = async (request, reply) => {
                 quantity: 1
             }],
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/checkout/success`,
-            cancel_url: `${process.env.FRONTEND_URL}/checkout/cancel`,
+            success_url,
+            cancel_url,
             metadata: {
-                type: 'coachPayment'  // Add a metadata field to indicate this is a coach payment
+                type: 'coachPayment'  
             }
         });
 
-        console.log(session.url);
+        console.log(session);
 
         const payment = new CoachPayment({
             user: userId,
