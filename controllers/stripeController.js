@@ -373,8 +373,6 @@ const payCoach = async (request, reply) => {
             }
         });
 
-        console.log(session);
-
         const payment = new CoachPayment({
             user: userId,
             amount,
