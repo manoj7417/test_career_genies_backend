@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const { pricing } = require('../constants/pricing');
 const { symbols } = require('../constants/symbols');
 const { CoachPayment } = require('../models/CoachPaymentModel');
+const { Coach } = require('../models/CoachModel');
+const { Booking } = require('../models/BookingModel');
 
 
 const getPricing = (currency, planName) => {
@@ -143,6 +145,16 @@ const webhook = async (request, reply) => {
                     // Add any other coach-specific actions here
 
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
+                } else if (session.metadata?.type === 'slotBooking') {
+                const Booking = await Booking.findOne({ sessionId });
+                
+                    if (!Booking) {
+                        return reply.status(404).send('Booking record not found');
+                    }
+                    Booking.status = 'booked';
+                    await Booking.save();
+                    // Add any other coach-specific actions here
+                    return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
                     // Handle regular subscription payment logic
                     const payment = await Payment.findOne({ sessionId });
@@ -369,7 +381,7 @@ const payCoach = async (request, reply) => {
             success_url,
             cancel_url,
             metadata: {
-                type: 'coachPayment'  
+                type: 'coachPayment'
             }
         });
 
@@ -390,6 +402,64 @@ const payCoach = async (request, reply) => {
     }
 };
 
+const bookCoachSlot = async (req, res) => {
+    const userId = req.user._id;
+    const { slotTime, coachId, timezone, notes, date, success_url, cancel_url, amount, currency , city , country } = req.body;
+    try {
+        const coach = await Coach.findById(coachId);
+        if (!coach) {
+            return res.status(404).send('Coach not found');
+        }
+        const isSlotBooked = await Booking.findOne({ coachId, slotTime, date, status: "booked" });
+        if (isSlotBooked) {
+            return res.status(409).send({
+                status: "FAILURE",
+                message: "Slot is already booked"
+            });
+        }
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency,
+                    unit_amount: amount * 100,
+                    product_data: {
+                        name: 'Slot Booking'
+                    }
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url,
+            cancel_url,
+            metadata: {
+                type: 'slotBooking'
+            }
+        });
+
+        const newBooking = new Booking({
+            userId,
+            coachId,
+            slotTime,
+            timezone,
+            notes,
+            date,
+            sessionId: session.id,
+            city,
+            country
+        });
+        await newBooking.save();
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Slot booked successfully",
+            url: session.url
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send(err);
+    }
+}
+
 
 module.exports = {
     createSubscriptionPayment,
@@ -397,5 +467,6 @@ module.exports = {
     razorpayWebhook,
     getPricing,
     buyCredits,
-    payCoach
+    payCoach,
+    bookCoachSlot
 };

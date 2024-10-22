@@ -1,4 +1,4 @@
-const { createSubscriptionPayment, buyCredits, payCoach } = require("../controllers/stripeController");
+const { createSubscriptionPayment, buyCredits, payCoach, bookCoachSlot } = require("../controllers/stripeController");
 
 
 async function StripeRoute(fastify, options) {
@@ -8,6 +8,9 @@ async function StripeRoute(fastify, options) {
 
     fastify.post('/payCoach', { preHandler: [fastify.verifyJWT] }, payCoach)
 
+    fastify.post("/bookCoachSlot", {
+        preHandler: [fastify.verifyJWT]
+    }, bookCoachSlot)
 }
 
 module.exports = StripeRoute;
