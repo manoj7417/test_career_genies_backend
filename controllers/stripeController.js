@@ -385,7 +385,6 @@ const payCoach = async (request, reply) => {
             }
         });
 
-
         const payment = new CoachPayment({
             user: userId,
             amount,
