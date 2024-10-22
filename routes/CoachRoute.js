@@ -44,7 +44,7 @@ async function CoachRoute(fastify, options) {
 
     fastify.put("/editProgram", { preHandler: fastify.coachAuth }, updateProgram)
 
-    fastify.put("/editProgramByAdmin/:programId", editProgramByadmin) // use this one to approve the program
+    fastify.put("/editProgramByAdmin/:coachId", editProgramByadmin) // use this one to approve the program
 
     fastify.delete("/deleteProgram/:programId", { preHandler: fastify.coachAuth }, deleteProgram)
 

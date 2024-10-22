@@ -11,6 +11,7 @@ const { sendEmail } = require("../utils/nodemailer");
 const jwt = require("jsonwebtoken");
 const { Booking } = require("../models/BookingModel");
 const { Program } = require("../models/ProgramModel");
+const { default: mongoose } = require("mongoose");
 require('dotenv').config();
 
 async function decodeToken(token, secret) {
@@ -486,45 +487,55 @@ const deleteProgram = async (req, res) => {
 };
 
 const editProgramByadmin = async (req, res) => {
-    const { coachId } = req.params;
-    const { _id, title, description, prerequisites, days, isapproved } = req.body;  // Destructure fields from the request body
-
+    const { _id, title, description, prerequisites, days, isapproved } = req.body; // Destructure fields from the request body
+  
     try {
-        // Perform a single database call to find and update the program
-        const program = await Program.findOneAndUpdate(
-            { _id: _id, coachId: coachId },  // Ensure program exists and belongs to the coach
-            {
-                ...(title && { title }),              // Update title if provided
-                ...(description && { description }),  // Update description if provided
-                ...(prerequisites && { prerequisites }),  // Update prerequisites if provided
-                ...(days && { days }),  // Update days if provided
-                ...(typeof isapproved !== 'undefined' && { isapproved })  // Update isapproved if provided (explicitly checking for undefined)
-            },
-            { new: true, lean: true }  // Return the updated document in a plain JavaScript object format for faster read
-        );
-
-        // If the program is not found or doesn't belong to the coach
-        if (!program) {
-            return res.status(404).send({
-                status: "FAILURE",
-                message: "Program not found or unauthorized"
-            });
-        }
-
-        // Successfully updated, return the updated program
-        return res.status(200).send({
-            status: "SUCCESS",
-            message: "Program updated successfully",
-            program
+      // Validate that _id is a valid ObjectId
+      if (!mongoose.isValidObjectId(_id)) {
+        return res.status(400).send({
+          status: "FAILURE",
+          message: "Invalid program ID",
         });
+      }
+  
+      // Perform the update using findByIdAndUpdate
+      const updatedProgram = await Program.findByIdAndUpdate(
+        _id,
+        {
+          ...(title && { title }),              // Update title if provided
+          ...(description && { description }),  // Update description if provided
+          ...(prerequisites && { prerequisites }),  // Update prerequisites if provided
+          ...(days && { days }),  // Update days if provided
+          ...(typeof isapproved !== "undefined" && { isapproved })  // Update isapproved if explicitly provided
+        },
+        { new: true, lean: true }  // Return the updated document in plain JavaScript object format
+      );
+  
+      // If the program is not found
+      if (!updatedProgram) {
+        return res.status(404).send({
+          status: "FAILURE",
+          message: "Program not found",
+        });
+      }
+  
+      // Successfully updated, return the updated program
+      return res.status(200).send({
+        status: "SUCCESS",
+        message: "Program updated successfully",
+        program: updatedProgram,
+      });
+  
     } catch (error) {
-        console.error(error);
-        return res.status(500).send({
-            status: "FAILURE",
-            message: "An error occurred while updating the program"
-        });
+      console.error(error);
+      return res.status(500).send({
+        status: "FAILURE",
+        message: "An error occurred while updating the program",
+      });
     }
-};
+  };
+
+
 
 
 
