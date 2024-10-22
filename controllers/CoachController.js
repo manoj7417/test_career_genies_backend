@@ -357,7 +357,7 @@ const createProgram = async (req, res) => {
 
 const getAllPrograms = async (req, res) => {
     try {
-        const programs = await Program.find({ isapproved: true });  // Filter by approved programs
+        const programs = await Program.find();  // Filter by approved programs
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
