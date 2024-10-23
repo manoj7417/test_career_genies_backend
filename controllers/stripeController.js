@@ -13,6 +13,7 @@ const { symbols } = require('../constants/symbols');
 const { CoachPayment } = require('../models/CoachPaymentModel');
 const { Coach } = require('../models/CoachModel');
 const { Booking } = require('../models/BookingModel');
+const moment = require('moment');
 
 
 const getPricing = (currency, planName) => {
@@ -168,7 +169,7 @@ const webhook = async (request, reply) => {
                     const coachHtml = `<div>
         <h2>Meeting Details</h2>
         <p>User: ${user.fullname}</p>
-        <p>Date: ${booked.date}</p>
+        <p>Date: ${moment(booked.date).format('LL')}</p>
         <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
         <p>Notes: ${booked.notes}</p>
         <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
@@ -178,7 +179,7 @@ const webhook = async (request, reply) => {
                     const userHtml = `<div>
         <h2>Meeting Details</h2>
         <p>Coach: ${coach.name}</p>
-        <p>Date: ${booked.date}</p>
+        <p>Date: ${moment(booked.date).format('LL')}</p>
         <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
         <p>Notes: ${booked.notes}</p>
         <p>To join the meeting, please visit the following link:</p>`
@@ -240,7 +241,7 @@ const webhook = async (request, reply) => {
                 if (session.metadata?.type === 'coachPayment') {
                     await CoachPayment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
                 } else if (session.metadata?.type === 'slotBooking') {
-                   await Booking.findOneAndUpdate({ sessionId }, { status: 'cancelled' });
+                    await Booking.findOneAndUpdate({ sessionId }, { status: 'cancelled' });
                 } else {
                     await Payment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
                 }
