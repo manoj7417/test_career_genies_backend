@@ -168,7 +168,7 @@ const webhook = async (request, reply) => {
                     const coachHtml = `<div>
         <h2>Meeting Details</h2>
         <p>User: ${user.fullname}</p>
-        <p>Date: ${date}</p>
+        <p>Date: ${booked.date}</p>
         <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
         <p>Notes: ${booked.notes}</p>
         <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
