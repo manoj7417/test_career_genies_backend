@@ -146,13 +146,13 @@ const webhook = async (request, reply) => {
 
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else if (session.metadata?.type === 'slotBooking') {
-                const Booking = await Booking.findOne({ sessionId });
+                const booked = await Booking.findOne({ sessionId });
                 
-                    if (!Booking) {
+                    if (!booked) {
                         return reply.status(404).send('Booking record not found');
                     }
-                    Booking.status = 'booked';
-                    await Booking.save();
+                    booked.status = 'booked';
+                    await booked.save();
                     // Add any other coach-specific actions here
                     return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
