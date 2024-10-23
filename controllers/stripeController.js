@@ -146,13 +146,44 @@ const webhook = async (request, reply) => {
 
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else if (session.metadata?.type === 'slotBooking') {
-                const booked = await Booking.findOne({ sessionId });
-                
+                    const booked = await Booking.findOne({ sessionId });
+
                     if (!booked) {
                         return reply.status(404).send('Booking record not found');
                     }
                     booked.status = 'booked';
                     await booked.save();
+                    const coachId = booked.coachId;
+                    const userId = booked.userId;
+                    const coach = await Coach.findById(coachId);
+                    if (!coach) {
+                        return reply.status(404).send('Coach not found');
+                    }
+
+                    const user = await User.findById(userId);
+                    if (!user) {
+                        return reply.status(404).send('User not found');
+                    }
+
+                    const coachHtml = `<div>
+        <h2>Meeting Details</h2>
+        <p>User: ${user.fullname}</p>
+        <p>Date: ${date}</p>
+        <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
+        <p>Notes: ${booked.notes}</p>
+        <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
+        <p>To join the meeting, please visit the following link:</p>
+        </div>`;
+                    await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
+                    const userHtml = `<div>
+        <h2>Meeting Details</h2>
+        <p>Coach: ${coach.name}</p>
+        <p>Date: ${booked.date}</p>
+        <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
+        <p>Notes: ${booked.notes}</p>
+        <p>To join the meeting, please visit the following link:</p>`
+
+                    await sendEmail(user.email, "Career coaching meeting scheduled", userHtml)
                     // Add any other coach-specific actions here
                     return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
@@ -208,6 +239,8 @@ const webhook = async (request, reply) => {
             try {
                 if (session.metadata?.type === 'coachPayment') {
                     await CoachPayment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
+                } else if (session.metadata?.type === 'slotBooking') {
+                   await Booking.findOneAndUpdate({ sessionId }, { status: 'cancelled' });
                 } else {
                     await Payment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
                 }
@@ -404,7 +437,7 @@ const payCoach = async (request, reply) => {
 
 const bookCoachSlot = async (req, res) => {
     const userId = req.user._id;
-    const { slotTime, coachId, timezone, notes, date, success_url, cancel_url, amount, currency , city , country } = req.body;
+    const { slotTime, coachId, timezone, notes, date, success_url, cancel_url, amount, currency, city, country } = req.body;
     try {
         const coach = await Coach.findById(coachId);
         if (!coach) {
@@ -458,7 +491,7 @@ const bookCoachSlot = async (req, res) => {
         console.log(err);
         return res.status(500).send(err);
     }
-}
+};
 
 
 module.exports = {
