@@ -778,9 +778,7 @@ const scheduleProgramDay = async (req, res) => {
 const getEnrollmentDetails = async (req, res) => {
   try {
     const { programId } = req.params;  // Extract userId and programId from the request parameters
-
     const userId = req.user.id;
-
     // Find the enrollment for the given user and program
     const enrollment = await Enrollment.findOne({ userId, programId })
       .populate('programId')  // Populate program details
@@ -888,11 +886,12 @@ const getCoachPayment = async (req, reply) => {
 
 const getPrograms = async (req, res) => {
   const userId = req.user._id;
+  console.log(userId)
   try {
     const programs = await CoachPayment.find({ user: userId, status: 'Completed' })
       .populate({
         path: 'programId',
-        select: 'name description duration', 
+        select: 'name description duration title programImage amount', 
       })
       .populate('coachId', 'name email phone profileImage ratesPerHour');
     res.status(200).send({ status: "SUCCESS", programs })
