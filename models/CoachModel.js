@@ -223,6 +223,7 @@ coachSchema.methods.generateAccessToken = function () {
     );
 };
 
+// Method to generate a refresh token
 coachSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
@@ -235,13 +236,8 @@ coachSchema.methods.generateRefreshToken = function () {
     );
 };
 
-coachSchema.methods.toSafeObject = async function () {
-    await this.populate({
-        path: 'students',
-        select: 'name email phone profileImage'
-    });
-
-    const coachObject = this.toObject({ virtuals: true });
+coachSchema.methods.toSafeObject = function () {
+    const coachObject = this.toObject({ virtuals: true });  
     return {
         name: coachObject.name,
         email: coachObject.email,
@@ -270,8 +266,8 @@ coachSchema.methods.toSafeObject = async function () {
         socialLinks: coachObject.socialLinks,
         description: coachObject.description,
         availability: coachObject.availability,
-        bookings: coachObject.bookings, 
-        programs: coachObject.programs,
+        bookings: coachObject.bookings,  // Ensure bookings are included
+        programs: coachObject.programs,  // Add programs to the output
         isApproved: coachObject.isApproved,
         approvalStatus: coachObject.approvalStatus,
         formFilled: coachObject.formFilled,
@@ -279,6 +275,7 @@ coachSchema.methods.toSafeObject = async function () {
     };
 };
 
+// Method to generate a reset password token
 coachSchema.methods.generateResetPasswordToken = function () {
     return jwt.sign(
         {
@@ -291,6 +288,7 @@ coachSchema.methods.generateResetPasswordToken = function () {
     );
 };
 
+// Create the Coach model
 const Coach = mongoose.model("Coach", coachSchema);
 
 module.exports = { Coach };
