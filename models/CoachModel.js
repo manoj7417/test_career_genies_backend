@@ -271,7 +271,8 @@ coachSchema.methods.toSafeObject = function () {
         isApproved: coachObject.isApproved,
         approvalStatus: coachObject.approvalStatus,
         formFilled: coachObject.formFilled,
-        isEditRequestSent: coachObject.isEditRequestSent
+        isEditRequestSent: coachObject.isEditRequestSent,
+        students : coachObject.students
     };
 };
 
