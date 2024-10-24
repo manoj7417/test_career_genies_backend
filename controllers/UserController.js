@@ -20,7 +20,7 @@ const { uploadfile } = require('../utils/s3Client');
 const { Booking } = require('../models/BookingModel');
 const { Payment } = require('../models/PaymentModel');
 const { Enrollment, Appointment } = require('../models/EnrollmentModel');
-const {CoachPaymentModel, CoachPayment} = require('../models/CoachPaymentModel');
+const {  CoachPayment } = require('../models/CoachPaymentModel');
 const { default: mongoose } = require('mongoose');
 
 function getFilenameFromUrl(url) {
@@ -867,23 +867,39 @@ const updateScheduleProgramDay = async (req, res) => {
 };
 
 const getCoachPayment = async (req, reply) => {
-  const userId = req.user._id; 
-  const { programId } = req.body; 
-  
+  const userId = req.user._id;
+  const { programId } = req.body;
+
   try {
     const coachPayment = await CoachPayment.findOne({ user: userId, programId: programId, status: 'Completed' });
-    
+
     if (!coachPayment) {
       return reply.code(200).send({ purchased: false, message: 'Not purchased yet' });
     }
 
     return reply.code(200).send({ purchased: true, message: 'Already purchased' });
-    
+
   } catch (error) {
     console.error('Error fetching coach payment:', error);
     return reply.code(500).send({ message: 'Internal server error' });
   }
 };
+
+
+const getPrograms = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const programs = await CoachPayment.find({ user: userId, status: 'Completed' })
+      .populate({
+        path: 'programId',
+        select: 'name description duration', 
+      })
+      .populate('coachId', 'name email phone profileImage ratesPerHour');
+    res.status(200).send({ status: "SUCCESS", programs })
+  } catch (error) {
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while getting edit coach details" })
+  }
+}
 
 module.exports = {
   register,
@@ -909,5 +925,6 @@ module.exports = {
   getEnrollmentDetails,
   getAllEnrollmentDetailsofUser,
   updateScheduleProgramDay,
-  getCoachPayment
+  getCoachPayment,
+  getPrograms
 };

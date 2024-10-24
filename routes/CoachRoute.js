@@ -1,5 +1,5 @@
 
-const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById, editProgramByadmin, getCoachProgramByprogramId, getAllCoachPrograms } = require("../controllers/CoachController");
+const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById, editProgramByadmin, getCoachProgramByprogramId, getAllCoachPrograms, getCompletedProgramBookings } = require("../controllers/CoachController");
 
 
 async function CoachRoute(fastify, options) {
@@ -48,7 +48,8 @@ async function CoachRoute(fastify, options) {
 
     fastify.delete("/deleteProgram/:programId", { preHandler: fastify.coachAuth }, deleteProgram)
 
-
+    fastify.get('/getProgramBookings', { preHandler: fastify.coachAuth }, getCompletedProgramBookings
+    )
 }
 
 module.exports = CoachRoute;

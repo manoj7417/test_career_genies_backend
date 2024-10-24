@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const { Booking } = require("../models/BookingModel");
 const { Program } = require("../models/ProgramModel");
 const { default: mongoose } = require("mongoose");
+const { CoachPayment } = require("../models/CoachPaymentModel");
 require('dotenv').config();
 
 async function decodeToken(token, secret) {
@@ -360,7 +361,7 @@ const getAllPrograms = async (req, res) => {
     try {
         const programs = await Program.find().populate(
             'coachId',
-        ) ;  
+        );
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -488,53 +489,69 @@ const deleteProgram = async (req, res) => {
 
 const editProgramByadmin = async (req, res) => {
     const { _id, title, description, prerequisites, days, isapproved } = req.body; // Destructure fields from the request body
-  
-    try {
-      // Validate that _id is a valid ObjectId
-      if (!mongoose.isValidObjectId(_id)) {
-        return res.status(400).send({
-          status: "FAILURE",
-          message: "Invalid program ID",
-        });
-      }
-  
-      // Perform the update using findByIdAndUpdate
-      const updatedProgram = await Program.findByIdAndUpdate(
-        _id,
-        {
-          ...(title && { title }),              // Update title if provided
-          ...(description && { description }),  // Update description if provided
-          ...(prerequisites && { prerequisites }),  // Update prerequisites if provided
-          ...(days && { days }),  // Update days if provided
-          ...(typeof isapproved !== "undefined" && { isapproved })  // Update isapproved if explicitly provided
-        },
-        { new: true, lean: true }  // Return the updated document in plain JavaScript object format
-      );
-  
-      // If the program is not found
-      if (!updatedProgram) {
-        return res.status(404).send({
-          status: "FAILURE",
-          message: "Program not found",
-        });
-      }
-  
-      // Successfully updated, return the updated program
-      return res.status(200).send({
-        status: "SUCCESS",
-        message: "Program updated successfully",
-        program: updatedProgram,
-      });
-  
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send({
-        status: "FAILURE",
-        message: "An error occurred while updating the program",
-      });
-    }
-  };
 
+    try {
+        // Validate that _id is a valid ObjectId
+        if (!mongoose.isValidObjectId(_id)) {
+            return res.status(400).send({
+                status: "FAILURE",
+                message: "Invalid program ID",
+            });
+        }
+
+        // Perform the update using findByIdAndUpdate
+        const updatedProgram = await Program.findByIdAndUpdate(
+            _id,
+            {
+                ...(title && { title }),              // Update title if provided
+                ...(description && { description }),  // Update description if provided
+                ...(prerequisites && { prerequisites }),  // Update prerequisites if provided
+                ...(days && { days }),  // Update days if provided
+                ...(typeof isapproved !== "undefined" && { isapproved })  // Update isapproved if explicitly provided
+            },
+            { new: true, lean: true }  // Return the updated document in plain JavaScript object format
+        );
+
+        // If the program is not found
+        if (!updatedProgram) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Program not found",
+            });
+        }
+
+        // Successfully updated, return the updated program
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Program updated successfully",
+            program: updatedProgram,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            status: "FAILURE",
+            message: "An error occurred while updating the program",
+        });
+    }
+};
+
+const getCompletedProgramBookings = async (req, res) => {
+    const coachId = req.coach._id;
+    try {
+        const bookings = await CoachPayment.find({ coachId: coachId, status: "COMPLETED" }).populate("programId").populate("user");
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Completed program bookings fetched successfully",
+            bookings
+        });
+    } catch (error) {
+        return res.status(500).send({
+            status: "FAILURE",
+            message: "An error occurred while fetching running programs"
+        });
+    }
+}
 
 
 
@@ -560,5 +577,6 @@ module.exports = {
     getCoachProgramById,
     editProgramByadmin,
     getCoachProgramByprogramId,
-    getAllCoachPrograms
+    getAllCoachPrograms,
+    getCompletedProgramBookings
 }

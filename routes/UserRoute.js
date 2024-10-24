@@ -1,4 +1,4 @@
-const { register, login, forgetPassword, resetPassword,  getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage, getUserBookingsDetails, scheduleProgram, scheduleProgramDay, getEnrollmentDetails, getAllEnrollmentDetailsofUser, updateScheduleProgramDay, getCoachPayment } = require("../controllers/UserController");
+const { register, login, forgetPassword, resetPassword, getAllUsers, logout, templatepurchase, analyserCreditsPurchase, UploadProfilePic, updateUserProfileDetails, GetuserDetails, careerCounsellingEligibility, changePassword, verifyToken, verifyEmail, resendVerificationEmail, udpateProfileImage, getUserBookingsDetails, scheduleProgram, scheduleProgramDay, getEnrollmentDetails, getAllEnrollmentDetailsofUser, updateScheduleProgramDay, getCoachPayment, getBookings, getPrograms } = require("../controllers/UserController");
 const upload = require('../config/multer')
 
 
@@ -61,10 +61,8 @@ async function UserRoute(fastify, options) {
     fastify.post("/forgetPassword", { schema: forgetPasswordSchema }, forgetPassword)
 
 
-    //decode user token from response token and update the user password accordingly
     fastify.post("/resetPassword", { schema: resetPasswordSchema }, resetPassword)
 
-    // update the user role and subsription status  for the specific user 
     fastify.route({
         method: "GET",
         url: "/all",
@@ -104,15 +102,17 @@ async function UserRoute(fastify, options) {
 
     fastify.post('/scheduleProgram', { preHandler: fastify.verifyJWT }, scheduleProgram)
 
-    fastify.post('/scheduleProgramDay', {preHandler: fastify.verifyJWT},  scheduleProgramDay)
+    fastify.post('/scheduleProgramDay', { preHandler: fastify.verifyJWT }, scheduleProgramDay)
 
     fastify.put('/updateScheduleProgramDay', { preHandler: fastify.verifyJWT }, updateScheduleProgramDay)
 
     fastify.get('/getEnrollmentDetails/:programId', { preHandler: fastify.verifyJWT }, getEnrollmentDetails)
-    
-    fastify.get('/getAllEnrollmentDetails',{ preHandler: fastify.verifyJWT}, getAllEnrollmentDetailsofUser)
+
+    fastify.get('/getAllEnrollmentDetails', { preHandler: fastify.verifyJWT }, getAllEnrollmentDetailsofUser)
 
     fastify.post('/coachPayment', { preHandler: fastify.verifyJWT }, getCoachPayment)
+
+    fastify.get("/programs", { preHandler: fastify.verifyJWT }, getPrograms)
 }
 
 module.exports = UserRoute

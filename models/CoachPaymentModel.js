@@ -10,6 +10,8 @@ const coachPaymentSchema = new mongoose.Schema({
     coachId : { type: mongoose.Schema.Types.ObjectId, ref: 'Coach', required: true },
     programId : { type: mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
     sessionId : { type: String, required: true }
+},{
+    timestamps: true
 });
 
 const CoachPayment = mongoose.model('CoachPayment', coachPaymentSchema);

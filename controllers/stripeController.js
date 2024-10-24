@@ -143,8 +143,12 @@ const webhook = async (request, reply) => {
                     coachPayment.status = 'Completed';
                     await coachPayment.save();
 
-                    // Add any other coach-specific actions here
-
+                    const coach = await Coach.findById(coachPayment.coachId);
+                    if (!coach) {
+                        return reply.status(404).send('Coach not found');
+                    }
+                    coach.students.push(coachPayment.user);
+                    await coach.save();
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else if (session.metadata?.type === 'slotBooking') {
                     const booked = await Booking.findOne({ sessionId });
