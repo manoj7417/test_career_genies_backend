@@ -539,7 +539,7 @@ const editProgramByadmin = async (req, res) => {
 const getCompletedProgramBookings = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const bookings = await CoachPayment.find({ coachId: coachId, status: "Completed" }).populate("programId").populate("user");
+        const bookings = await CoachPayment.find({ coachId: coachId, status: "Completed" }).populate("programId" , 'title description programImage amount').populate("user" , 'fullname email profilePicture');
         return res.status(200).send({
             status: "SUCCESS",
             message: "Completed program bookings fetched successfully",
