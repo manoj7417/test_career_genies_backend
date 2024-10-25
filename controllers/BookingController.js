@@ -87,8 +87,22 @@ const cancelSlot = async (req, res) => {
     }
 }
 
+const getAllBookings = async (req, res) => {
+    const userId = req.user._id;
+    try {
+        
+    } catch (error) {
+
+    }
+}
+
+const getCoachBookedSlots = async (req, res) => {
+    const {coachId } = req.params;
+}
+
 
 module.exports = {
     bookSlots,
-    cancelSlot
+    cancelSlot,
+    getCoachBookedSlots
 }

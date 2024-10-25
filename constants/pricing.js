@@ -3,19 +3,19 @@ const pricing = {
     CVSTUDIO: {
         name: "CV STUDIO",
         INR: {
-            price: 40,
+            price: 1050,
             symbol: "₹"
         },
         USD: {
-            price: 20,
+            price: 15,
             symbol: "$"
         },
         EUR: {
-            price: 25,
+            price: 17.5,
             symbol: "€"
         },
         GBP: {
-            price: 20,
+            price: 15,
             symbol: "£"
         }
     },

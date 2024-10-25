@@ -47,7 +47,7 @@ const createSubscriptionPayment = async (req, res) => {
                     product_data: {
                         name: `Subscription Plan - ${plan}`,
                     },
-                    unit_amount: amount * 100,
+                    unit_amount: duration === 'monthly' ? amount * 100 : amount * 10 * 100,
                 },
                 quantity: 1,
             }],
@@ -67,7 +67,7 @@ const createSubscriptionPayment = async (req, res) => {
         const currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1))
         const payment = new Payment({
             user: userId,
-            amount: amount,
+            amount: duration === 'monthly' ? amount * 100 : amount * 10 * 100,
             status: 'Pending',
             plan: planName,
             planType: duration,
