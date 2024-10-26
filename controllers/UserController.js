@@ -542,8 +542,10 @@ const GetuserDetails = async (req, reply) => {
 
 const careerCounsellingEligibility = async (req, reply) => {
   const userId = req.user._id;
+  
   try {
     const user = await User.findById(userId);
+   
     if (!user) {
       return reply.code(404).send({ status: "FAILURE", message: "User not found" });
     }

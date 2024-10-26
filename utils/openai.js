@@ -967,8 +967,8 @@ async function generateCounsellingTest(req, reply) {
                 return acc;
             }, {});
         };
-
         const testWithAnswers = mapAnswersToQuestions(test);
+        
         reply.status(201).send(testWithAnswers);
     } catch (error) {
         reply.status(500).send(error);
@@ -1032,17 +1032,19 @@ async function generateCareerAdvice(req, reply) {
             }
         };
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-
+       
         const personalisedSummary = JSON.parse(response[0].text.value)
         const userSummary = new Summary({ userId, ...personalisedSummary })
+        
         await userSummary.save();
-
+        
         await User.findByIdAndUpdate(userId, {
-            $inc: { 'subscription.careerCounsellingTokens': -1 }
+            $inc: { 'subscription.careerCounsellingTokens.credits': -1 }
         });
         reply.send(response);
 
     } catch (error) {
+        
         reply.status(500).send(error);
     }
 
