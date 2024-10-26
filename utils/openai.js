@@ -924,7 +924,7 @@ async function generateCounsellingTest(req, reply) {
             });
         }
 
-        if (user.subscription.status !== 'Active') {
+        if (user.subscription.status !== 'Completed') {
             return reply.status(403).send({ error: "Subscription is not active" });
         }
 
@@ -997,7 +997,7 @@ async function generateCareerAdvice(req, reply) {
             return reply.status(404).send({ error: "User not found" });
         }
 
-        if (user.subscription.status !== 'Active') {
+        if (user.subscription.status !== 'Completed') {
             return reply.status(403).send({ error: "Subscription is not active" });
         }
 
@@ -1041,7 +1041,6 @@ async function generateCareerAdvice(req, reply) {
             $inc: { 'subscription.careerCounsellingTokens': -1 }
         });
         reply.send(response);
-
     } catch (error) {
         reply.status(500).send(error);
     }

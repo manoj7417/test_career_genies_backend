@@ -131,9 +131,7 @@ const webhook = async (request, reply) => {
             const sessionId = session.id;
 
             try {
-                // Check if it's a coach payment
                 if (session.metadata?.type === 'coachPayment') {
-                    // Handle coach payment logic
                     const coachPayment = await CoachPayment.findOne({ sessionId });
 
                     if (!coachPayment) {
@@ -308,7 +306,7 @@ const razorpayWebhook = async (request, reply) => {
                 }
 
                 // Update user subscription status
-                user.subscription.status = 'Active';
+                user.subscription.status = 'Completed';
                 user.subscription.plan = payment.plan;
                 user.subscription.planType = payment.planType;
                 user.subscription.currentPeriodStart = new Date();

@@ -20,7 +20,7 @@ const { uploadfile } = require('../utils/s3Client');
 const { Booking } = require('../models/BookingModel');
 const { Payment } = require('../models/PaymentModel');
 const { Enrollment, Appointment } = require('../models/EnrollmentModel');
-const {  CoachPayment } = require('../models/CoachPaymentModel');
+const { CoachPayment } = require('../models/CoachPaymentModel');
 const { default: mongoose } = require('mongoose');
 
 function getFilenameFromUrl(url) {
@@ -459,7 +459,6 @@ async function decodeToken(token, secret) {
 const updateUserProfileDetails = async (req, reply) => {
   const userId = req.user._id;
   const { fullname, phoneNumber, profilePicture, address, occupation, links, role } = req.body;
-
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -549,7 +548,7 @@ const careerCounsellingEligibility = async (req, reply) => {
     }
 
 
-    if (user.subscription.status !== 'Active') {
+    if (user.subscription.status !== 'Completed') {
       return reply.code(403).send({
         status: "FAILURE",
         message: "Subscription is not active"
@@ -891,7 +890,7 @@ const getPrograms = async (req, res) => {
     const programs = await CoachPayment.find({ user: userId, status: 'Completed' })
       .populate({
         path: 'programId',
-        select: 'name description duration title programImage amount', 
+        select: 'name description duration title programImage amount',
       })
       .populate('coachId', 'name email phone profileImage ratesPerHour');
     res.status(200).send({ status: "SUCCESS", programs })
