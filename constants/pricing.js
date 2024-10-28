@@ -22,19 +22,19 @@ const pricing = {
     AICareerCoach: {
         name: "AI Career Coach",
         INR: {
-            price: 5000,
+            price: 327,
             symbol: "₹"
         },
         USD: {
-            price: 120,
+            price: 3.89,
             symbol: "$"
         },
         EUR: {
-            price: 110,
+            price: 3.6,
             symbol: "€"
         },
         GBP: {
-            price: 100,
+            price: 3,
             symbol: "£"
         }
     },
