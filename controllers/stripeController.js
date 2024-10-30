@@ -162,11 +162,15 @@ const webhook = async (request, reply) => {
                     if (!coach) {
                         return reply.status(404).send('Coach not found');
                     }
+                    coach.bookings.push(booked._id);
+                    await coach.save();
 
                     const user = await User.findById(userId);
                     if (!user) {
                         return reply.status(404).send('User not found');
                     }
+                    user.bookings.push(booked._id);
+                    await user.save();
 
                     const coachHtml = `<div>
         <h2>Meeting Details</h2>

@@ -193,8 +193,8 @@ const getCoachDetails = async (req, res) => {
     try {
         // Find the coach by ID and populate both bookings and the virtual programs field
         const coach = await Coach.findById(coachId)
-            .populate('bookings')  // Populate bookings
-            .populate('programs');  // Populate programs via virtual field
+            .populate('bookings')  
+            .populate('programs');
 
         if (!coach) {
             return res.status(404).send({

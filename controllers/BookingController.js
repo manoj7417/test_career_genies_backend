@@ -14,7 +14,7 @@ const bookSlots = async (req, res) => {
                 message: "Coach not found"
             });
         }
-        const isSlotBooked = await Booking.findOne({ coachId, slotTime, date });
+        const isSlotBooked = await Booking.findOne({ coachId, slotTime, date  });
         if (isSlotBooked) {
             return res.status(409).send({
                 status: "FAILURE",
