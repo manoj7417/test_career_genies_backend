@@ -541,10 +541,10 @@ const GetuserDetails = async (req, reply) => {
 
 const careerCounsellingEligibility = async (req, reply) => {
   const userId = req.user._id;
-  
+
   try {
     const user = await User.findById(userId);
-   
+
     if (!user) {
       return reply.code(404).send({ status: "FAILURE", message: "User not found" });
     }
@@ -669,7 +669,9 @@ const resendVerificationEmail = async (req, res) => {
 const getUserBookingsDetails = async (req, res) => {
   const userId = req.user._id;
   try {
-    const bookings = await Booking.find({ userId }).populate('coachId', 'name email phone profileImage country city experience typeOfCoaching skills ratesPerHour');
+    const bookings = await Booking.find({ userId })
+      .populate('coachId', 'name email phone profileImage country city experience typeOfCoaching skills ratesPerHour')
+      .sort({ createdAt: -1 });
     res.status(200).send({ status: "SUCCESS", bookings });
   } catch (error) {
     console.error(error);

@@ -43,7 +43,7 @@ const BookingSchema = new mongoose.Schema({
         default: 'pending'
     },
     sessionId: { type: String, required: true }
-});
+}, { timestamps: true });
 
 const Booking = mongoose.model('Booking', BookingSchema);
 
