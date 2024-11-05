@@ -89,8 +89,17 @@ const approveEditCoach = async (req, res) => {
                 message: "Edit coach not found"
             });
         }
-        console.log(coachEdit);
-        const coach = await Coach.findById(coachId);
+        const coach = await Coach.findByIdAndUpdate(
+            coachId,
+            { ...coachEdit.toObject(), isEditRequestSent: false },
+            { new: true }
+        );
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach not found"
+            });
+        }
 
         res.status(200).send({
             status: "SUCCESS",
