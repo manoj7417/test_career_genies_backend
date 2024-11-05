@@ -82,7 +82,7 @@ const GeteditCoachRequests = async (req, res) => {
 const approveEditCoach = async (req, res) => {
     const { coachId } = req.params;
     try {
-        const coachEdit = await CoachEdit.findByIdAndUpdate(coachId, { isApproved: true }, { new: true });
+        const coachEdit = await CoachEdit.findByIdAndUpdate(coachId, { isRequestApproved: true }, { new: true });
         if (!coachEdit) {
             return res.status(404).send({
                 status: "FAILURE",

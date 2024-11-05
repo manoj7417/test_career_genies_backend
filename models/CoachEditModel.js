@@ -99,7 +99,7 @@ const coachEditSchema = new mongoose.Schema({
         link: { type: String, required: false, trim: true }
     }],
     description: { type: String, required: false, trim: true },
-    isApproved: {
+    isRequestApproved: {
         type: Boolean,
         required: true,
         default: false
