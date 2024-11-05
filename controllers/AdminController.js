@@ -15,6 +15,7 @@ const verifyCoach = async (req, res) => {
         coach.signedAggrement.isVerified = true;
         coach.isApproved = true;
         coach.approvalStatus = 'approved'
+        coach.profileVideo.isApproved = true;
         await coach.save()
         res.status(200).send({
             status: "SUCCESS",
