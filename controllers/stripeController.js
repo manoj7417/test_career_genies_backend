@@ -8,7 +8,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
 const userAppointmentTemp = path.join(__dirname, '..', "emailTemplates", 'userAppointmentTemp.html')
-const coachAppointmentTemp = path.join(__dirname, '..', "emailTemplates", 'coachAppointmentTemp.html')
+const coachAppointmentTemplate = path.join(__dirname, '..', "emailTemplates", 'coachAppointmentTemp.html')
 const newEnrollmentTemplate = path.join(__dirname, '..', "emailTemplates", 'newEnrollmentTemplate.html')
 const userEnrollmentTemplate = path.join(__dirname, '..', "emailTemplates", 'userProgrammEnrollTemplate.html')
 const crypto = require('crypto');
@@ -177,7 +177,7 @@ const webhook = async (request, reply) => {
                     }
                     user.bookings.push(booked._id);
                     await user.save();
-                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemp, 'utf8')
+                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemplate, 'utf8')
                     const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL'))
                     await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
                     const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8')
