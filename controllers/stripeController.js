@@ -177,7 +177,7 @@ const webhook = async (request, reply) => {
                     user.bookings.push(booked._id);
                     await user.save();
                     const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemplate, 'utf8')
-                    const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL'))
+                    const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL')).replace('{timezone}', booked.timezone)
                     await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
                     const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8')
                     const userHtml = userappointmentTemp.replace('{username}', user.fullname).replace('{coachname}', coach.name).replace('{date}', moment(booked.date).format('LL')).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{timezone}', booked.timezone)
