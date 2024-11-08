@@ -108,7 +108,7 @@ const coachSchema = new mongoose.Schema({
     },
     courses: [],
     socialLinks: [{
-        name: { type: String, required: false, trim: true },
+        name: { type: String, required: false, trim: true, enum: ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'other'], default: 'other' },
         link: { type: String, required: false, trim: true }
     }],
     description: { type: String, required: false, trim: true },
@@ -237,7 +237,7 @@ coachSchema.methods.generateRefreshToken = function () {
 };
 
 coachSchema.methods.toSafeObject = function () {
-    const coachObject = this.toObject({ virtuals: true });  
+    const coachObject = this.toObject({ virtuals: true });
     return {
         name: coachObject.name,
         email: coachObject.email,
@@ -272,7 +272,7 @@ coachSchema.methods.toSafeObject = function () {
         approvalStatus: coachObject.approvalStatus,
         formFilled: coachObject.formFilled,
         isEditRequestSent: coachObject.isEditRequestSent,
-        students : coachObject.students
+        students: coachObject.students
     };
 };
 
