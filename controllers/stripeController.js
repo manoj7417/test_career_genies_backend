@@ -170,7 +170,6 @@ const webhook = async (request, reply) => {
                     }
                     coach.bookings.push(booked._id);
                     await coach.save();
-
                     const user = await User.findById(userId);
                     if (!user) {
                         return reply.status(404).send('User not found');
@@ -181,7 +180,7 @@ const webhook = async (request, reply) => {
                     const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL'))
                     await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
                     const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8')
-                    const userHtml = userappointmentTemp.replace('{name}', user.fullname).replace('{coachname}', coach.name).replace('{date}', moment(booked.date).format('LL')).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{timezone}', booked.timezone)
+                    const userHtml = userappointmentTemp.replace('{username}', user.fullname).replace('{coachname}', coach.name).replace('{date}', moment(booked.date).format('LL')).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{timezone}', booked.timezone)
                     await sendEmail(user.email, "Career coaching meeting scheduled", userHtml)
                     return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
