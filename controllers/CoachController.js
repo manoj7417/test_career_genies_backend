@@ -7,6 +7,7 @@ const resetPasswordTemplatePath = path.join(
     "emailTemplates",
     "resetPassword.html"
 );
+const coachwelcomeEmail = path.join(__dirname, '..', 'emailTemplates', 'coachwelcomeEmail.html');
 const { sendEmail } = require("../utils/nodemailer");
 const jwt = require("jsonwebtoken");
 const { Booking } = require("../models/BookingModel");
@@ -60,11 +61,16 @@ const registerCoach = async (req, res) => {
             phone
         })
         await coach.save();
+        const getStartedEmail = fs.readFileSync(coachwelcomeEmail, "utf-8");
+        await sendEmail(
+            email,
+            "Welcome email",
+            getStartedEmail,
+        );
         res.status(201).send({
             message: "Coach registered successfully"
         })
     } catch (error) {
-        console.log(error)
         res.status(500).send({
             message: "Failed to register coach"
         })
@@ -182,7 +188,6 @@ const getAllCoaches = async (req, res) => {
             coaches
         })
     } catch (error) {
-        console.log("Error", error)
         res.status(500).send({ status: "FAILURE", error })
     }
 }
@@ -191,9 +196,8 @@ const getCoachDetails = async (req, res) => {
     const { coachId } = req.params;
 
     try {
-        // Find the coach by ID and populate both bookings and the virtual programs field
         const coach = await Coach.findById(coachId)
-            .populate('bookings')  
+            .populate('bookings')
             .populate('programs');
 
         if (!coach) {
@@ -539,7 +543,7 @@ const editProgramByadmin = async (req, res) => {
 const getCompletedProgramBookings = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const bookings = await CoachPayment.find({ coachId: coachId, status: "Completed" }).populate("programId" , 'title description programImage amount').populate("user" , 'fullname email profilePicture');
+        const bookings = await CoachPayment.find({ coachId: coachId, status: "Completed" }).populate("programId", 'title description programImage amount').populate("user", 'fullname email profilePicture');
         return res.status(200).send({
             status: "SUCCESS",
             message: "Completed program bookings fetched successfully",

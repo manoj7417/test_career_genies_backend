@@ -7,6 +7,10 @@ require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.WEBHOOK_ENDPOINT
 const invoiceTemplatePath = path.join(__dirname, '..', "emailTemplates", 'InvoiceTemplate.html')
+const userAppointmentTemp = path.join(__dirname, '..', "emailTemplates", 'userAppointmentTemp.html')
+const coachAppointmentTemp = path.join(__dirname, '..', "emailTemplates", 'coachAppointmentTemp.html')
+const newEnrollmentTemplate = path.join(__dirname, '..', "emailTemplates", 'newEnrollmentTemplate.html')
+const userEnrollmentTemplate = path.join(__dirname, '..', "emailTemplates", 'userProgrammEnrollTemplate.html')
 const crypto = require('crypto');
 const { pricing } = require('../constants/pricing');
 const { symbols } = require('../constants/symbols');
@@ -147,10 +151,19 @@ const webhook = async (request, reply) => {
                     }
                     coach.students.push(coachPayment.user);
                     await coach.save();
+                    const newEnrollmentTemp = fs.readFileSync(newEnrollmentTemplate, 'utf8');
+                    const newEnrollmentHtml = newEnrollmentTemp.replace('{coachName}', coach.name)
+                    await sendEmail(coach.email, "New student enrolled", newEnrollmentHtml)
+                    const user = await User.findById(coachPayment.user);
+                    if (!user) {
+                        return reply.status(404).send('User not found');
+                    }
+                    const userEnrollmentTemp = fs.readFileSync(userEnrollmentTemplate, 'utf8');
+                    const userEnrollmentHtml = userEnrollmentTemp.replace('{username}', user.fullname).replace('{date}', moment().format('DD-MM-YYYY'))
+                    await sendEmail(user.email, "New career coaching appointment scheduled", userEnrollmentHtml)
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else if (session.metadata?.type === 'slotBooking') {
                     const booked = await Booking.findOne({ sessionId });
-
                     if (!booked) {
                         return reply.status(404).send('Booking record not found');
                     }
@@ -171,30 +184,14 @@ const webhook = async (request, reply) => {
                     }
                     user.bookings.push(booked._id);
                     await user.save();
-
-                    const coachHtml = `<div>
-        <h2>Meeting Details</h2>
-        <p>User: ${user.fullname}</p>
-        <p>Date: ${moment(booked.date).format('LL')}</p>
-        <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
-        <p>Notes: ${booked.notes}</p>
-        <p>Please make sure to arrive at the scheduled time to join the meeting.</p>
-        <p>To join the meeting, please visit the following link:</p>
-        </div>`;
+                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemp, 'utf8')
+                    const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL'))
                     await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
-                    const userHtml = `<div>
-        <h2>Meeting Details</h2>
-        <p>Coach: ${coach.name}</p>
-        <p>Date: ${moment(booked.date).format('LL')}</p>
-        <p>Slot Time: ${booked.slotTime.startTime}-${booked.slotTime.endTime} , ${booked.timezone}</p>
-        <p>Notes: ${booked.notes}</p>
-        <p>To join the meeting, please visit the following link:</p>`
-
+                    const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8')
+                    const userHtml = userappointmentTemp.replace('{name}', user.fullname).replace('{coachname}', coach.name).replace('{date}', moment(booked.date).format('LL')).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{timezone}', booked.timezone)
                     await sendEmail(user.email, "Career coaching meeting scheduled", userHtml)
-                    // Add any other coach-specific actions here
                     return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
-                    // Handle regular subscription payment logic
                     const payment = await Payment.findOne({ sessionId });
 
                     if (!payment) {

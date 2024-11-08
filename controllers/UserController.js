@@ -709,8 +709,8 @@ const scheduleProgram = async (req, res) => {
       programId,
       enrollmentDate: new Date(),
       status: 'active',
-      progress: 0,  // Initial progress
-      appointments: []  // No appointments yet
+      progress: 0,  
+      appointments: []  
     });
 
     await enrollment.save();

@@ -53,7 +53,8 @@ const UserSchema = new mongoose.Schema({
         name: {
             type: String,
             trim: true,
-            default: ''
+            enum: ['facebook', 'twitter', 'linkedin', 'github', 'other'],
+            default: 'other'
         },
         url: {
             type: String,

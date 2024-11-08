@@ -1,5 +1,10 @@
 const { CoachEdit } = require("../models/CoachEditModel")
 const { Coach } = require("../models/CoachModel")
+const path = require('path')
+const fs = require('fs');
+const { sendEmail } = require("../utils/nodemailer");
+const approveCoachTemplate = path.join(__dirname, '..', 'emailTemplates', 'coachApprovalTemplate.html');
+
 
 const verifyCoach = async (req, res) => {
     const { coachId } = req.params
@@ -15,15 +20,16 @@ const verifyCoach = async (req, res) => {
         coach.signedAggrement.isVerified = true;
         coach.isApproved = true;
         coach.approvalStatus = 'approved'
-        coach.profileVideo.isApproved = true;
+        coach.profileVideo.url && (coach.profileVideo.isApproved = true);
         await coach.save()
+        const template = fs.readFileSync(approveCoachTemplate, 'utf8')
+        await sendEmail(coach.email, 'Your account has been verified', template)
         res.status(200).send({
             status: "SUCCESS",
             message: "Coach found",
             coach
         })
     } catch (error) {
-        console.log("Error", error)
         res.status(500).send({ status: "FAILURE", error })
     }
 }
