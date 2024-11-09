@@ -113,14 +113,12 @@ const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody;
     let event;
-
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
     } catch (err) {
         console.error(`Webhook signature verification failed: ${err.message}`);
         return reply.status(400).send(`Webhook Error: ${err.message}`);
     }
-
     switch (event.type) {
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;

@@ -23,11 +23,6 @@ const editCoachDetails = async (req, res) => {
 }
 
 
-
-
-
-
-
 module.exports = {
     editCoachDetails
 }

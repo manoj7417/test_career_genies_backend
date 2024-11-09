@@ -106,7 +106,6 @@ const approveEditCoach = async (req, res) => {
                 message: "Coach not found"
             });
         }
-
         res.status(200).send({
             status: "SUCCESS",
             coachEdit

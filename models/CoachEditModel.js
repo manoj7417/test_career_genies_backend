@@ -95,7 +95,7 @@ const coachEditSchema = new mongoose.Schema({
         type: Number,
     },
     socialLinks: [{
-        name: { type: String, required: false, trim: true },
+        name: { type: String, required: false, trim: true, enum: ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'other'], default: 'other' },
         link: { type: String, required: false, trim: true }
     }],
     description: { type: String, required: false, trim: true },
