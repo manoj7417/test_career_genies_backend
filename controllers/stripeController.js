@@ -377,10 +377,8 @@ const payCoach = async (request, reply) => {
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
-                    // currency,
-                    currency: "USD",
-                    // unit_amount: amount * 100,
-                    unit_amount: 1 * 100,
+                    currency,
+                    unit_amount: amount * 100,
                     product_data: {
                         name: 'Coach Subscription'
                     }
@@ -431,8 +429,8 @@ const bookCoachSlot = async (req, res) => {
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
-                    currency: "USD",
-                    unit_amount: 1 * 100,
+                    currency,
+                    unit_amount: amount * 100,
                     product_data: {
                         name: 'Slot Booking'
                     }
