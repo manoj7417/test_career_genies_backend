@@ -669,7 +669,7 @@ const resendVerificationEmail = async (req, res) => {
 const getUserBookingsDetails = async (req, res) => {
   const userId = req.user._id;
   try {
-    const bookings = await Booking.find({ userId })
+    const bookings = await Booking.find({ userId, status: 'booked' })
       .populate('coachId', 'name email phone profileImage country city experience typeOfCoaching skills ratesPerHour')
       .sort({ createdAt: -1 });
     res.status(200).send({ status: "SUCCESS", bookings });
@@ -709,8 +709,8 @@ const scheduleProgram = async (req, res) => {
       programId,
       enrollmentDate: new Date(),
       status: 'active',
-      progress: 0,  
-      appointments: []  
+      progress: 0,
+      appointments: []
     });
 
     await enrollment.save();
