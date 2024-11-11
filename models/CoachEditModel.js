@@ -106,7 +106,7 @@ const coachEditSchema = new mongoose.Schema({
     },
     approvalStatus: { type: String, required: false, enum: ['Pending', 'Approved', 'Rejected'] },
     rejectionReason: { type: String, required: false },
-})
+}, { timestamps: true })
 
 const CoachEdit = mongoose.model('CoachEdit', coachEditSchema)
 
