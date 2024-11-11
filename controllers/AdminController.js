@@ -86,9 +86,9 @@ const GeteditCoachRequests = async (req, res) => {
 }
 
 const approveEditCoach = async (req, res) => {
-    const { coachId } = req.params;
+    const { id } = req.params;
     try {
-        const coachEdit = await CoachEdit.findByIdAndUpdate(coachId, { isRequestApproved: true }, { new: true });
+        const coachEdit = await CoachEdit.findById(id);
         if (!coachEdit) {
             return res.status(404).send({
                 status: "FAILURE",
@@ -96,7 +96,7 @@ const approveEditCoach = async (req, res) => {
             });
         }
         const coach = await Coach.findByIdAndUpdate(
-            coachId,
+            coachEdit.coachId,
             { ...coachEdit.toObject(), isEditRequestSent: false },
             { new: true }
         );
@@ -106,9 +106,10 @@ const approveEditCoach = async (req, res) => {
                 message: "Coach not found"
             });
         }
+        await CoachEdit.findByIdAndDelete(id)
         res.status(200).send({
             status: "SUCCESS",
-            coachEdit
+            message: "Coach details updated"
         });
     } catch (error) {
         console.log("Error", error)

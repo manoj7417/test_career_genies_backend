@@ -4,6 +4,13 @@ const { Coach } = require("../models/CoachModel");
 const editCoachDetails = async (req, res) => {
     const coachId = req.coach._id;
     try {
+        const editRequest = await CoachEdit.findOne({ coachId: coachId });
+        if (editRequest) {
+            return res.status(400).send({
+                status: "FAILURE",
+                message: "Edit request already sent for this coach"
+            });
+        }
         const editCoach = new CoachEdit({
             coachId, ...req.body, isApproved: false
         })
