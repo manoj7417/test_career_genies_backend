@@ -15,7 +15,7 @@ async function AdminRoute(fastify, options) {
         preHandler: fastify.roleCheck(['admin'])
     }, GeteditCoachRequests)
 
-    fastify.post("/approve/editCoachRequest/:id", {
+    fastify.patch("/approve/editCoachRequest/:id", {
         preHandler: fastify.roleCheck(['admin'])
     }, approveEditCoach)
 
