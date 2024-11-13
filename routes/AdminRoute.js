@@ -1,4 +1,4 @@
-const { verifyCoach, auth, rejectCoach, GeteditCoachRequests, approveEditCoach } = require("../controllers/AdminController");
+const { verifyCoach, auth, rejectCoach, GeteditCoachRequests, approveEditCoach, getCoachEditReqById } = require("../controllers/AdminController");
 
 async function AdminRoute(fastify, options) {
 
@@ -19,6 +19,9 @@ async function AdminRoute(fastify, options) {
         preHandler: fastify.roleCheck(['admin'])
     }, approveEditCoach)
 
+    fastify.get('/getdetails/:id', {
+        preHandler: fastify.roleCheck(['admin'])
+    }, getCoachEditReqById)
 }
 
 module.exports = AdminRoute;

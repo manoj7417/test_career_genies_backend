@@ -29,28 +29,9 @@ const editCoachDetails = async (req, res) => {
     }
 }
 
-const getCoachEditReqById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const editRequest = await CoachEdit.findById(id);
-        if (!editRequest) {
-            return res.status(404).send({
-                status: "FAILURE",
-                message: "Edit request not found"
-            });
-        }
-        res.status(200).send({
-            status: "SUCCESS",
-            editRequest
-        });
-    } catch (error) {
-        console.log("Error", error);
-        res.status(500).send({ status: "FAILURE", message: "An error occurred while getting edit coach details" });
-    }
-}
+
 
 
 module.exports = {
-    editCoachDetails,
-    getCoachEditReqById
+    editCoachDetails
 }
