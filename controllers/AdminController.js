@@ -95,25 +95,32 @@ const approveEditCoach = async (req, res) => {
                 message: "Edit coach not found"
             });
         }
+
+        // Convert to object and exclude _id
+        const updateData = { ...coachEdit.toObject(), isEditRequestSent: false };
+        delete updateData._id;
+
         const coach = await Coach.findByIdAndUpdate(
             coachEdit.coachId,
-            { ...coachEdit.toObject(), isEditRequestSent: false },
+            updateData,
             { new: true }
         );
+
         if (!coach) {
             return res.status(404).send({
                 status: "FAILURE",
                 message: "Coach not found"
             });
         }
-        await CoachEdit.findByIdAndDelete(id)
+
+        await CoachEdit.findByIdAndDelete(id);
         res.status(200).send({
             status: "SUCCESS",
             message: "Coach details updated"
         });
     } catch (error) {
-        console.log("Error", error)
-        res.status(500).send({ status: "FAILURE", message: "An error occurred while approving edit coach details" })
+        console.log("Error", error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while approving edit coach details" });
     }
 }
 
