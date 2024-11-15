@@ -1,3 +1,4 @@
+const { dummyData } = require("../constants/resumeDummyData");
 const { Resume } = require("../models/ResumeModel");
 const { User } = require("../models/userModel")
 const { v4: uuidv4 } = require('uuid');
@@ -137,9 +138,31 @@ const createResume = async (request, reply) => {
     const userId = request.user._id;
     const { template } = request.body;
     try {
-        const count = await Resume.countDocuments({ userId });
         const title = `Untitled` + uuidv4();
         const resume = new Resume({ userId, title, 'data.metadata.template': template })
+        await resume.save()
+        return reply.code(201).send({
+            status: "SUCCESS",
+            message: "Resume created succesfully",
+            data: resume
+        })
+    } catch (error) {
+        console.log(error)
+        return reply.code(500).send({
+            status: "FAILURE",
+            error: error.message || "Internal server error"
+        })
+    }
+}
+
+const createPrefilledResume = async (request, reply) => {
+    const userId = request.user._id;
+    const { template } = request.body;
+    try {
+        const title = `Untitled` + uuidv4();
+        const basics = dummyData.basics;
+        const sections = dummyData.sections;
+        const resume = new Resume({ userId, title, 'data.basics': basics, 'data.sections': sections, 'data.metadata.template': template })
         await resume.save()
         return reply.code(201).send({
             status: "SUCCESS",
@@ -213,4 +236,4 @@ const createNewJobResume = async (request, reply) => {
 
 
 
-module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume, updateUserResumeTitle }
+module.exports = { getUserResume, updateUserResume, createResume, deleteResume, getAllResumes, createNewJobResume, updateUserResumeTitle, createPrefilledResume }
