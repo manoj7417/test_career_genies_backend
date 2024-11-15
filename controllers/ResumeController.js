@@ -157,12 +157,12 @@ const createResume = async (request, reply) => {
 
 const createPrefilledResume = async (request, reply) => {
     const userId = request.user._id;
-    const { template } = request.body;
+    const { template, color } = request.body;
     try {
         const title = `Untitled` + uuidv4();
         const basics = dummyData.basics;
         const sections = dummyData.sections;
-        const resume = new Resume({ userId, title, 'data.basics': basics, 'data.sections': sections, 'data.metadata.template': template })
+        const resume = new Resume({ userId, title, 'data.basics': basics, 'data.sections': sections, 'data.metadata.template': template, 'data.metadata.theme.primary': color })
         await resume.save()
         return reply.code(201).send({
             status: "SUCCESS",
