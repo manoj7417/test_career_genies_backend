@@ -22,6 +22,9 @@ const { Payment } = require('../models/PaymentModel');
 const { Enrollment, Appointment } = require('../models/EnrollmentModel');
 const { CoachPayment } = require('../models/CoachPaymentModel');
 const { default: mongoose } = require('mongoose');
+const { OAuth2Client } = require("google-auth-library");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 function getFilenameFromUrl(url) {
   const parts = url.split('uploads/');
@@ -216,6 +219,55 @@ const login = async (request, reply) => {
     });
   } catch (error) {
     console.log(error);
+    reply.code(500).send({
+      status: "FAILURE",
+      error: error.message || "Internal server error",
+    });
+  }
+};
+
+const googleLogin = async (request, reply) => {
+  const { idToken } = request.body;
+
+  try {
+    // Verify the Google ID token
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Check if the user exists
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Create a new user
+      user = new User({
+        fullname: name,
+        email,
+        password: "google-signin", // Placeholder; won't be used
+        profilePicture: picture,
+        emailVerified: true, // Google verifies the email
+        role: "user",
+      });
+      await user.save();
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+    reply.code(200).send({
+      status: "SUCCESS",
+      message: "Login successful",
+      data: {
+        accessToken,
+        refreshToken,
+        userdata: user.toSafeObject(),
+      },
+    });
+  } catch (error) {
+    console.error("Error during Google Login:", error);
     reply.code(500).send({
       status: "FAILURE",
       error: error.message || "Internal server error",
@@ -928,5 +980,6 @@ module.exports = {
   getAllEnrollmentDetailsofUser,
   updateScheduleProgramDay,
   getCoachPayment,
-  getPrograms
+  getPrograms,
+  googleLogin
 };
