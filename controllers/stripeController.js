@@ -304,140 +304,74 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id,
-            });
-            const session = sessions.data[0];
-            const sessionId = session.id;
-
+        
             try {
-                if (session.metadata?.type === 'coachPayment') {
-                    const coachPayment = await CoachPayment.findOne({ sessionId });
-                    if (!coachPayment) {
-                        return reply.status(404).send('Coach payment record not found');
-                    }
-                    coachPayment.status = 'Completed';
-                    await coachPayment.save();
-                    const coach = await Coach.findById(coachPayment.coachId);
-                    if (!coach) {
-                        return reply.status(404).send('Coach not found');
-                    }
-                    coach.students.push(coachPayment.user);
-                    await coach.save();
-                    const newEnrollmentTemp = fs.readFileSync(newEnrollmentTemplate, 'utf8');
-                    const newEnrollmentHtml = newEnrollmentTemp.replace('{coachName}', coach.name);
-                    await sendEmail(coach.email, 'New student enrolled', newEnrollmentHtml);
-                    const user = await User.findById(coachPayment.user);
-                    if (!user) {
-                        return reply.status(404).send('User not found');
-                    }
-                    const userEnrollmentTemp = fs.readFileSync(userEnrollmentTemplate, 'utf8');
-                    const userEnrollmentHtml = userEnrollmentTemp
-                        .replace('{username}', user.fullname)
-                        .replace('{date}', moment().format('DD-MM-YYYY'));
-                    await sendEmail(user.email, 'New career coaching appointment scheduled', userEnrollmentHtml);
-                    return reply.status(200).send({ message: 'Coach payment completed successfully' });
-                } else if (session.metadata?.type === 'slotBooking') {
-                    const booked = await Booking.findOne({ sessionId });
-                    if (!booked) {
-                        return reply.status(404).send('Booking record not found');
-                    }
-                    booked.status = 'booked';
-                    await booked.save();
-                    const coachId = booked.coachId;
-                    const userId = booked.userId;
-                    const coach = await Coach.findById(coachId);
-                    if (!coach) {
-                        return reply.status(404).send('Coach not found');
-                    }
-                    coach.bookings.push(booked._id);
-                    await coach.save();
-                    const user = await User.findById(userId);
-                    if (!user) {
-                        return reply.status(404).send('User not found');
-                    }
-                    user.bookings.push(booked._id);
-                    await user.save();
-                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemplate, 'utf8');
-                    const coachHtml = coachAppointmentTemp
-                        .replace('{coachname}', coach.name)
-                        .replace('{username}', user.fullname)
-                        .replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime)
-                        .replace('{date}', moment(booked.date).format('LL'))
-                        .replace('{timezone}', booked.timezone);
-                    await sendEmail(coach.email, 'Career coaching meeting scheduled', coachHtml);
-                    const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8');
-                    const userHtml = userappointmentTemp
-                        .replace('{username}', user.fullname)
-                        .replace('{coachname}', coach.name)
-                        .replace('{date}', moment(booked.date).format('LL'))
-                        .replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime)
-                        .replace('{timezone}', booked.timezone);
-                    await sendEmail(user.email, 'Career coaching meeting scheduled', userHtml);
-                    return reply.status(200).send({ message: 'Slot booked successfully' });
-                } else {
-                    const payment = await Payment.findOne({ sessionId });
-
-                    if (!payment) {
-                        return reply.status(404).send('Payment record not found');
-                    }
-
-                    payment.status = 'Completed';
-                    await payment.save();
-
-                    const user = await User.findById(payment.user);
-                    if (!user) {
-                        return reply.status(404).send('User not found');
-                    }
-
-                    // Update user subscription
-                    await User.findByIdAndUpdate(payment.user, {
-                        $set: {
-                            'subscription.status': 'Completed',
-                            'subscription.plan': [...user.subscription.plan, payment.plan],
-                            'subscription.planType': payment.planType,
-                            'subscription.currentPeriodStart': new Date(),
-                            'subscription.currentPeriodEnd': payment.expiryDate,
-                            'subscription.stripeCheckoutSessionId': sessionId,
-                            'subscription.paymentId': payment._id,
-                            'subscription.analyserTokens': payment.analyserTokens,
-                            'subscription.optimizerTokens': payment.optimizerTokens,
-                            'subscription.JobCVTokens': payment.jobCVTokens,
-                            'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                            'subscription.downloadCVTokens': payment.downloadCVTokens,
-                            payments: [...user.payments, payment._id],
-                        },
-                    });
-
-                    return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+                const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+        
+                if (!payment) {
+                    console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
+                    return reply.status(404).send('Payment record not found');
                 }
+        
+                payment.status = 'Completed'; // Update payment status
+                await payment.save();
+        
+                // Additional logic for subscription or user updates
+                const user = await User.findById(payment.user);
+                if (!user) {
+                    console.error('User not found for payment:', payment.user);
+                    return reply.status(404).send('User not found');
+                }
+        
+                // Update user subscription
+                await User.findByIdAndUpdate(payment.user, {
+                    $set: {
+                        'subscription.status': 'Completed',
+                        'subscription.plan': [...user.subscription.plan, payment.plan],
+                        'subscription.planType': payment.planType,
+                        'subscription.currentPeriodStart': new Date(),
+                        'subscription.currentPeriodEnd': payment.expiryDate,
+                        'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
+                        'subscription.paymentId': payment._id,
+                        'subscription.analyserTokens': payment.analyserTokens,
+                        'subscription.optimizerTokens': payment.optimizerTokens,
+                        'subscription.JobCVTokens': payment.jobCVTokens,
+                        'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+                        'subscription.downloadCVTokens': payment.downloadCVTokens,
+                        payments: [...user.payments, payment._id],
+                    },
+                });
+        
+                console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
+                return reply.status(200).send({ message: 'Subscription payment completed successfully' });
             } catch (err) {
-                console.error('Error processing payment:', err);
+                console.error('Error processing payment_intent.succeeded event:', err);
                 return reply.status(500).send('Internal server error');
             }
         }
-
+        
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
-            const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id,
-            });
-            const session = sessions.data[0];
-            const sessionId = session.id;
-
+        
             try {
-                if (session.metadata?.type === 'coachPayment') {
-                    await CoachPayment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
-                } else if (session.metadata?.type === 'slotBooking') {
-                    await Booking.findOneAndUpdate({ sessionId }, { status: 'cancelled' });
-                } else {
-                    await Payment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
+                const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+        
+                if (!payment) {
+                    console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
+                    return reply.status(404).send('Payment record not found');
                 }
+        
+                payment.status = 'Failed'; // Update payment status
+                await payment.save();
+        
+                console.log(`Payment intent failed for setupIntentId: ${paymentIntent.setup_intent}`);
             } catch (err) {
                 console.error('Error updating payment status to Failed:', err);
+                return reply.status(500).send('Internal server error');
             }
             break;
         }
+        
 
         default:
             console.log(`Unhandled event type: ${event.type}`);
