@@ -196,36 +196,55 @@ const createSubscriptionPayment = async (req, res) => {
 }
 
 const chargeDelayedPayment = async (paymentId) => {
-    const payment = await Payment.findById(paymentId);
+    try {
+        console.log(`Charging payment ${paymentId}`);
+        const payment = await Payment.findById(paymentId);
 
-    if (!payment || payment.status !== 'Ready for Charge') {
-        throw new Error("Payment not ready for charging or already processed.");
+        if (!payment || payment.status !== 'Ready for Charge') {
+            throw new Error("Payment not ready for charging or already processed.");
+        }
+
+        let setupIntent;
+        try {
+            setupIntent = await stripe.setupIntents.retrieve(payment.setupIntentId);
+        } catch (error) {
+            console.error(`Failed to retrieve setup intent: ${error.message}`);
+            throw new Error("Failed to retrieve setup intent.");
+        }
+
+        if (!setupIntent || setupIntent.status !== 'succeeded') {
+            throw new Error("Setup Intent not valid for charging.");
+        }
+
+        let paymentIntent;
+        try {
+            paymentIntent = await stripe.paymentIntents.create({
+                amount: payment.amount,
+                currency: payment.currency || 'usd',
+                customer: setupIntent.customer,
+                payment_method: setupIntent.payment_method,
+                off_session: true,
+                confirm: true,
+            });
+        } catch (error) {
+            console.error(`Failed to create payment intent: ${error.message}`);
+            throw new Error("Failed to create payment intent.");
+        }
+
+        // Update payment status
+        payment.status = 'Completed';
+        payment.paymentIntentId = paymentIntent.id;
+        payment.expiryDate = new Date(); // Update expiry or subscription details as needed
+        await payment.save();
+
+        console.log(`Payment ${paymentId} successfully charged.`);
+        return { success: true, paymentIntent };
+    } catch (error) {
+        console.error(`Error in charging delayed payment ${paymentId}: ${error.message}`);
+        return { success: false, error: error.message };
     }
-
-    const setupIntent = await stripe.setupIntents.retrieve(payment.setupIntentId);
-
-    if (!setupIntent || setupIntent.status !== 'succeeded') {
-        throw new Error("Setup Intent not valid for charging.");
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount: payment.amount,
-        currency: payment.currency || 'usd',
-        customer: setupIntent.customer,
-        payment_method: setupIntent.payment_method,
-        off_session: true,
-        confirm: true,
-    });
-
-    // Update payment status
-    payment.status = 'Completed';
-    payment.paymentIntentId = paymentIntent.id;
-    payment.expiryDate = new Date(); // Update expiry or subscription details as needed
-    await payment.save();
-
-    console.log(`Payment ${paymentId} successfully charged.`);
-    return { success: true, paymentIntent };
 };
+
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
