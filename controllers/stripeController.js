@@ -220,7 +220,7 @@ const chargeDelayedPayment = async (paymentId) => {
         console.log(payment.amount,payment.currency)
         try {
             paymentIntent = await stripe.paymentIntents.create({
-                amount: payment.amount,
+                amount: payment.amount * 100,
                 currency: payment.currency || 'usd',
                 customer: setupIntent.customer,
                 payment_method: setupIntent.payment_method,
