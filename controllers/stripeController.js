@@ -197,7 +197,7 @@ const createSubscriptionPayment = async (req, res) => {
 
 const chargeDelayedPayment = async (paymentId) => {
     try {
-        console.log(`Charging payment ${paymentId}`);
+       
         const payment = await Payment.findById(paymentId);
 
         if (!payment || payment.status !== 'Ready for Charge') {
@@ -217,6 +217,7 @@ const chargeDelayedPayment = async (paymentId) => {
         }
 
         let paymentIntent;
+        console.log(payment.amount,payment.currency)
         try {
             paymentIntent = await stripe.paymentIntents.create({
                 amount: payment.amount,
