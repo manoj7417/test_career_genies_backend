@@ -17,6 +17,7 @@ const { CoachPayment } = require('../models/CoachPaymentModel');
 const { Coach } = require('../models/CoachModel');
 const { Booking } = require('../models/BookingModel');
 const moment = require('moment');
+const schedule = require('node-schedule');
 
 const getPricing = (currency, planName) => {
     const plan = pricing[planName]?.[currency] || null;
@@ -31,6 +32,91 @@ const getPlanName = (planName) => {
 const createSubscriptionPayment = async (req, res) => {
     const userId = req.user._id;
     let { email, success_url, cancel_url, currency, planName, duration } = req.body;
+
+    const {discount} = req.body;
+
+    if(discount == 100){
+        try {
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).send({ status: "FAILURE", message: "User not found" });
+            }
+    
+            const price = getPricing(currency, planName);
+            const amount = price?.price || 0;
+            const plan = getPlanName(planName);
+    
+            if (!amount || !plan) {
+                return res.status(400).send({ status: "FAILURE", message: "Invalid plan details" });
+            }
+    
+            // Check if the customer already exists in Stripe
+            let stripeCustomerId = user.stripeCustomerId;
+    
+            if (!stripeCustomerId) {
+                // Create a new Stripe customer if not already linked
+                const customer = await stripe.customers.create({
+                    email: email,
+                    metadata: {
+                        userId: user._id.toString(),
+                    },
+                });
+    
+                stripeCustomerId = customer.id;
+    
+                // Save the Stripe customer ID in the user record
+                user.stripeCustomerId = stripeCustomerId;
+                await user.save();
+            }
+    
+            // Create a setup intent for the user
+            const setupIntent = await stripe.setupIntents.create({
+                payment_method_types: ['card'],
+                customer: stripeCustomerId, 
+                usage: 'off_session',
+                metadata: {
+                    payment: "delayedPayment",
+                },
+            });
+    
+            // Save payment details
+            const payment = new Payment({
+                user: userId,
+                amount: duration === 'monthly' ? amount * 100 : amount * 10 * 100,
+                status: 'Pending',
+                plan: planName,
+                planType: duration,
+                setupIntentId: setupIntent.id,
+                expiryDate: new Date(Date.now() + 5 * 60 * 1000), // Payment scheduled 14 days later
+            });
+            await payment.save();
+    
+            // Schedule the job to charge after 14 days
+            schedule.scheduleJob(payment._id.toString(), new Date(Date.now() + 5 * 60 * 1000), async () => {
+                try {
+                    const delayedPayment = await Payment.findById(payment._id);
+                    if (delayedPayment && delayedPayment.status === 'Ready for Charge') {
+                        const chargeResult = await chargeDelayedPayment(delayedPayment._id);
+                        console.log(`Payment ${payment._id} processed:`, chargeResult);
+                    } else {
+                        console.log(`Payment ${payment._id} not ready for charge.`);
+                    }
+                } catch (error) {
+                    console.error(`Failed to process payment ${payment._id}:`, error.message);
+                }
+            });
+ 
+            return res.status(200).send({
+                clientSecret: setupIntent.client_secret, // Pass the client secret for frontend use
+                message: "Setup link created. Card details need to be provided.",
+            });
+            
+        } catch (error) {
+            console.error("Error creating delayed payment link:", error.message);
+            return res.status(500).send({ status: "FAILURE", error: error.message });
+        }
+    }
+
     try {
         const user = await User.findById(userId)
         if (!user) {
@@ -109,21 +195,97 @@ const createSubscriptionPayment = async (req, res) => {
     }
 }
 
+const chargeDelayedPayment = async (paymentId) => {
+    const payment = await Payment.findById(paymentId);
+
+    if (!payment || payment.status !== 'Ready for Charge') {
+        throw new Error("Payment not ready for charging or already processed.");
+    }
+
+    const setupIntent = await stripe.setupIntents.retrieve(payment.setupIntentId);
+
+    if (!setupIntent || setupIntent.status !== 'succeeded') {
+        throw new Error("Setup Intent not valid for charging.");
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+        amount: payment.amount,
+        currency: payment.currency || 'usd',
+        customer: setupIntent.customer,
+        payment_method: setupIntent.payment_method,
+        off_session: true,
+        confirm: true,
+    });
+
+    // Update payment status
+    payment.status = 'Completed';
+    payment.paymentIntentId = paymentIntent.id;
+    payment.expiryDate = new Date(); // Update expiry or subscription details as needed
+    await payment.save();
+
+    console.log(`Payment ${paymentId} successfully charged.`);
+    return { success: true, paymentIntent };
+};
+
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
     const payload = request.rawBody;
     let event;
+
     try {
         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
     } catch (err) {
         console.error(`Webhook signature verification failed: ${err.message}`);
         return reply.status(400).send(`Webhook Error: ${err.message}`);
     }
+
     switch (event.type) {
+        case 'setup_intent.succeeded': {
+            const setupIntent = event.data.object;
+
+            try {
+                const payment = await Payment.findOne({ setupIntentId: setupIntent.id });
+
+                if (!payment) {
+                    console.error(`Payment record not found for setupIntentId: ${setupIntent.id}`);
+                    return reply.status(404).send('Payment record not found');
+                }
+
+                payment.status = 'Ready for Charge'; // Update status to Ready for Charge
+                await payment.save();
+                console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
+            } catch (err) {
+                console.error('Error processing setup_intent.succeeded event:', err);
+                return reply.status(500).send('Internal server error');
+            }
+            break;
+        }
+
+        case 'setup_intent.setup_failed': {
+            const setupIntent = event.data.object;
+
+            try {
+                const payment = await Payment.findOne({ setupIntentId: setupIntent.id });
+
+                if (!payment) {
+                    console.error(`Payment record not found for setupIntentId: ${setupIntent.id}`);
+                    return reply.status(404).send('Payment record not found');
+                }
+
+                payment.status = 'Failed'; // Update status to Failed
+                await payment.save();
+                console.log(`Payment setup failed for payment ID: ${payment._id}`);
+            } catch (err) {
+                console.error('Error processing setup_intent.setup_failed event:', err);
+                return reply.status(500).send('Internal server error');
+            }
+            break;
+        }
+
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
             const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
+                payment_intent: paymentIntent.id,
             });
             const session = sessions.data[0];
             const sessionId = session.id;
@@ -143,15 +305,17 @@ const webhook = async (request, reply) => {
                     coach.students.push(coachPayment.user);
                     await coach.save();
                     const newEnrollmentTemp = fs.readFileSync(newEnrollmentTemplate, 'utf8');
-                    const newEnrollmentHtml = newEnrollmentTemp.replace('{coachName}', coach.name)
-                    await sendEmail(coach.email, "New student enrolled", newEnrollmentHtml)
+                    const newEnrollmentHtml = newEnrollmentTemp.replace('{coachName}', coach.name);
+                    await sendEmail(coach.email, 'New student enrolled', newEnrollmentHtml);
                     const user = await User.findById(coachPayment.user);
                     if (!user) {
                         return reply.status(404).send('User not found');
                     }
                     const userEnrollmentTemp = fs.readFileSync(userEnrollmentTemplate, 'utf8');
-                    const userEnrollmentHtml = userEnrollmentTemp.replace('{username}', user.fullname).replace('{date}', moment().format('DD-MM-YYYY'))
-                    await sendEmail(user.email, "New career coaching appointment scheduled", userEnrollmentHtml)
+                    const userEnrollmentHtml = userEnrollmentTemp
+                        .replace('{username}', user.fullname)
+                        .replace('{date}', moment().format('DD-MM-YYYY'));
+                    await sendEmail(user.email, 'New career coaching appointment scheduled', userEnrollmentHtml);
                     return reply.status(200).send({ message: 'Coach payment completed successfully' });
                 } else if (session.metadata?.type === 'slotBooking') {
                     const booked = await Booking.findOne({ sessionId });
@@ -174,12 +338,22 @@ const webhook = async (request, reply) => {
                     }
                     user.bookings.push(booked._id);
                     await user.save();
-                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemplate, 'utf8')
-                    const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name).replace('{username}', user.fullname).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{date}', moment(booked.date).format('LL')).replace('{timezone}', booked.timezone)
-                    await sendEmail(coach.email, "Career coaching meeting scheduled", coachHtml)
-                    const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8')
-                    const userHtml = userappointmentTemp.replace('{username}', user.fullname).replace('{coachname}', coach.name).replace('{date}', moment(booked.date).format('LL')).replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime).replace('{timezone}', booked.timezone)
-                    await sendEmail(user.email, "Career coaching meeting scheduled", userHtml)
+                    const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemplate, 'utf8');
+                    const coachHtml = coachAppointmentTemp
+                        .replace('{coachname}', coach.name)
+                        .replace('{username}', user.fullname)
+                        .replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime)
+                        .replace('{date}', moment(booked.date).format('LL'))
+                        .replace('{timezone}', booked.timezone);
+                    await sendEmail(coach.email, 'Career coaching meeting scheduled', coachHtml);
+                    const userappointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8');
+                    const userHtml = userappointmentTemp
+                        .replace('{username}', user.fullname)
+                        .replace('{coachname}', coach.name)
+                        .replace('{date}', moment(booked.date).format('LL'))
+                        .replace('{slot}', booked.slotTime.startTime + ' - ' + booked.slotTime.endTime)
+                        .replace('{timezone}', booked.timezone);
+                    await sendEmail(user.email, 'Career coaching meeting scheduled', userHtml);
                     return reply.status(200).send({ message: 'Slot booked successfully' });
                 } else {
                     const payment = await Payment.findOne({ sessionId });
@@ -211,8 +385,8 @@ const webhook = async (request, reply) => {
                             'subscription.JobCVTokens': payment.jobCVTokens,
                             'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
                             'subscription.downloadCVTokens': payment.downloadCVTokens,
-                            payments: [...user.payments, payment._id]
-                        }
+                            payments: [...user.payments, payment._id],
+                        },
                     });
 
                     return reply.status(200).send({ message: 'Subscription payment completed successfully' });
@@ -222,10 +396,11 @@ const webhook = async (request, reply) => {
                 return reply.status(500).send('Internal server error');
             }
         }
+
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
             const sessions = await stripe.checkout.sessions.list({
-                payment_intent: paymentIntent.id
+                payment_intent: paymentIntent.id,
             });
             const session = sessions.data[0];
             const sessionId = session.id;
@@ -243,8 +418,9 @@ const webhook = async (request, reply) => {
             }
             break;
         }
-        default:
 
+        default:
+            console.log(`Unhandled event type: ${event.type}`);
     }
 
     reply.status(200).send();
@@ -475,5 +651,5 @@ module.exports = {
     getPricing,
     buyCredits,
     payCoach,
-    bookCoachSlot
+    bookCoachSlot,
 };

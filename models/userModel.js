@@ -8,6 +8,11 @@ const UserSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    stripeCustomerId: {
+        type: String,
+        trim: true, 
+        default: null 
+    },
     email: {
         type: String,
         required: true,
