@@ -14,7 +14,7 @@ const PaymentSchema = new mongoose.Schema({
         enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'ADD-CREDITS'
         ]
     },
-    planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
+    planType: { type: String, enum: ['monthly', 'yearly', 'trial'], default: 'monthly' },
     sessionId: { type: String, required: false },
     setupIntentId: { type: String, required: false },
     analyserTokens: {

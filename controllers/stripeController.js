@@ -45,7 +45,6 @@ const createSubscriptionPayment = async (req, res) => {
             const price = getPricing(currency, planName);
             const amount = price?.price || 0;
             const plan = getPlanName(planName);
-    
             if (!amount || !plan) {
                 return res.status(400).send({ status: "FAILURE", message: "Invalid plan details" });
             }
@@ -82,10 +81,11 @@ const createSubscriptionPayment = async (req, res) => {
             // Save payment details
             const payment = new Payment({
                 user: userId,
-                amount: duration === 'monthly' ? amount * 100 : amount * 10 * 100,
+                amount: amount,
+                currency: currency,
                 status: 'Pending',
                 plan: planName,
-                planType: duration,
+                planType: "trial",
                 setupIntentId: setupIntent.id,
                 expiryDate: new Date(Date.now() + 5 * 60 * 1000), // Payment scheduled 14 days later
             });
