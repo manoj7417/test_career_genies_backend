@@ -8,14 +8,15 @@ const PaymentSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     currency: { type: String, required: true, default: 'USD' },
     date: { type: Date, default: Date.now },
-    status: { type: String, enum: ['Pending', 'Completed', 'Failed'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Completed', 'Failed','Ready for Charge'], default: 'Pending' },
     plan: {
         type: String,
         enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'ADD-CREDITS'
         ]
     },
-    planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
-    sessionId: { type: String, required: true },
+    planType: { type: String, enum: ['monthly', 'yearly', 'trial'], default: 'monthly' },
+    sessionId: { type: String, required: false },
+    setupIntentId: { type: String, required: false },
     analyserTokens: {
         credits: { type: Number, default: 0 },
         expiry: { type: Date }
