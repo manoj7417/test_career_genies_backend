@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
         trim: true
     },
     phoneNumber: {
@@ -133,7 +133,14 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Resume"
     }],
-    emailVerified: { type: Boolean, default: false }
+    emailVerified: { type: Boolean, default: false },
+    googleAuth: {
+        googleId: { type: String, trim: true },
+        isAuthorized: { type: Boolean, default: false },
+        accessToken: { type: String, trim: true },
+        refreshToken: { type: String, trim: true },
+        tokenExpiry: { type: Date },
+    },
 },
     {
         timestamps: true
@@ -207,7 +214,8 @@ UserSchema.methods.toSafeObject = function () {
         profilePicture: this.profilePicture,
         address: this.address,
         occupation: this.occupation,
-        phoneNumber: this.phoneNumber
+        phoneNumber: this.phoneNumber,
+        googleAuth: this.googleAuth,
     };
 };
 
