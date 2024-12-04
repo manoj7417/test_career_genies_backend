@@ -42,7 +42,8 @@ const BookingSchema = new mongoose.Schema({
         enum: ['pending', 'booked', 'cancelled'],
         default: 'pending'
     },
-    sessionId: { type: String, required: true }
+    meetingLink: { type: String, required: false },
+    programId : { type : mongoose.Schema.Types.ObjectId, ref: 'Program', required: true },
 }, { timestamps: true });
 
 const Booking = mongoose.model('Booking', BookingSchema);

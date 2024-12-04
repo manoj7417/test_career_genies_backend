@@ -15,6 +15,10 @@ const { Program } = require("../models/ProgramModel");
 const { default: mongoose } = require("mongoose");
 const { CoachPayment } = require("../models/CoachPaymentModel");
 require('dotenv').config();
+const { OAuth2Client } = require("google-auth-library");
+const { google } = require('googleapis');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function decodeToken(token, secret) {
     try {
@@ -321,23 +325,47 @@ const resetCoachPassword = async (req, res) => {
 }
 
 const getBookings = async (req, res) => {
-    const coachId = req.coach._id;
+    const coach = req.coach;
     try {
-        const bookings = await Booking.find({ coachId }).populate('userId', 'fullname  email phoneNumber profilePicture');
-        res.status(200).send({ status: "SUCCESS", bookings });
+        const bookings = await Booking.find({ coachId: coach._id }).populate('userId', 'fullname email phoneNumber profilePicture');
 
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET
+        );
+        
+        oauth2Client.setCredentials({
+            refresh_token: coach.googleAuth.refreshToken,
+        });
+
+        // Access Google Calendar API
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+        // Fetch calendar events
+        const events = await calendar.events.list({
+            calendarId: 'primary',
+            timeMin: new Date().toISOString(),
+            maxResults: 100,
+            singleEvents: true,
+            orderBy: 'startTime',
+        });
+
+        // Send response
+        res.status(200).send({
+            status: "SUCCESS",
+            bookings,
+            googleEvents: events.data.items,
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings" });
+        console.error("Error fetching bookings or calendar events:", error);
+        res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings or calendar events" });
     }
-}
+};
 
 const createProgram = async (req, res) => {
     try {
         const coachId = req.coach._id;
         const { title, description, prerequisites, days, programImage, programVideo, amount } = req.body;
-
-        // Validate required fields
         if (!programImage) {
             return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
         }
@@ -556,6 +584,113 @@ const getCompletedProgramBookings = async (req, res) => {
         });
     }
 }
+const CoachgoogleLogin = async (req, reply) => {
+    const { idToken, accessToken, refreshToken } = req.body; // Include tokens from request
+    try {
+        // Verify the Google ID token
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, picture } = payload;
+
+        // Check if the user exists
+        let user = await Coach.findOne({ email });
+        if (!user) {
+            user = new Coach({
+                name: name,
+                email,
+                profileImage: picture,
+                googleAuth: {
+                    googleId: payload.sub, // Google's unique user ID
+                    isAuthorized: true,
+                    accessToken: accessToken, // Save Google access token
+                    refreshToken: refreshToken, // Save Google refresh token
+                    tokenExpiry: new Date(payload.exp * 1000), // Convert expiry time to Date
+                },
+            });
+        } else {
+            // Update existing user's Google access and refresh tokens
+            user.googleAuth = {
+                googleId: payload.sub,
+                isAuthorized: true,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                tokenExpiry: new Date(payload.exp * 1000),
+            };
+        }
+
+        await user.save();
+
+        // Generate tokens
+        const generatedTokens = {
+            accessToken: user.generateAccessToken(),
+            refreshToken: user.generateRefreshToken(),
+        };
+
+        reply.code(200).send({
+            status: "SUCCESS",
+            message: "Login successful",
+            data: {
+                accessToken: generatedTokens.accessToken,
+                refreshToken: generatedTokens.refreshToken,
+                userdata: user.toSafeObject(),
+            },
+        });
+    } catch (error) {
+        console.error("Error during Google Login:", error);
+        reply.code(500).send({
+            status: "FAILURE",
+            error: error.message || "Internal server error",
+        });
+    }
+};
+
+
+const syncCalendar = async (req, res) => {
+    const { idToken, accessToken, refreshToken } = req.body;
+    try {
+        // Verify the ID token to ensure user identity
+        const oauth2Client = new google.auth.OAuth2();
+        const ticket = await oauth2Client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const userId = payload.sub; // Google user ID
+        const email = payload.email;
+
+        // Set credentials for the OAuth2 client
+        oauth2Client.setCredentials({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+        });
+
+        // Use Google Calendar API to fetch events
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+        const events = await calendar.events.list({
+            calendarId: 'primary',
+            timeMin: new Date().toISOString(),
+            maxResults: 100,
+            singleEvents: true,
+            orderBy: 'startTime',
+        });
+        const coach = await Coach.findById(coachId)
+
+        res.status(200).send({
+            userId,
+            email,
+            events: events.data.items,
+        });
+    } catch (error) {
+        console.error('Error syncing calendar:', error.message);
+        res.status(500).send({ error: 'Failed to sync calendar events' });
+    }
+}
 
 
 
@@ -581,5 +716,7 @@ module.exports = {
     editProgramByadmin,
     getCoachProgramByprogramId,
     getAllCoachPrograms,
-    getCompletedProgramBookings
+    getCompletedProgramBookings,
+    CoachgoogleLogin,
+    syncCalendar
 }
