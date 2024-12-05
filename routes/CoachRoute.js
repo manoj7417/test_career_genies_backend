@@ -52,7 +52,7 @@ async function CoachRoute(fastify, options) {
 
     fastify.post("/googleLogin", CoachgoogleLogin)
 
-    fastify.post("/syncCalendar", syncCalendar)
+    fastify.post("/syncCalendar", { preHandler: fastify.coachAuth }, syncCalendar)
 }
 
 module.exports = CoachRoute;
