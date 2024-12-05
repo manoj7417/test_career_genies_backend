@@ -69,11 +69,12 @@ async function saveCredentials(client) {
  * Creates a new meeting space.
  * @param {OAuth2Client} authClient An authorized OAuth2 client.
  */
- async function createSpace(authClient) {
+ async function createSpace(authClient , coachEmail) {
     const meetClient = new SpacesServiceClient({
         authClient: authClient
     });
     const request = {
+        organizer: { email: coachEmail }, 
     };
 
     const response = await meetClient.createSpace(request);

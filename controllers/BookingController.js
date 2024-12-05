@@ -116,7 +116,7 @@ const bookSlots = async (req, res) => {
             });
         }
 
-        meetingLink = await createSpace(authorize());
+        meetingLink = await createSpace(authorize() , coach.email);
         newBooking.meetingLink = meetingLink;
         await newBooking.save();
         res.status(201).send({

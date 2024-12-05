@@ -333,7 +333,7 @@ const getBookings = async (req, res) => {
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET
         );
-        
+
         oauth2Client.setCredentials({
             refresh_token: coach.googleAuth.refreshToken,
         });
@@ -651,8 +651,18 @@ const CoachgoogleLogin = async (req, reply) => {
 
 const syncCalendar = async (req, res) => {
     const { idToken, accessToken, refreshToken } = req.body;
+    const coachId = req.coach._id
     try {
-        // Verify the ID token to ensure user identity
+        const coach = await Coach.findById(coachId)
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach not found"
+            });
+        }
+        coach.googleAuth.accessToken = accessToken
+        coach.googleAuth.refreshToken = refreshToken
+        await coach.save()
         const oauth2Client = new google.auth.OAuth2();
         const ticket = await oauth2Client.verifyIdToken({
             idToken,
@@ -660,16 +670,14 @@ const syncCalendar = async (req, res) => {
         });
 
         const payload = ticket.getPayload();
-        const userId = payload.sub; // Google user ID
+        const userId = payload.sub;
         const email = payload.email;
 
-        // Set credentials for the OAuth2 client
         oauth2Client.setCredentials({
             access_token: accessToken,
             refresh_token: refreshToken,
         });
 
-        // Use Google Calendar API to fetch events
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
         const events = await calendar.events.list({
@@ -679,8 +687,8 @@ const syncCalendar = async (req, res) => {
             singleEvents: true,
             orderBy: 'startTime',
         });
-        const coach = await Coach.findById(coachId)
 
+        // const bookings = await Booking.find({ coachId })
         res.status(200).send({
             userId,
             email,
