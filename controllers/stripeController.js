@@ -382,12 +382,14 @@ const webhook = async (request, reply) => {
                         
                         try{
                         const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
-                       
+                        console.log(coachPayment)
                         if (coachPayment) {
                             coachPayment.status = 'Completed';
                             await coachPayment.save();
+                            console.log(coachPayment)
                             return reply.status(200).send({ message: 'Coach payment completed successfully' });
                         }
+                        console.log("No coach payment found")
                     } catch (error) {
                         console.error('Error processing coach payment:', error);
                         return reply.status(500).send({ message: 'Internal server error' });
