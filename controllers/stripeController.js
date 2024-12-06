@@ -385,7 +385,7 @@ const webhook = async (request, reply) => {
                         console.log('Processing coach payment...');
                         try {
                             // Retrieve the coach payment record
-                            const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
+                            const coachPayment = await CoachPayment.findOne({ sessionId: session.id } );
                             
                             if (coachPayment) {
                                 // Update the coach payment status
