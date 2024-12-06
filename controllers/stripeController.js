@@ -316,12 +316,121 @@ const webhook = async (request, reply) => {
                     });
 
                     const session = sessions.data[0];
-                    if (!session) {
-                        console.error(`Session not found for paymentIntent ID: ${paymentIntent.id}`);
-                        return reply.status(404).send('Session not found');
+                    if (session) {
+                        const sessionId = session.id;
+
+                        // Check metadata and handle accordingly
+                        if (session.metadata?.type === 'coachPayment') {
+                            const coachPayment = await CoachPayment.findOne({ sessionId });
+        
+                            if (!coachPayment) {
+                                return reply.status(404).send('Coach payment record not found');
+                            }
+        
+                            coachPayment.status = 'Completed';
+                            await coachPayment.save();
+        
+                            const coach = await Coach.findById(coachPayment.coachId);
+                            if (!coach) {
+                                return reply.status(404).send('Coach not found');
+                            }
+                            coach.students.push(coachPayment.user);
+                            await coach.save();
+        
+                            const newEnrollmentTemp = fs.readFileSync(newEnrollmentTemplate, 'utf8');
+                            const newEnrollmentHtml = newEnrollmentTemp.replace('{coachName}', coach.name);
+                            await sendEmail(coach.email, 'New student enrolled', newEnrollmentHtml);
+        
+                            const user = await User.findById(coachPayment.user);
+                            if (!user) {
+                                return reply.status(404).send('User not found');
+                            }
+        
+                            const userEnrollmentTemp = fs.readFileSync(userEnrollmentTemplate, 'utf8');
+                            const userEnrollmentHtml = userEnrollmentTemp.replace('{username}', user.fullname)
+                                .replace('{date}', moment().format('DD-MM-YYYY'));
+                            await sendEmail(user.email, 'New career coaching appointment scheduled', userEnrollmentHtml);
+        
+                            return reply.status(200).send({ message: 'Coach payment completed successfully' });
+        
+                        } else if (session.metadata?.type === 'slotBooking') {
+                            const booked = await Booking.findOne({ sessionId });
+        
+                            if (!booked) {
+                                return reply.status(404).send('Booking record not found');
+                            }
+        
+                            booked.status = 'booked';
+                            await booked.save();
+        
+                            const coach = await Coach.findById(booked.coachId);
+                            if (!coach) {
+                                return reply.status(404).send('Coach not found');
+                            }
+        
+                            coach.bookings.push(booked._id);
+                            await coach.save();
+        
+                            const user = await User.findById(booked.userId);
+                            if (!user) {
+                                return reply.status(404).send('User not found');
+                            }
+        
+                            user.bookings.push(booked._id);
+                            await user.save();
+        
+                            const coachAppointmentTemp = fs.readFileSync(coachAppointmentTemp, 'utf8');
+                            const coachHtml = coachAppointmentTemp.replace('{coachname}', coach.name)
+                                .replace('{username}', user.fullname)
+                                .replace('{slot}', `${booked.slotTime.startTime} - ${booked.slotTime.endTime}`)
+                                .replace('{date}', moment(booked.date).format('LL'));
+                            await sendEmail(coach.email, 'Career coaching meeting scheduled', coachHtml);
+        
+                            const userAppointmentTemp = fs.readFileSync(userAppointmentTemp, 'utf8');
+                            const userHtml = userAppointmentTemp.replace('{name}', user.fullname)
+                                .replace('{coachname}', coach.name)
+                                .replace('{date}', moment(booked.date).format('LL'))
+                                .replace('{slot}', `${booked.slotTime.startTime} - ${booked.slotTime.endTime}`)
+                                .replace('{timezone}', booked.timezone);
+                            await sendEmail(user.email, 'Career coaching meeting scheduled', userHtml);
+        
+                            return reply.status(200).send({ message: 'Slot booked successfully' });
+        
+                        } else {
+                            const payment = await Payment.findOne({ sessionId });
+        
+                            if (!payment) {
+                                return reply.status(404).send('Payment record not found');
+                            }
+        
+                            payment.status = 'Completed';
+                            await payment.save();
+        
+                            const user = await User.findById(payment.user);
+                            if (!user) {
+                                return reply.status(404).send('User not found');
+                            }
+        
+                            // Update user subscription
+                            await User.findByIdAndUpdate(payment.user, {
+                                $set: {
+                                    'subscription.status': 'Completed',
+                                    'subscription.plan': [...user.subscription.plan, payment.plan],
+                                    'subscription.planType': payment.planType,
+                                    'subscription.currentPeriodStart': new Date(),
+                                    'subscription.currentPeriodEnd': payment.expiryDate,
+                                    'subscription.stripeCheckoutSessionId': sessionId,
+                                    'subscription.paymentId': payment._id,
+                                    'subscription.analyserTokens': payment.analyserTokens,
+                                    'subscription.optimizerTokens': payment.optimizerTokens,
+                                    'subscription.JobCVTokens': payment.jobCVTokens,
+                                    'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+                                    'subscription.downloadCVTokens': payment.downloadCVTokens,
+                                    payments: [...user.payments, payment._id],
+                                },
+                            });
                     }
 
-                    const sessionId = session.id;
                     payment = await Payment.findOne({ sessionId });
 
                     if (!payment) {
@@ -360,7 +469,8 @@ const webhook = async (request, reply) => {
 
                 console.log(`Payment intent succeeded for payment ID: ${payment._id}`);
                 return reply.status(200).send({ message: 'Subscription payment completed successfully' });
-            } catch (err) {
+            }
+         } catch (err) {
                 console.error('Error processing payment_intent.succeeded event:', err);
                 return reply.status(500).send('Internal server error');
             }
