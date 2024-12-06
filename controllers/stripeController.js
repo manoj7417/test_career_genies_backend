@@ -376,40 +376,52 @@ const webhook = async (request, reply) => {
             const session = event.data.object;
         
             try {
+                // Check if session status is 'complete'
                 if (session.status === 'complete') {
-
+                    console.log('Session status is complete.');
+        
+                    // Check for metadata type
                     if (session.metadata?.type === 'coachPayment') {
-                        
-                        try{
-                        const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
-                        console.log(coachPayment)
-                        if (coachPayment) {
-                            coachPayment.status = 'Completed';
-                            await coachPayment.save();
-                            console.log(coachPayment)
-                            return reply.status(200).send({ message: 'Coach payment completed successfully' });
+                        console.log('Processing coach payment...');
+                        try {
+                            // Retrieve the coach payment record
+                            const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
+                            
+                            if (coachPayment) {
+                                // Update the coach payment status
+                                coachPayment.status = 'Completed';
+                                await coachPayment.save();
+                                console.log('Coach payment updated successfully:', coachPayment);
+        
+                                // Send success response
+                                return reply.status(200).send({ message: 'Coach payment completed successfully' });
+                            } else {
+                                console.log('No coach payment found for session ID:', session.id);
+                                return reply.status(404).send({ message: 'Coach payment record not found' });
+                            }
+                        } catch (error) {
+                            console.error('Error processing coach payment:', error);
+                            return reply.status(500).send({ message: 'Internal server error while processing coach payment' });
                         }
-                        console.log("No coach payment found")
-                    } catch (error) {
-                        console.error('Error processing coach payment:', error);
-                        return reply.status(500).send({ message: 'Internal server error' });
-                    }
                     } else if (session.metadata?.type === 'slotBooking') {
                         console.log('Processing slot booking...');
                         // Add slot booking logic here
                     } else {
                         console.warn('Unhandled metadata type:', session.metadata?.type);
+                        return reply.status(400).send({ message: `Unhandled metadata type: ${session.metadata?.type}` });
                     }
                 } else {
                     console.warn(`Session status is not complete: ${session.status}`);
+                    return reply.status(400).send({ message: `Invalid session status: ${session.status}` });
                 }
             } catch (err) {
                 console.error('Error handling checkout.session.completed event:', err);
-                return reply.status(500).send('Internal server error');
+                return reply.status(500).send({ message: 'Internal server error' });
             }
         
             break;
         }
+        
 
         default:
             console.log(`Unhandled event type: ${event.type}`);
