@@ -35,7 +35,6 @@ const GoogleOAuthRoute = require('./routes/GoogleOAuthRoute');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
-
 // Register plugins
 fastify.register(cookie);
 
