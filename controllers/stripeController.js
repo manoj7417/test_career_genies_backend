@@ -304,7 +304,6 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-
             try {
                 // Attempt to find payment by setupIntent ID
                 let payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
@@ -316,6 +315,7 @@ const webhook = async (request, reply) => {
                     });
 
                     const session = sessions.data[0];
+                    console.log(session)
                     if (session) {
                         const sessionId = session.id;
 
