@@ -372,10 +372,39 @@ const webhook = async (request, reply) => {
             break;
         }
         
-        case 'checkout.session.completed':{
+        case 'checkout.session.completed': {
             const session = event.data.object;
+        
+            try {
+                if (session.status === 'complete') {
 
-            console.log(session);
+                    if (session.metadata?.type === 'coachPayment') {
+                        console.log('Processing coach payment...');
+                        try{
+                        const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
+                        if (coachPayment) {
+                            coachPayment.status = 'Completed';
+                            return reply.status(200).send({ message: 'Coach payment completed successfully' });
+                        }
+                    } catch (error) {
+                        console.error('Error processing coach payment:', error);
+                        return reply.status(500).send({ message: 'Internal server error' });
+                    }
+                    } else if (session.metadata?.type === 'slotBooking') {
+                        console.log('Processing slot booking...');
+                        // Add slot booking logic here
+                    } else {
+                        console.warn('Unhandled metadata type:', session.metadata?.type);
+                    }
+                } else {
+                    console.warn(`Session status is not complete: ${session.status}`);
+                }
+            } catch (err) {
+                console.error('Error handling checkout.session.completed event:', err);
+                return reply.status(500).send('Internal server error');
+            }
+        
+            break;
         }
 
         default:
