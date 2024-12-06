@@ -379,11 +379,13 @@ const webhook = async (request, reply) => {
                 if (session.status === 'complete') {
 
                     if (session.metadata?.type === 'coachPayment') {
-                        console.log('Processing coach payment...');
+                        
                         try{
                         const coachPayment = await CoachPayment.findOne({ where: { sessionId: session.id } });
+                       
                         if (coachPayment) {
                             coachPayment.status = 'Completed';
+                            await coachPayment.save();
                             return reply.status(200).send({ message: 'Coach payment completed successfully' });
                         }
                     } catch (error) {
