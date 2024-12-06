@@ -271,7 +271,7 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                payment.status = 'Ready for Charge'; // Update status to Ready for Charge
+                payment.status = 'Ready for Charge';
                 await payment.save();
                 console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
             } catch (err) {
@@ -292,7 +292,7 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                payment.status = 'Failed'; // Update status to Failed
+                payment.status = 'Failed';
                 await payment.save();
                 console.log(`Payment setup failed for payment ID: ${payment._id}`);
             } catch (err) {
@@ -304,26 +304,42 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-        
+
             try {
-                const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
-        
+                // Attempt to find payment by setupIntent ID
+                let payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+
                 if (!payment) {
-                    console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
-                    return reply.status(404).send('Payment record not found');
+                    // Fallback: Attempt to find payment by session
+                    const sessions = await stripe.checkout.sessions.list({
+                        payment_intent: paymentIntent.id,
+                    });
+
+                    const session = sessions.data[0];
+                    if (!session) {
+                        console.error(`Session not found for paymentIntent ID: ${paymentIntent.id}`);
+                        return reply.status(404).send('Session not found');
+                    }
+
+                    const sessionId = session.id;
+                    payment = await Payment.findOne({ sessionId });
+
+                    if (!payment) {
+                        console.error(`Payment record not found for sessionId: ${sessionId}`);
+                        return reply.status(404).send('Payment record not found');
+                    }
                 }
-        
-                payment.status = 'Completed'; // Update payment status
+
+                // Update payment status and user subscription
+                payment.status = 'Completed';
                 await payment.save();
-        
-                // Additional logic for subscription or user updates
+
                 const user = await User.findById(payment.user);
                 if (!user) {
-                    console.error('User not found for payment:', payment.user);
+                    console.error(`User not found for payment: ${payment.user}`);
                     return reply.status(404).send('User not found');
                 }
-        
-                // Update user subscription
+
                 await User.findByIdAndUpdate(payment.user, {
                     $set: {
                         'subscription.status': 'Completed',
@@ -331,7 +347,7 @@ const webhook = async (request, reply) => {
                         'subscription.planType': payment.planType,
                         'subscription.currentPeriodStart': new Date(),
                         'subscription.currentPeriodEnd': payment.expiryDate,
-                        'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
+                        'subscription.stripeCheckoutSessionId': paymentIntent.id,
                         'subscription.paymentId': payment._id,
                         'subscription.analyserTokens': payment.analyserTokens,
                         'subscription.optimizerTokens': payment.optimizerTokens,
@@ -341,37 +357,46 @@ const webhook = async (request, reply) => {
                         payments: [...user.payments, payment._id],
                     },
                 });
-        
-                console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
+
+                console.log(`Payment intent succeeded for payment ID: ${payment._id}`);
                 return reply.status(200).send({ message: 'Subscription payment completed successfully' });
             } catch (err) {
                 console.error('Error processing payment_intent.succeeded event:', err);
                 return reply.status(500).send('Internal server error');
             }
         }
-        
+
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
-        
+
             try {
                 const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
-        
+
                 if (!payment) {
-                    console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
-                    return reply.status(404).send('Payment record not found');
+                    const sessions = await stripe.checkout.sessions.list({
+                        payment_intent: paymentIntent.id,
+                    });
+
+                    const session = sessions.data[0];
+                    if (!session) {
+                        console.error(`Session not found for paymentIntent ID: ${paymentIntent.id}`);
+                        return reply.status(404).send('Session not found');
+                    }
+
+                    const sessionId = session.id;
+                    await Payment.findOneAndUpdate({ sessionId }, { status: 'Failed' });
+                } else {
+                    payment.status = 'Failed';
+                    await payment.save();
                 }
-        
-                payment.status = 'Failed'; // Update payment status
-                await payment.save();
-        
-                console.log(`Payment intent failed for setupIntentId: ${paymentIntent.setup_intent}`);
+
+                console.log(`Payment intent failed for payment ID: ${paymentIntent.id}`);
             } catch (err) {
                 console.error('Error updating payment status to Failed:', err);
                 return reply.status(500).send('Internal server error');
             }
             break;
         }
-        
 
         default:
             console.log(`Unhandled event type: ${event.type}`);
