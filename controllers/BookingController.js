@@ -5,6 +5,9 @@ const { sendEmail } = require("../utils/nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const { google } = require('googleapis');
 const { v4: uuid } = require('uuid');
+const path = require('path');
+const userAppointmentTemp = path.resolve(__dirname, ".." , 'emailTemplates' , 'userAppointmentTemp.html');
+const coachAppointmentTemplate = path.resolve(__dirname, ".." , 'emailTemplates' , 'coachAppointmentTemp.html');
 
 const bookSlots = async (req, res) => {
     const user = req.user;
@@ -115,9 +118,15 @@ const bookSlots = async (req, res) => {
                 data: newBooking,
             });
         }
-
         meetingLink = await createSpace(authorize() , coach.email);
         newBooking.meetingLink = meetingLink;
+        
+        const userAppointmentTempHtml = userAppointmentTemp.replaceAll("{username}", user.email).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
+        await sendEmail(user.email, "Career Coaching Session", userAppointmentTempHtml);
+
+        const coachAppointmentTempHtml = coachAppointmentTemplate.replaceAll("{username}", user.fullname).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
+        await sendEmail(coach.email, "Career Coaching Session", coachAppointmentTempHtml);
+        
         await newBooking.save();
         res.status(201).send({
             status: "SUCCESS",

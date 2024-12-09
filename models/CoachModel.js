@@ -92,10 +92,6 @@ const coachSchema = new mongoose.Schema({
         type: String,
         trim: false
     },
-    ratesPerHour: {
-        charges: { type: Number, required: false },
-        currency: { type: String, required: false, enum: ['USD', 'EUR', 'GBP', 'INR'] }
-    },
     ratings: {
         type: Number,
     },
