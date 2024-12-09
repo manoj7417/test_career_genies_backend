@@ -6,6 +6,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { google } = require('googleapis');
 const { v4: uuid } = require('uuid');
 const path = require('path');
+const fs = require('fs');
 const userAppointmentTemp = path.resolve(__dirname, ".." , 'emailTemplates' , 'userAppointmentTemp.html');
 const coachAppointmentTemplate = path.resolve(__dirname, ".." , 'emailTemplates' , 'coachAppointmentTemp.html');
 
@@ -120,13 +121,14 @@ const bookSlots = async (req, res) => {
         }
         meetingLink = await createSpace(authorize() , coach.email);
         newBooking.meetingLink = meetingLink;
-        
-        const userAppointmentTempHtml = userAppointmentTemp.replaceAll("{username}", user.email).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
+        const userAppointmentTempbody = fs.readFileSync(userAppointmentTemp, "utf-8");
+        const userAppointmentTempHtml = userAppointmentTempbody.replace("{username}", user.email).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
         await sendEmail(user.email, "Career Coaching Session", userAppointmentTempHtml);
 
-        const coachAppointmentTempHtml = coachAppointmentTemplate.replaceAll("{username}", user.fullname).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
+        const coachAppointmentTempbody = fs.readFileSync(coachAppointmentTemplate, "utf-8");
+        const coachAppointmentTempHtml = coachAppointmentTempbody.replace("{username}", user.fullname).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
         await sendEmail(coach.email, "Career Coaching Session", coachAppointmentTempHtml);
-        
+
         await newBooking.save();
         res.status(201).send({
             status: "SUCCESS",
