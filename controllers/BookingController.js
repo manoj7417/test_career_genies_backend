@@ -122,7 +122,7 @@ const bookSlots = async (req, res) => {
         meetingLink = await createSpace(authorize() , coach.email);
         newBooking.meetingLink = meetingLink;
         const userAppointmentTempbody = fs.readFileSync(userAppointmentTemp, "utf-8");
-        const userAppointmentTempHtml = userAppointmentTempbody.replace("{username}", user.email).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
+        const userAppointmentTempHtml = userAppointmentTempbody.replace("{username}", user.fullname).replace('{coachname}', coach.name).replace('{date}', date).replace('{slot}' , `${slotTime.startTime} - ${slotTime.endTime}`).replace('{timezone}' , timezone)
         await sendEmail(user.email, "Career Coaching Session", userAppointmentTempHtml);
 
         const coachAppointmentTempbody = fs.readFileSync(coachAppointmentTemplate, "utf-8");
