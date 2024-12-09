@@ -55,7 +55,7 @@ const registerCoach = async (req, res) => {
         const findExistingUser = await Coach.findOne({ email })
         if (findExistingUser) {
             return res.status(400).send({
-                message: "User with email already exists"
+                message: "Email ID already exists, try Signing In"
             })
         }
         const coach = new Coach({
@@ -335,13 +335,13 @@ const getBookings = async (req, res) => {
         );
 
         oauth2Client.setCredentials({
-            refresh_token: coach.googleAuth.refreshToken,
+            refresh_token: coach?.googleAuth?.refreshToken
         });
 
-        // Access Google Calendar API
+
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-        // Fetch calendar events
+
         const events = await calendar.events.list({
             calendarId: 'primary',
             timeMin: new Date().toISOString(),
@@ -350,7 +350,6 @@ const getBookings = async (req, res) => {
             orderBy: 'startTime',
         });
 
-        // Send response
         res.status(200).send({
             status: "SUCCESS",
             bookings,
@@ -651,7 +650,7 @@ const CoachgoogleLogin = async (req, reply) => {
 
 const syncCalendar = async (req, res) => {
     const { idToken, accessToken, refreshToken } = req.body;
-    const coachId = req.coach._id
+    const coachId = req.coach._id;
     try {
         const coach = await Coach.findById(coachId)
         if (!coach) {
