@@ -155,7 +155,7 @@ const createSubscriptionPayment = async (req, res) => {
         const currentPeriodEnd = duration === 'monthly' ? new Date(new Date().setMonth(new Date().getMonth() + 1)) : new Date(new Date().setFullYear(new Date().getFullYear() + 1))
         const payment = new Payment({
             user: userId,
-            amount: duration === 'monthly' ? amount * 100 : amount * 10 * 100,
+            amount: duration === 'monthly' ? amount : amount * 10,
             status: 'Pending',
             plan: planName,
             planType: duration,
@@ -336,7 +336,8 @@ const webhook = async (request, reply) => {
                 await payment.save();
         
                 // Additional logic for subscription or user updates
-                const user = await User.findById(payment.user);
+                const userId = payment.user;
+                const user = await User.findOne({ _id: userId });
                 if (!user) {
                     console.error('User not found for payment:', payment.user);
                     return reply.status(404).send('User not found');
