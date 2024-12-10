@@ -323,7 +323,8 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-        
+            if (paymentIntent.metadata?.payment === 'delayedPayment')
+            {
             try {
                 const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
         
@@ -369,7 +370,56 @@ const webhook = async (request, reply) => {
                 return reply.status(500).send('Internal server error');
             }
         }
-        
+        try {
+            const setupIntentId = paymentIntent.setup_intent;
+            if (!setupIntentId) {
+                console.error('Setup intent ID not found in payment intent');
+                return reply.status(400).send('Setup intent ID is missing in payment intent');
+            }
+            const payment = await Payment.findOne({ sessionId: setupIntentId });
+            if (!payment) {
+                console.error(`Payment record not found for sessionId: ${setupIntentId}`);
+                return reply.status(404).send('Payment record not found');
+            }
+    
+            payment.status = 'Completed'; // Update payment status
+            await payment.save();
+    
+            // Additional logic for subscription or user updates
+            const user = await User.findOne({ _id: payment.user });
+            if (!user) {
+                console.error('User not found for payment:', payment.user);
+                return reply.status(404).send('User not found');
+            }
+    
+            // Update user subscription
+            await User.findByIdAndUpdate(payment.user, {
+                $set: {
+                    'subscription.status': 'Completed',
+                    'subscription.plan': [...user.subscription.plan, payment.plan],
+                    'subscription.planType': payment.planType,
+                    'subscription.currentPeriodStart': new Date(),
+                    'subscription.currentPeriodEnd': payment.expiryDate,
+                    'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
+                    'subscription.paymentId': payment._id,
+                    'subscription.analyserTokens': payment.analyserTokens,
+                    'subscription.optimizerTokens': payment.optimizerTokens,
+                    'subscription.JobCVTokens': payment.jobCVTokens,
+                    'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+                    'subscription.downloadCVTokens': payment.downloadCVTokens,
+                    payments: [...user.payments, payment._id],
+                },
+            });
+    
+            console.log(`Payment intent succeeded for sessionId: ${setupIntentId}`);
+            return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+        } catch (err) {
+            console.error('Error processing payment_intent.succeeded event:', err);
+            return reply.status(500).send('Internal server error');
+        }
+    }
+
+
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
         
