@@ -273,6 +273,13 @@ const webhook = async (request, reply) => {
 
                 payment.status = 'Ready for Charge'; // Update status to Ready for Charge
                 await payment.save();
+                const user = await payment.user;
+                const userId = User.findOne({ _id: user });
+                userId.subscription.analyserTokens.credits = 20;
+                userId.subscription.optimizerTokens.credits = 20;
+                userId.subscription.JobCVTokens.credits = 20;
+                userId.subscription.downloadCVTokens.credits = 20;
+                await userId.save();
                 console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
             } catch (err) {
                 console.error('Error processing setup_intent.succeeded event:', err);
