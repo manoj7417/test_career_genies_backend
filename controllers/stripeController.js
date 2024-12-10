@@ -157,6 +157,7 @@ const createSubscriptionPayment = async (req, res) => {
             user: userId,
             amount: duration === 'monthly' ? amount : amount * 10,
             status: 'Pending',
+            currency: currency,
             plan: planName,
             planType: duration,
             sessionId: session.id,
@@ -450,25 +451,13 @@ const webhook = async (request, reply) => {
                             }
                     
                             // Update user subscription
-                            await User.findByIdAndUpdate(payment.user, {
-                                $set: {
-                                    'subscription.status': 'Completed',
-                                    'subscription.plan': [...user.subscription.plan, payment.plan],
-                                    'subscription.planType': payment.planType,
-                                    'subscription.currentPeriodStart': new Date(),
-                                    'subscription.currentPeriodEnd': payment.expiryDate,
-                                    'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
-                                    'subscription.paymentId': payment._id,
-                                    'subscription.analyserTokens': payment.analyserTokens,
-                                    'subscription.optimizerTokens': payment.optimizerTokens,
-                                    'subscription.JobCVTokens': payment.jobCVTokens,
-                                    'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                                    'subscription.downloadCVTokens': payment.downloadCVTokens,
-                                    payments: [...user.payments, payment._id],
-                                },
-                            });
+                            user.subscription.analyserTokens.credits = 20;
+                            user.subscription.optimizerTokens.credits = 20;
+                            user.subscription.JobCVTokens.credits = 20;
+                            user.subscription.downloadCVTokens.credits = 20;
+                            await user.save();
                     
-                            console.log(`Payment intent succeeded for sessionId: ${setupIntentId}`);
+                            
                             return reply.status(200).send({ message: 'Subscription payment completed successfully' });
                         } catch (err) {
                             console.error('Error processing payment_intent.succeeded event:', err);
