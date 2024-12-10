@@ -274,7 +274,19 @@ const webhook = async (request, reply) => {
                 payment.status = 'Ready for Charge'; // Update status to Ready for Charge
                 await payment.save();
                 const user = await payment.user;
-                const userId = User.findOne({ _id: user });
+
+                if (!user) {
+                    throw new Error('User not found in payment.');
+                }
+
+                const userId = await User.findOne({ _id: user });
+                if (!userId) {
+                    throw new Error(`User with ID ${user} not found.`);
+                }
+                if (!userId.subscription) {
+                    throw new Error(`Subscription data missing for user ${userId._id}`);
+                }
+              
                 userId.subscription.analyserTokens.credits = 20;
                 userId.subscription.optimizerTokens.credits = 20;
                 userId.subscription.JobCVTokens.credits = 20;
