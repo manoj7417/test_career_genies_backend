@@ -364,7 +364,7 @@ const getBookings = async (req, res) => {
 const createProgram = async (req, res) => {
     try {
         const coachId = req.coach._id;
-        const { title, description, prerequisites, days, programImage, programVideo, amount } = req.body;
+        const { title, description, prerequisites, content, programImage, programVideo, amount , currency } = req.body;
         if (!programImage) {
             return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
         }
@@ -374,10 +374,11 @@ const createProgram = async (req, res) => {
             title,
             description,
             prerequisites,
-            days,
+            content,
             programImage,
             programVideo,
-            amount
+            amount,
+            currency
         });
 
         await program.save();

@@ -29,11 +29,12 @@ const programSchema = new mongoose.Schema({
     title: { type: String, required: true },  // Program title
     description: { type: String, required: true },  // Program description
     prerequisites: [prerequisiteSchema],  // Optional program-level prerequisites
-    days: [daySchema],  // Array of days in the program
+    content : {type : String , required : true},  // Array of days in the program
     programImage: {type: String, required: true},  // URL to the program image
     programVideo: {type: String},  // URL to the program video
     isapproved: { type: Boolean, default: false },  // Whether the program has been approved by the coach
     amount: { type: Number, required: true },  // Amount of the program
+    currency: { type: String, required: true , enum: ['USD', 'EUR', 'GBP', 'INR'] , default: 'USD' }
 }, {
     timestamps: true
 });
