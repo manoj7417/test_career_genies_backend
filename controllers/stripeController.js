@@ -33,25 +33,25 @@ const createSubscriptionPayment = async (req, res) => {
     const userId = req.user._id;
     let { email, success_url, cancel_url, currency, planName, duration } = req.body;
 
-    const {discount} = req.body;
+    const { discount } = req.body;
 
-    if(discount == 100){
+    if (discount == 100) {
         try {
             const user = await User.findById(userId);
             if (!user) {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
-    
+
             const price = getPricing(currency, planName);
             const amount = price?.price || 0;
             const plan = getPlanName(planName);
             if (!amount || !plan) {
                 return res.status(400).send({ status: "FAILURE", message: "Invalid plan details" });
             }
-    
+
             // Check if the customer already exists in Stripe
             let stripeCustomerId = user.stripeCustomerId;
-    
+
             if (!stripeCustomerId) {
                 // Create a new Stripe customer if not already linked
                 const customer = await stripe.customers.create({
@@ -60,24 +60,24 @@ const createSubscriptionPayment = async (req, res) => {
                         userId: user._id.toString(),
                     },
                 });
-    
+
                 stripeCustomerId = customer.id;
-    
+
                 // Save the Stripe customer ID in the user record
                 user.stripeCustomerId = stripeCustomerId;
                 await user.save();
             }
-    
+
             // Create a setup intent for the user
             const setupIntent = await stripe.setupIntents.create({
                 payment_method_types: ['card'],
-                customer: stripeCustomerId, 
+                customer: stripeCustomerId,
                 usage: 'off_session',
                 metadata: {
                     payment: "delayedPayment",
                 },
             });
-    
+
             // Save payment details
             const payment = new Payment({
                 user: userId,
@@ -87,12 +87,14 @@ const createSubscriptionPayment = async (req, res) => {
                 plan: planName,
                 planType: "trial",
                 setupIntentId: setupIntent.id,
-                expiryDate: new Date(Date.now() + 5 * 60 * 1000), // Payment scheduled 14 days later
+                expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+                // Payment scheduled 14 days later
             });
             await payment.save();
-    
+
             // Schedule the job to charge after 14 days
-            schedule.scheduleJob(payment._id.toString(), new Date(Date.now() + 5 * 60 * 1000), async () => {
+            schedule.scheduleJob(payment._id.toString(), new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+            , async () => {
                 try {
                     const delayedPayment = await Payment.findById(payment._id);
                     if (delayedPayment && delayedPayment.status === 'Ready for Charge') {
@@ -105,12 +107,12 @@ const createSubscriptionPayment = async (req, res) => {
                     console.error(`Failed to process payment ${payment._id}:`, error.message);
                 }
             });
- 
+
             return res.status(200).send({
                 clientSecret: setupIntent.client_secret, // Pass the client secret for frontend use
                 message: "Setup link created. Card details need to be provided.",
             });
-            
+
         } catch (error) {
             console.error("Error creating delayed payment link:", error.message);
             return res.status(500).send({ status: "FAILURE", error: error.message });
@@ -198,7 +200,7 @@ const createSubscriptionPayment = async (req, res) => {
 
 const chargeDelayedPayment = async (paymentId) => {
     try {
-       
+
         const payment = await Payment.findById(paymentId);
 
         if (!payment || payment.status !== 'Ready for Charge') {
@@ -218,7 +220,7 @@ const chargeDelayedPayment = async (paymentId) => {
         }
 
         let paymentIntent;
-        console.log(payment.amount,payment.currency)
+        console.log(payment.amount, payment.currency)
         try {
             paymentIntent = await stripe.paymentIntents.create({
                 amount: payment.amount * 100,
@@ -287,7 +289,7 @@ const webhook = async (request, reply) => {
                 if (!userId.subscription) {
                     throw new Error(`Subscription data missing for user ${userId._id}`);
                 }
-              
+
                 userId.subscription.analyserTokens.credits = 20;
                 userId.subscription.optimizerTokens.credits = 20;
                 userId.subscription.JobCVTokens.credits = 20;
@@ -324,71 +326,70 @@ const webhook = async (request, reply) => {
 
         case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object;
-            if (paymentIntent.metadata?.payment === 'delayedPayment')
-            {
-            try {
-                const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
-        
-                if (!payment) {
-                    console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
-                    return reply.status(404).send('Payment record not found');
+            if (paymentIntent.metadata?.payment === 'delayedPayment') {
+                try {
+                    const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+
+                    if (!payment) {
+                        console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
+                        return reply.status(404).send('Payment record not found');
+                    }
+
+                    payment.status = 'Completed'; // Update payment status
+                    await payment.save();
+
+                    // Additional logic for subscription or user updates
+                    const userId = payment.user;
+                    const user = await User.findOne({ _id: userId });
+                    if (!user) {
+                        console.error('User not found for payment:', payment.user);
+                        return reply.status(404).send('User not found');
+                    }
+
+                    // Update user subscription
+                    await User.findByIdAndUpdate(payment.user, {
+                        $set: {
+                            'subscription.status': 'Completed',
+                            'subscription.plan': [...user.subscription.plan, payment.plan],
+                            'subscription.planType': payment.planType,
+                            'subscription.currentPeriodStart': new Date(),
+                            'subscription.currentPeriodEnd': payment.expiryDate,
+                            'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
+                            'subscription.paymentId': payment._id,
+                            'subscription.analyserTokens': payment.analyserTokens,
+                            'subscription.optimizerTokens': payment.optimizerTokens,
+                            'subscription.JobCVTokens': payment.jobCVTokens,
+                            'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+                            'subscription.downloadCVTokens': payment.downloadCVTokens,
+                            payments: [...user.payments, payment._id],
+                        },
+                    });
+
+                    console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
+                    return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+                } catch (err) {
+                    console.error('Error processing payment_intent.succeeded event:', err);
+                    return reply.status(500).send('Internal server error');
                 }
-        
-                payment.status = 'Completed'; // Update payment status
-                await payment.save();
-        
-                // Additional logic for subscription or user updates
-                const userId = payment.user;
-                const user = await User.findOne({ _id: userId });
-                if (!user) {
-                    console.error('User not found for payment:', payment.user);
-                    return reply.status(404).send('User not found');
-                }
-        
-                // Update user subscription
-                await User.findByIdAndUpdate(payment.user, {
-                    $set: {
-                        'subscription.status': 'Completed',
-                        'subscription.plan': [...user.subscription.plan, payment.plan],
-                        'subscription.planType': payment.planType,
-                        'subscription.currentPeriodStart': new Date(),
-                        'subscription.currentPeriodEnd': payment.expiryDate,
-                        'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
-                        'subscription.paymentId': payment._id,
-                        'subscription.analyserTokens': payment.analyserTokens,
-                        'subscription.optimizerTokens': payment.optimizerTokens,
-                        'subscription.JobCVTokens': payment.jobCVTokens,
-                        'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                        'subscription.downloadCVTokens': payment.downloadCVTokens,
-                        payments: [...user.payments, payment._id],
-                    },
-                });
-        
-                console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
-                return reply.status(200).send({ message: 'Subscription payment completed successfully' });
-            } catch (err) {
-                console.error('Error processing payment_intent.succeeded event:', err);
-                return reply.status(500).send('Internal server error');
             }
+
         }
-       
-    }
 
 
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
-        
+
             try {
                 const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
-        
+
                 if (!payment) {
                     console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
                     return reply.status(404).send('Payment record not found');
                 }
-        
+
                 payment.status = 'Failed'; // Update payment status
                 await payment.save();
-        
+
                 console.log(`Payment intent failed for setupIntentId: ${paymentIntent.setup_intent}`);
             } catch (err) {
                 console.error('Error updating payment status to Failed:', err);
@@ -396,28 +397,28 @@ const webhook = async (request, reply) => {
             }
             break;
         }
-        
+
         case 'checkout.session.completed': {
             const session = event.data.object;
-        
+
             try {
                 // Check if session status is 'complete'
                 if (session.status === 'complete') {
                     console.log('Session status is complete.');
-        
+
                     // Check for metadata type
                     if (session.metadata?.type === 'coachPayment') {
                         console.log('Processing coach payment...');
                         try {
                             // Retrieve the coach payment record
-                            const coachPayment = await CoachPayment.findOne({ sessionId: session.id } );
-                            
+                            const coachPayment = await CoachPayment.findOne({ sessionId: session.id });
+
                             if (coachPayment) {
                                 // Update the coach payment status
                                 coachPayment.status = 'Completed';
                                 await coachPayment.save();
                                 console.log('Coach payment updated successfully:', coachPayment);
-        
+
                                 // Send success response
                                 return reply.status(200).send({ message: 'Coach payment completed successfully' });
                             } else {
@@ -433,31 +434,31 @@ const webhook = async (request, reply) => {
                         // Add slot booking logic here
                     } else {
                         try {
-                            
+
                             const payment = await Payment.findOne({ sessionId: session.id });
                             if (!payment) {
                                 console.error(`Payment record not found for sessionId: ${session.id}`);
                                 return reply.status(404).send('Payment record not found');
                             }
-                    
+
                             payment.status = 'Completed'; // Update payment status
                             await payment.save();
-                    
+
                             // Additional logic for subscription or user updates
                             const user = await User.findOne({ _id: payment.user });
                             if (!user) {
                                 console.error('User not found for payment:', payment.user);
                                 return reply.status(404).send('User not found');
                             }
-                    
+
                             // Update user subscription
                             user.subscription.analyserTokens.credits = 20;
                             user.subscription.optimizerTokens.credits = 20;
                             user.subscription.JobCVTokens.credits = 20;
                             user.subscription.downloadCVTokens.credits = 20;
                             await user.save();
-                    
-                            
+
+
                             return reply.status(200).send({ message: 'Subscription payment completed successfully' });
                         } catch (err) {
                             console.error('Error processing payment_intent.succeeded event:', err);
@@ -472,10 +473,10 @@ const webhook = async (request, reply) => {
                 console.error('Error handling checkout.session.completed event:', err);
                 return reply.status(500).send({ message: 'Internal server error' });
             }
-        
+
             break;
         }
-        
+
 
         default:
             console.log(`Unhandled event type: ${event.type}`);

@@ -51,7 +51,7 @@ const coachSchema = new mongoose.Schema({
         isVerified: { type: Boolean, default: false }
     },
     experience: {
-        type: Number
+        type: Number            
     },
     typeOfCoaching: {
         type: String
