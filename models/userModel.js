@@ -82,7 +82,7 @@ const UserSchema = new mongoose.Schema({
         plan: [
             {
                 type: String,
-                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools'
+                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools' , 'Trial14'
                 ],
                 default: "CVSTUDIO"
             }

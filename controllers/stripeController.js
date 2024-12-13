@@ -294,6 +294,7 @@ const webhook = async (request, reply) => {
                 userId.subscription.optimizerTokens.credits = 20;
                 userId.subscription.JobCVTokens.credits = 20;
                 userId.subscription.downloadCVTokens.credits = 20;
+                userId.subscription.plan.push("Trial14");
                 await userId.save();
                 console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
             } catch (err) {
