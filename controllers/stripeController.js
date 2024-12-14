@@ -42,13 +42,13 @@ const createSubscriptionPayment = async (req, res) => {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
 
-            if (user.trial.status === "Active") {
-                return res.status(403).send({ status: "FAILURE", message: "Trial period is already active" });
-            }
+            // if (user.trial.status === "Active") {
+            //     return res.status(403).send({ status: "FAILURE", message: "Trial period is already active" });
+            // }
 
-            if (user?.trial?.expiryDate && user.trial.expiryDate < new Date()) {
-                return res.status(403).send({ status: "FAILURE", message: "Trial period has ended" });
-            }
+            // if (user?.trial?.expiryDate && user.trial.expiryDate < new Date()) {
+            //     return res.status(403).send({ status: "FAILURE", message: "Trial period has ended" });
+            // }
 
             const price = getPricing(currency, planName);
             const amount = price?.price || 0;
