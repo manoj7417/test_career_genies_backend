@@ -42,6 +42,14 @@ const createSubscriptionPayment = async (req, res) => {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
 
+            if (user.trial.status === "Active") {
+                return res.status(403).send({ status: "FAILURE", message: "Trial period is already active" });
+            }
+
+            if (user?.trial?.expiryDate && user.trial.expiryDate < new Date()) {
+                return res.status(403).send({ status: "FAILURE", message: "Trial period has ended" });
+            }
+
             const price = getPricing(currency, planName);
             const amount = price?.price || 0;
             const plan = getPlanName(planName);
@@ -94,19 +102,19 @@ const createSubscriptionPayment = async (req, res) => {
 
             // Schedule the job to charge after 14 days
             schedule.scheduleJob(payment._id.toString(), new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-            , async () => {
-                try {
-                    const delayedPayment = await Payment.findById(payment._id);
-                    if (delayedPayment && delayedPayment.status === 'Ready for Charge') {
-                        const chargeResult = await chargeDelayedPayment(delayedPayment._id);
-                        console.log(`Payment ${payment._id} processed:`, chargeResult);
-                    } else {
-                        console.log(`Payment ${payment._id} not ready for charge.`);
+                , async () => {
+                    try {
+                        const delayedPayment = await Payment.findById(payment._id);
+                        if (delayedPayment && delayedPayment.status === 'Ready for Charge') {
+                            const chargeResult = await chargeDelayedPayment(delayedPayment._id);
+                            console.log(`Payment ${payment._id} processed:`, chargeResult);
+                        } else {
+                            console.log(`Payment ${payment._id} not ready for charge.`);
+                        }
+                    } catch (error) {
+                        console.error(`Failed to process payment ${payment._id}:`, error.message);
                     }
-                } catch (error) {
-                    console.error(`Failed to process payment ${payment._id}:`, error.message);
-                }
-            });
+                });
 
             return res.status(200).send({
                 clientSecret: setupIntent.client_secret, // Pass the client secret for frontend use
@@ -295,6 +303,8 @@ const webhook = async (request, reply) => {
                 userId.subscription.JobCVTokens.credits = 20;
                 userId.subscription.downloadCVTokens.credits = 20;
                 userId.subscription.plan.push("Trial14");
+                userId.subscription.trial.status = "Active";
+                userId.subscription.trial.expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
                 await userId.save();
                 console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
             } catch (err) {

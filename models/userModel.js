@@ -10,8 +10,8 @@ const UserSchema = new mongoose.Schema({
     },
     stripeCustomerId: {
         type: String,
-        trim: true, 
-        default: null 
+        trim: true,
+        default: null
     },
     email: {
         type: String,
@@ -82,7 +82,7 @@ const UserSchema = new mongoose.Schema({
         plan: [
             {
                 type: String,
-                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools' , 'Trial14'
+                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14'
                 ],
                 default: "CVSTUDIO"
             }
@@ -146,6 +146,10 @@ const UserSchema = new mongoose.Schema({
         refreshToken: { type: String, trim: true },
         tokenExpiry: { type: Date },
     },
+    trial: {
+        status: { type: String, enum: ['Incomplete','Active', 'Expired'], default: 'Active' },
+        expiryDate: { type: Date, required: false }
+    }
 },
     {
         timestamps: true

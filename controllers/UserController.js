@@ -941,7 +941,6 @@ const getCoachPayment = async (req, reply) => {
 
 const getPrograms = async (req, res) => {
   const userId = req.user._id;
-  console.log(userId)
   try {
     const programs = await CoachPayment.find({ user: userId, status: 'Completed' })
       .populate({
@@ -954,6 +953,11 @@ const getPrograms = async (req, res) => {
     res.status(500).send({ status: "FAILURE", message: "An error occurred while getting edit coach details" })
   }
 }
+
+const unsubscribe = async (req, res) => {
+  const userId = req.user._id;
+
+};
 
 module.exports = {
   register,
@@ -981,5 +985,6 @@ module.exports = {
   updateScheduleProgramDay,
   getCoachPayment,
   getPrograms,
-  googleLogin
+  googleLogin,
+  unsubscribe
 };
