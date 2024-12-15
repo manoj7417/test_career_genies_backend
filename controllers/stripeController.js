@@ -38,13 +38,14 @@ const createSubscriptionPayment = async (req, res) => {
     if (discount == 100) {
         try {
             const user = await User.findById(userId);
+            
             if (!user) {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
 
-            // if (user.trial.status === "Active") {
-            //     return res.status(403).send({ status: "FAILURE", message: "Trial period is already active" });
-            // }
+            if (user.trial.status === "Active") {
+                return res.status(200).send({ status: "FAILURE", error: "Trial coupon already redeemed" });
+            }
 
             // if (user?.trial?.expiryDate && user.trial.expiryDate < new Date()) {
             //     return res.status(403).send({ status: "FAILURE", message: "Trial period has ended" });
@@ -115,6 +116,14 @@ const createSubscriptionPayment = async (req, res) => {
                         console.error(`Failed to process payment ${payment._id}:`, error.message);
                     }
                 });
+
+            user.trial.status = "Active";
+            user.trial.expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+            await user.save();
+
+            if (!user) {
+                return res.status(404).send({ status: "FAILURE", message: "User not found" });
+            }
 
             return res.status(200).send({
                 clientSecret: setupIntent.client_secret, // Pass the client secret for frontend use

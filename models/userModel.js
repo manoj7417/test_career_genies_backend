@@ -147,7 +147,7 @@ const UserSchema = new mongoose.Schema({
         tokenExpiry: { type: Date },
     },
     trial: {
-        status: { type: String, enum: ['Incomplete','Active', 'Expired'], default: 'Active' },
+        status: { type: String, enum: ['Incomplete','Active', 'Expired'], default: 'Incomplete' },
         expiryDate: { type: Date, required: false }
     }
 },
