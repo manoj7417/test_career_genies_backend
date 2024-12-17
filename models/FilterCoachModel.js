@@ -2,11 +2,11 @@ const mongoose = require('mongoose')
 
 
 const FilterCoachSchema = new mongoose.Schema({
-    step1: { type: String, required: true },
-    step2: { type: String, required: true },
-    step3: { type: String, required: true },
-    step4: { type: String, required: true },
-    step5: { type: String, required: true },
+    step_1: { type: String, required: true },
+    step_2: { type: String, required: true },
+    step_3: { type: String, required: true },
+    step_4: { type: String, required: true },
+    step_5: { type: String, required: true },
 },
     {
         timestamps: true

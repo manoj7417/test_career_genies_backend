@@ -2,13 +2,13 @@ const { FilterCoach } = require("../models/FilterCoachModel")
 
 const addFilterCoach = async (req, res) => {
     try {
-        const { step1, step2, step3, step4, step5 } = req.body
-        const filterCoach = new FilterCoach({ step1, step2, step3, step4, step5 })
+        const { step_1, step_2, step_3, step_4, step_5 } = req.body
+        const filterCoach = new FilterCoach({ step_1, step_2, step_3, step_4, step_5 })
         await filterCoach.save()
-        res.status(201).json({ message: "FilterCoach Added" })
+        res.status(201).send({ message: "FilterCoach Added" })
     } catch (error) {
         console.log(error)
-        res.status(500).json({ message: "Internal Server Error" })
+        res.status(500).send({ message: "Internal Server Error" })
     }
 }
 
