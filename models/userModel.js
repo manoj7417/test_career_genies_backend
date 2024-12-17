@@ -225,6 +225,7 @@ UserSchema.methods.toSafeObject = function () {
         occupation: this.occupation,
         phoneNumber: this.phoneNumber,
         googleAuth: this.googleAuth,
+        trial: this.trial,
     };
 };
 
