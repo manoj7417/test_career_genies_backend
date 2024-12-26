@@ -77,7 +77,6 @@ const createSubscriptionPayment = async (req, res) => {
                 await user.save();
             }
 
-            // Create a setup intent for the user
             const setupIntent = await stripe.setupIntents.create({
                 payment_method_types: ['card'],
                 customer: stripeCustomerId,
@@ -87,7 +86,6 @@ const createSubscriptionPayment = async (req, res) => {
                 },
             });
 
-            // Save payment details
             const payment = new Payment({
                 user: userId,
                 amount: amount,
@@ -97,11 +95,8 @@ const createSubscriptionPayment = async (req, res) => {
                 planType: "trial",
                 setupIntentId: setupIntent.id,
                 expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-                // Payment scheduled 14 days later
             });
             await payment.save();
-
-            // Schedule the job to charge after 14 days
             schedule.scheduleJob(payment._id.toString(), new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
                 , async () => {
                     try {
@@ -120,7 +115,6 @@ const createSubscriptionPayment = async (req, res) => {
             user.trial.status = "Active";
             user.trial.expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
             await user.save();
-
             if (!user) {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
@@ -135,7 +129,6 @@ const createSubscriptionPayment = async (req, res) => {
             return res.status(500).send({ status: "FAILURE", error: error.message });
         }
     }
-
     try {
         const user = await User.findById(userId)
         if (!user) {
@@ -237,7 +230,6 @@ const chargeDelayedPayment = async (paymentId) => {
         }
 
         let paymentIntent;
-        console.log(payment.amount, payment.currency)
         try {
             paymentIntent = await stripe.paymentIntents.create({
                 amount: payment.amount * 100,

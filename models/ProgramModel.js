@@ -34,7 +34,9 @@ const programSchema = new mongoose.Schema({
     programVideo: {type: String},  // URL to the program video
     isapproved: { type: Boolean, default: false },  // Whether the program has been approved by the coach
     amount: { type: Number, required: true },  // Amount of the program
-    currency: { type: String, required: true , enum: ['USD', 'EUR', 'GBP', 'INR'] , default: 'USD' }
+    currency: { type: String, required: true , enum: ['USD', 'EUR', 'GBP', 'INR'] , default: 'USD' },
+    INRrate: { type: Number, required: false },
+    USDrate: { type: Number, required: false },  
 }, {
     timestamps: true
 });

@@ -23,6 +23,8 @@ const { Enrollment, Appointment } = require('../models/EnrollmentModel');
 const { CoachPayment } = require('../models/CoachPaymentModel');
 const { default: mongoose } = require('mongoose');
 const { OAuth2Client } = require("google-auth-library");
+const schedule = require('node-schedule');
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -956,8 +958,29 @@ const getPrograms = async (req, res) => {
 
 const unsubscribe = async (req, res) => {
   const userId = req.user._id;
-
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.code(404).send({ status: "FAILURE", message: "User not found" });
+    }
+    const payment = await Payment.findOne({ user: userId, status: 'Completed', planType: 'trial' });
+    if (!payment) {
+      return res.code(404).send({ status: "FAILURE", message: "Trial payment not found" });
+    }
+    const job = schedule.cancelJob(payment._id.toString());
+    if (!job) {
+      return res.code(404).send({ status: "FAILURE", message: "Job not found" });
+    }
+    await payment.updateOne({ status: 'Cancelled' });
+    res.code(200).send({ status: "SUCCESS", message: "Trial payment cancelled" });
+  } catch (error) {
+    console.error("Error unsubscribing user:", error);
+    res.code(500).send({ status: "FAILURE", message: "An error occurred while unsubscribing user" });
+  }
 };
+
+
+
 
 module.exports = {
   register,

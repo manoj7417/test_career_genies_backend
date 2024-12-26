@@ -17,6 +17,8 @@ const { CoachPayment } = require("../models/CoachPaymentModel");
 require('dotenv').config();
 const { OAuth2Client } = require("google-auth-library");
 const { google } = require('googleapis');
+const { default: axios } = require("axios");
+require('dotenv').config();
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -364,10 +366,14 @@ const getBookings = async (req, res) => {
 const createProgram = async (req, res) => {
     try {
         const coachId = req.coach._id;
-        const { title, description, prerequisites, content, programImage, programVideo, amount , currency } = req.body;
+        const { title, description, prerequisites, content, programImage, programVideo, amount } = req.body;
         if (!programImage) {
             return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
         }
+        const rates = await axios.get(`https://apilayer.net/api/live?access_key=${process.env.APILAYER_API_KEY}&currencies=INR,USD&source=GBP&format=1`)
+        const INRrate = Math.round(rates?.data?.quotes?.GBPINR);
+        const USDrate = Math.round(rates?.data?.quotes?.GBPUSD);
+
 
         const program = new Program({
             coachId,
@@ -378,7 +384,9 @@ const createProgram = async (req, res) => {
             programImage,
             programVideo,
             amount,
-            currency
+            currency: "GBP",
+            INRrate: INRrate * amount,
+            USDrate: USDrate * amount,
         });
 
         await program.save();
