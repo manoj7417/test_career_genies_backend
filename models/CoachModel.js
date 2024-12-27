@@ -51,7 +51,7 @@ const coachSchema = new mongoose.Schema({
         isVerified: { type: Boolean, default: false }
     },
     experience: {
-        type: Number            
+        type: Number
     },
     typeOfCoaching: {
         type: String
@@ -108,21 +108,35 @@ const coachSchema = new mongoose.Schema({
     description: { type: String, required: false, trim: true },
     blogs: [],
     availability: {
-        dates: [{
-            dayOfWeek: {
-                type: String,
-                enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-            },
-            isAvailable: { type: Boolean, default: false },
-            slots: [{
-                startTime: {
-                    type: String
-                },
-                endTime: {
-                    type: String
-                },
-            }],
-        }],
+        dates: {
+            type: [
+                {
+                    dayOfWeek: {
+                        type: String,
+                        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                    },
+                    isAvailable: { type: Boolean, default: false },
+                    slots: {
+                        type: [
+                            {
+                                startTime: { type: String },
+                                endTime: { type: String },
+                            }
+                        ],
+                        default: [] 
+                    },
+                }
+            ],
+            default: [
+                { dayOfWeek: 'Monday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Tuesday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Wednesday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Thursday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Friday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Saturday', isAvailable: false, slots: [] },
+                { dayOfWeek: 'Sunday', isAvailable: false, slots: [] },
+            ],
+        },
         timeZone: { type: String },
         dateOverrides: [{
             date: { type: Date },
@@ -179,10 +193,10 @@ const coachSchema = new mongoose.Schema({
 
 // Virtual field for programs
 coachSchema.virtual('programs', {
-    ref: 'Program',  
+    ref: 'Program',
     localField: '_id',  // The field in Coach schema
     foreignField: 'coachId',  // The field in Program schema that refers to the coach
-    justOne: false  
+    justOne: false
 });
 
 coachSchema.set('toObject', { virtuals: true });
@@ -263,8 +277,8 @@ coachSchema.methods.toSafeObject = function () {
         socialLinks: coachObject.socialLinks,
         description: coachObject.description,
         availability: coachObject.availability,
-        bookings: coachObject.bookings,  
-        programs: coachObject.programs, 
+        bookings: coachObject.bookings,
+        programs: coachObject.programs,
         isApproved: coachObject.isApproved,
         approvalStatus: coachObject.approvalStatus,
         formFilled: coachObject.formFilled,
