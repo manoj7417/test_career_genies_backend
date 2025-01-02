@@ -147,7 +147,8 @@ const coachSchema = new mongoose.Schema({
                 endTime: {
                     type: String
                 }
-            }]
+            }],
+            isUnavailable: { type: Boolean, default: false }
         }]
     },
     bookings: {
