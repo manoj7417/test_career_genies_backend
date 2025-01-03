@@ -367,9 +367,9 @@ const createProgram = async (req, res) => {
     try {
         const coachId = req.coach._id;
         const { title, description, prerequisites, content, programImage, programVideo, amount } = req.body;
-        if (!programImage) {
-            return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
-        }
+        // if (!programImage) {
+        //     return res.status(400).send({ status: "FAILURE", message: "Program image is required" });
+        // }
         const rates = await axios.get(`https://apilayer.net/api/live?access_key=${process.env.APILAYER_API_KEY}&currencies=INR,USD&source=GBP&format=1`)
         const INRrate = Math.round(rates?.data?.quotes?.GBPINR);
         const USDrate = Math.round(rates?.data?.quotes?.GBPUSD);
