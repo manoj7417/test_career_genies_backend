@@ -619,42 +619,58 @@ const buyCredits = async (request, reply) => {
 const payCoach = async (request, reply) => {
     const { amount, currency, coachId, programId, success_url, cancel_url } = await request.body;
     const userId = request.user._id;
-    try {
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency,
-                    unit_amount: amount * 100,
-                    product_data: {
-                        name: 'Coach Subscription'
-                    }
-                },
-                quantity: 1
-            }],
-            mode: 'payment',
-            success_url,
-            cancel_url,
-            metadata: {
-                type: 'coachPayment'
-            }
-        });
-
-        const payment = new CoachPayment({
-            user: userId,
-            amount,
-            currency,
-            status: 'Pending',
-            coachId,
-            programId: programId,
-            sessionId: session.id
-        });
-        await payment.save();
-        return reply.status(200).send({ url: session.url });
-    } catch (error) {
-        console.log("Error processing coach payment", error);
-        return reply.status(500).send('Error processing payment');
+    const coach = await Coach.findById(coachId);
+    if (!coach) {
+        return reply.status(404).send('Coach not found');
     }
+    if (coach.availability && 
+        Array.isArray(coach.availability.dates) && 
+        coach.availability.dates.length === 0
+    ) {
+      return reply.status(200).send({
+        status: "FAILURE",
+        message: "Coach is not available all slots are booked for the month."
+      });
+    } else {
+        try {
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: [{
+                    price_data: {
+                        currency,
+                        unit_amount: amount * 100,
+                        product_data: {
+                            name: 'Coach Subscription'
+                        }
+                    },
+                    quantity: 1
+                }],
+                mode: 'payment',
+                success_url,
+                cancel_url,
+                metadata: {
+                    type: 'coachPayment'
+                }
+            });
+    
+            const payment = new CoachPayment({
+                user: userId,
+                amount,
+                currency,
+                status: 'Pending',
+                coachId,
+                programId: programId,
+                sessionId: session.id
+            });
+            await payment.save();
+            return reply.status(201).send({ url: session.url });
+        } catch (error) {
+            console.log("Error processing coach payment", error);
+            return reply.status(500).send('Error processing payment');
+        }
+    }
+    
+
 };
 
 const bookCoachSlot = async (req, res) => {
