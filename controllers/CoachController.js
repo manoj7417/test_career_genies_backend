@@ -213,7 +213,6 @@ const getCoachDetails = async (req, res) => {
             });
         }
 
-        // Respond with the coach object, including populated programs
         res.status(200).send({
             status: "SUCCESS",
             coach: coach.toSafeObject()  // Ensure toSafeObject includes virtual fields
@@ -287,7 +286,6 @@ const forgotCoachPassword = async (req, res) => {
             });
         }
         const token = await coach.generateResetPasswordToken();
-        // const url = `http://localhost:3000/reset-password?token=${token}&type=coach`;
         const url = `https://geniescareerhub.com/reset-password?token=${token}&type=coach`;
         const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
         const emailBody = emailtemplate
@@ -373,8 +371,6 @@ const createProgram = async (req, res) => {
         const rates = await axios.get(`https://apilayer.net/api/live?access_key=${process.env.APILAYER_API_KEY}&currencies=INR,USD&source=GBP&format=1`)
         const INRrate = Math.round(rates?.data?.quotes?.GBPINR);
         const USDrate = Math.round(rates?.data?.quotes?.GBPUSD);
-
-
         const program = new Program({
             coachId,
             title,
@@ -412,7 +408,7 @@ const getAllPrograms = async (req, res) => {
 const getCoachPrograms = async (req, res) => {
     const coachId = req.coach._id;
     try {
-        const programs = await Program.find({ coachId, isapproved: true });  // Filter by coachId and approved programs
+        const programs = await Program.find({ coachId, isapproved: true });
         console.log(programs)
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
@@ -435,7 +431,7 @@ const getAllCoachPrograms = async (req, res) => {
 const getCoachProgramById = async (req, res) => {
     const { coachId } = req.params;
     try {
-        const programs = await Program.find({ coachId, isapproved: true });
+        const programs = await Program.find({ coachId });
         res.status(200).send({ status: "SUCCESS", programs });
     } catch (error) {
         console.error(error);
@@ -447,7 +443,7 @@ const getCoachProgramByprogramId = async (req, res) => {
     const { programId } = req.params;
     const coachId = req.coach._id;
     try {
-        const program = await Program.findOne({ _id: programId, coachId, isapproved: true })  // Filter by programId, coachId, and approved programs
+        const program = await Program.findOne({ _id: programId, coachId })
         if (!program) {
             return res.status(404).send({
                 status: "FAILURE",
@@ -462,44 +458,49 @@ const getCoachProgramByprogramId = async (req, res) => {
 }
 
 const updateProgram = async (req, res) => {
-    const coachId = req.coach._id;  // Extract the coach's ID from the authenticated user
-    const { _id, title, description, prerequisites, days } = req.body;  // Destructure fields from the request body
-
+    const { programId } = req.params;
+    const coachId = req.coach._id;
+    const { title, description, prerequisites, content, programImage, programVideo, amount } = req.body;
     try {
-        // Perform a single database call to find and update the program
+        if (!mongoose.Types.ObjectId.isValid(programId)) {
+            return res.status(400).send({
+                status: "FAILURE",
+                message: "Invalid program ID"
+            });
+        }
         const program = await Program.findOneAndUpdate(
-            { _id: _id, coachId: coachId },  // Ensure program exists and belongs to the coach
+            { _id: programId, coachId },
             {
-                ...(title && { title }),              // Update only if the field is provided
+                ...(title && { title }),
                 ...(description && { description }),
                 ...(prerequisites && { prerequisites }),
-                ...(days && { days })
+                ...(content && { content }),
+                ...(programImage && { programImage }),
+                ...(programVideo && { programVideo }),
+                ...(amount && { amount }),
             },
-            { new: true, lean: true }  // Return the updated document in a plain JavaScript object format for faster read
+            { new: true } 
         );
-
-        // If the program is not found or doesn't belong to the coach
         if (!program) {
             return res.status(404).send({
                 status: "FAILURE",
                 message: "Program not found or unauthorized"
             });
         }
-
-        // Successfully updated, return the updated program
         return res.status(200).send({
             status: "SUCCESS",
             message: "Program updated successfully",
-            program
+            program 
         });
     } catch (error) {
-        console.error(error);
+        console.error("Error updating program:", error);
         return res.status(500).send({
             status: "FAILURE",
-            message: "An error occurred while updating the program"
+            message: error.message || "An error occurred while updating the program"
         });
     }
 };
+
 
 const deleteProgram = async (req, res) => {
     const coachId = req.coach._id;
