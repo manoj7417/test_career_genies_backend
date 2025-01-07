@@ -275,6 +275,34 @@ const setCoachAvailability = async (req, res) => {
     }
 }
 
+const updateCoachDateOverride = async (req, res) => {
+    const coachId = req.coach._id;
+    const dateOverrides = req.body;
+    try {
+        const coach = await Coach.findById(coachId);
+        if (!coach) {
+            return res.status(404).send({
+                status: "FAILURE",
+                message: "Coach not found",
+            });
+        }
+
+        coach.availability.dateOverrides = dateOverrides;
+        await coach.save();
+        return res.status(200).send({
+            status: "SUCCESS",
+            message: "Coach date overrides updated successfully",
+            data: coach.toSafeObject()
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            status: "FAILURE",
+            message: "An error occurred while updating the coach date overrides"
+        });
+    }
+}
+
 const forgotCoachPassword = async (req, res) => {
     const { email } = req.body;
     try {
@@ -479,7 +507,7 @@ const updateProgram = async (req, res) => {
                 ...(programVideo && { programVideo }),
                 ...(amount && { amount }),
             },
-            { new: true } 
+            { new: true }
         );
         if (!program) {
             return res.status(404).send({
@@ -490,7 +518,7 @@ const updateProgram = async (req, res) => {
         return res.status(200).send({
             status: "SUCCESS",
             message: "Program updated successfully",
-            program 
+            program
         });
     } catch (error) {
         console.error("Error updating program:", error);
@@ -735,5 +763,6 @@ module.exports = {
     getAllCoachPrograms,
     getCompletedProgramBookings,
     CoachgoogleLogin,
-    syncCalendar
+    syncCalendar,
+    updateCoachDateOverride
 }

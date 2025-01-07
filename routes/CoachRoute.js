@@ -1,5 +1,5 @@
 
-const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById, editProgramByadmin, getCoachProgramByprogramId, getAllCoachPrograms, getCompletedProgramBookings, CoachgoogleLogin, syncCalendar } = require("../controllers/CoachController");
+const { registerCoach, coachLogin, setCoachAvailability, getAllCoaches, getCoachDetails, updateCoachDetails, forgotCoachPassword, resetCoachPassword, uploadCoachDocuments, authVerification, getBookings, createProgram, getAllPrograms, getCoachPrograms, updateProgram, deleteProgram, getCoachProgramById, editProgramByadmin, getCoachProgramByprogramId, getAllCoachPrograms, getCompletedProgramBookings, CoachgoogleLogin, syncCalendar, updateCoachDateOverride } = require("../controllers/CoachController");
 
 
 async function CoachRoute(fastify, options) {
@@ -53,6 +53,8 @@ async function CoachRoute(fastify, options) {
     fastify.post("/googleLogin", CoachgoogleLogin)
 
     fastify.post("/syncCalendar", { preHandler: fastify.coachAuth }, syncCalendar)
+
+    fastify.patch("/updateDateOverrides", { preHandler: fastify.coachAuth }, updateCoachDateOverride)
 }
 
 module.exports = CoachRoute;
