@@ -623,9 +623,10 @@ const payCoach = async (request, reply) => {
     if (!coach) {
         return reply.status(404).send('Coach not found');
     }
-    if (coach.availability && 
-        Array.isArray(coach.availability.dates) && 
-        coach.availability.dates.length === 0
+    if (
+        coach.availability &&
+        Array.isArray(coach.availability.dates) &&
+        coach.availability.dates.every(day => day.isAvailable === false)
     ) {
       return reply.status(200).send({
         status: "FAILURE",
