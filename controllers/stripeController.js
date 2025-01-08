@@ -429,7 +429,7 @@ const webhook = async (request, reply) => {
                                 // Update the coach payment status
                                 coachPayment.status = 'Completed';
                                 await coachPayment.save();
-                                console.log('Coach payment updated successfully:', coachPayment);
+                                // console.log('Coach payment updated successfully:', coachPayment);
 
                                 // Send success response
                                 return reply.status(200).send({ message: 'Coach payment completed successfully' });

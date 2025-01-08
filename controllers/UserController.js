@@ -723,13 +723,14 @@ const resendVerificationEmail = async (req, res) => {
 const getUserBookingsDetails = async (req, res) => {
   const userId = req.user._id;
   try {
-    const bookings = await Booking.find({ userId, status: 'booked' })
-      .populate('coachId', 'name email phone profileImage country city experience typeOfCoaching skills ratesPerHour')
-      .sort({ createdAt: -1 });
-    res.status(200).send({ status: "SUCCESS", bookings });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.code(404).send({ status: "FAILURE", message: "User not found" });
+    }
+    const bookings = await Booking.find({ userId })
+    res.status(200).send({ status: "SUCCESS", bookings })
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ status: "FAILURE", message: "An error occurred while fetching bookings" });
+    res.status(500).send({ status: "FAILURE", message: "An error occurred while getting edit coach details" })
   }
 }
 
@@ -956,6 +957,8 @@ const getPrograms = async (req, res) => {
   }
 }
 
+
+
 const unsubscribe = async (req, res) => {
   const userId = req.user._id;
   try {
@@ -978,9 +981,6 @@ const unsubscribe = async (req, res) => {
     res.code(500).send({ status: "FAILURE", message: "An error occurred while unsubscribing user" });
   }
 };
-
-
-
 
 module.exports = {
   register,
@@ -1009,5 +1009,6 @@ module.exports = {
   getCoachPayment,
   getPrograms,
   googleLogin,
-  unsubscribe
+  unsubscribe,
+
 };
