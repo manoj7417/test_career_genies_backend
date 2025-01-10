@@ -990,7 +990,7 @@ const raiseQuery = async (req, res) => {
     if (!user) {
       return res.code(404).send({ status: "FAILURE", message: "User not found" });
     }
-    await sendEmail( 'support', `Query from ${user.fullname}`, query);
+    await sendEmail( 'amit_bajaj@glassfrog.design', `Query from ${user.fullname}`, query);
     res.code(200).send({ status: "SUCCESS", message: "Query raised successfully" });
   } catch (error) {
     console.error("Error fetching user details:", error);
