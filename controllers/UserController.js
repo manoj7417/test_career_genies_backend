@@ -982,6 +982,25 @@ const unsubscribe = async (req, res) => {
   }
 };
 
+const raiseQuery = async (req, res) => {
+  const userId = req.user._id;
+  const { query } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.code(404).send({ status: "FAILURE", message: "User not found" });
+    }
+    await sendEmail( 'support', `Query from ${user.fullname}`, query);
+    res.code(200).send({ status: "SUCCESS", message: "Query raised successfully" });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.code(500).send({
+      status: "FAILURE",
+      error: "An error occurred while fetching user details",
+    })
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -1010,5 +1029,5 @@ module.exports = {
   getPrograms,
   googleLogin,
   unsubscribe,
-
+  raiseQuery
 };
