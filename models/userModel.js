@@ -79,14 +79,14 @@ const UserSchema = new mongoose.Schema({
         currency: { type: String, required: true, default: 'USD' },
         date: { type: Date, default: Date.now },
         status: { type: String, enum: ['Pending', 'Completed', 'Failed'], default: 'Pending' },
-        plan: [
-            {
+        plan: {
+            type: [{
                 type: String,
-                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14'
-                ],
-                default: "CVSTUDIO"
-            }
-        ],
+                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14'],
+                default: 'CVSTUDIO'
+            }],
+            default: ['CVSTUDIO'] 
+        },
         planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
         currentPeriodStart: {
             type: Date
