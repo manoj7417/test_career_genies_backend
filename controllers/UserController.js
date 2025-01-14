@@ -24,6 +24,7 @@ const { CoachPayment } = require('../models/CoachPaymentModel');
 const { default: mongoose } = require('mongoose');
 const { OAuth2Client } = require("google-auth-library");
 const schedule = require('node-schedule');
+const { Program } = require('../models/ProgramModel');
 
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -985,12 +986,20 @@ const unsubscribe = async (req, res) => {
 const raiseQuery = async (req, res) => {
   const userId = req.user._id;
   const { query } = req.body;
+  const { programId } = req.params;
   try {
     const user = await User.findById(userId);
     if (!user) {
       return res.code(404).send({ status: "FAILURE", message: "User not found" });
     }
-    await sendEmail( 'amit_bajaj@glassfrog.design', `Query from ${user.fullname}`, query);
+
+    const program = await Program.findById(programId).populate('coachId' , 'name email phone profileImage');
+    if (!program) {
+      return res.code(404).send({ status: "FAILURE", message: "Program not found" });
+    }
+    
+    const html = `<p>Query from ${user.fullname}</p>\n<p>Query:${query}</p>\n<p>Program Name: ${program.title}</p>\n<p>Coach Name: ${program.coachId.name}</p>`;
+    await sendEmail( 'amit_bajaj@glassfrog.design', `Query from ${user.fullname}`, html);
     res.code(200).send({ status: "SUCCESS", message: "Query raised successfully" });
   } catch (error) {
     console.error("Error fetching user details:", error);

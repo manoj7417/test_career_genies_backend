@@ -116,7 +116,7 @@ async function UserRoute(fastify, options) {
     fastify.post("/unsubscribe", { preHandler: fastify.verifyJWT }, unsubscribe)
 
     fastify.post(
-        '/raiseQuery',
+        '/raiseQuery/:programId',
         { preHandler: fastify.verifyJWT },
         raiseQuery
     )
