@@ -17,15 +17,15 @@ const printResume = async (request, reply) => {
         if (!user) {
             return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
         }
-        if (user.subscription.downloadCVTokens.expiry <= currentDate) {
-            return reply.code(403).send({
-                status: 'FAILURE',
-                message: 'Your download CV tokens have expired'
-            });
-        }
-        if (user.subscription.downloadCVTokens.credits <= 0) {
-            return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
-        }
+        // if (user.subscription.downloadCVTokens.expiry <= currentDate) {
+        //     return reply.code(403).send({
+        //         status: 'FAILURE',
+        //         message: 'Your download CV tokens have expired'
+        //     });
+        // }
+        // if (user.subscription.downloadCVTokens.credits <= 0) {
+        //     return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
+        // }
         const htmlbody = request.body.html;
         const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
         const html = htmlPage.replace('{{content}}', htmlbody);
