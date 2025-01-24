@@ -104,6 +104,9 @@ fastify.post("/webhook", webhook);
 
 fastify.post("/webhookrazorpay", razorpayWebhook);
 
+// Register recruiter routes
+fastify.register(require('./routes/recruiterRoutes'), { prefix: '/api/recruiters' });
+
 const start = async () => {
     try {
         await DBConnection();

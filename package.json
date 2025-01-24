@@ -9,7 +9,6 @@
     "dev": "nodemon index.js",
     "start": "node index"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +25,7 @@
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
     "fastify-multer": "^2.0.3",

@@ -149,6 +149,11 @@ const UserSchema = new mongoose.Schema({
     trial: {
         status: { type: String, enum: ['Incomplete','Active', 'Expired'], default: 'Incomplete' },
         expiryDate: { type: Date, required: false }
+    },
+    cv: {
+        type: String,
+        trim: true,
+        default: ''
     }
 },
     {
@@ -226,6 +231,7 @@ UserSchema.methods.toSafeObject = function () {
         phoneNumber: this.phoneNumber,
         googleAuth: this.googleAuth,
         trial: this.trial,
+        cv: this.cv,
     };
 };
 
