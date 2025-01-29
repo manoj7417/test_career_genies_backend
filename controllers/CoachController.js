@@ -667,6 +667,14 @@ const CoachgoogleLogin = async (req, reply) => {
             refreshToken: user.generateRefreshToken(),
         };
 
+        //generate welcome email
+        const getStartedEmail = fs.readFileSync(coachwelcomeEmail, "utf-8");
+        await sendEmail(
+            email,
+            "Welcome email",
+            getStartedEmail,
+        );
+
         reply.code(200).send({
             status: "SUCCESS",
             message: "Login successful",
