@@ -305,7 +305,8 @@ const forgetPassword = async (request, reply) => {
     console.log(error);
     reply.code(500).send({
       status: "FAILURE",
-      error: error.message || "Internal server error",
+      message: "Please enter email address",
+      // error: error.message || "Internal server error",
     });
   }
 };
@@ -993,13 +994,13 @@ const raiseQuery = async (req, res) => {
       return res.code(404).send({ status: "FAILURE", message: "User not found" });
     }
 
-    const program = await Program.findById(programId).populate('coachId' , 'name email phone profileImage');
+    const program = await Program.findById(programId).populate('coachId', 'name email phone profileImage');
     if (!program) {
       return res.code(404).send({ status: "FAILURE", message: "Program not found" });
     }
-    
+
     const html = `<p>Query from ${user.fullname}</p>\n<p>Query:${query}</p>\n<p>Program Name: ${program.title}</p>\n<p>Coach Name: ${program.coachId.name}</p>`;
-    await sendEmail( 'amit_bajaj@glassfrog.design', `Query from ${user.fullname}`, html);
+    await sendEmail('amit_bajaj@glassfrog.design', `Query from ${user.fullname}`, html);
     res.code(200).send({ status: "SUCCESS", message: "Query raised successfully" });
   } catch (error) {
     console.error("Error fetching user details:", error);
