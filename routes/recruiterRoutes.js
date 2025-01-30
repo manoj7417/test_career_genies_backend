@@ -192,6 +192,33 @@ async function routes(fastify, options) {
             },
             handler: recruiterController.resendVerificationEmail
         });
+
+        fastify.post('/forgot-password', {
+            schema: {
+                body: {
+                    type: 'object',
+                    required: ['email'],
+                    properties: {
+                        email: { type: 'string' }
+                    }
+                }
+            },
+            handler: recruiterController.forgotPassword
+        });
+
+        fastify.post('/reset-password', {
+            schema: {
+                body: {
+                    type: 'object',
+                    required: ['token', 'newPassword'],
+                    properties: {
+                        token: { type: 'string' },
+                        newPassword: { type: 'string' }
+                    }
+                }
+            },
+            handler: recruiterController.resetPassword
+        });
     });
 }
 

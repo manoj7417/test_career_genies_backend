@@ -5,12 +5,27 @@ const path = require("path");
 const { sendEmail } = require("../utils/nodemailer");
 const VerfiyEmailPath = path.join(__dirname, '..', 'emailTemplates', 'VerifyEmail.html');
 const welcomeTemplatePath = path.join(__dirname, '..', 'emailTemplates', 'WelcomeTemplate.html');
+const resetPasswordTemplatePath = path.join(
+    __dirname,
+    "..",
+    "emailTemplates",
+    "resetPassword.html"
+);
 
 const getVerificationToken = (recruiterId) => {
     const token = jwt.sign({ id: recruiterId }, process.env.EMAIL_VERIFICATION_SECRET, {
         expiresIn: process.env.EMAIL_VERIFICATION_EXPIRY
     });
     return token;
+};
+
+// Generate reset password token
+const generateResetPasswordToken = (recruiterId) => {
+    return jwt.sign(
+        { id: recruiterId },
+        process.env.RESET_PASSWORD_SECRET,
+        { expiresIn: process.env.RESET_PASSWORD_EXPIRY }
+    );
 };
 
 exports.signup = async (request, reply) => {
@@ -348,6 +363,98 @@ exports.getAllRecruiters = async (request, reply) => {
         reply.code(400).send({
             status: 'error',
             message: err.message
+        });
+    }
+};
+
+exports.forgotPassword = async (request, reply) => {
+    try {
+        const { email } = request.body;
+        console.log(email);
+        
+        const recruiter = await Recruiter.findOne({ email });
+        if (!recruiter) {
+            return reply.code(404).send({
+                status: 'error',
+                message: 'No recruiter found with this email'
+            });
+        }
+
+        // Generate reset token
+        const resetToken = generateResetPasswordToken(recruiter._id);
+        
+        // Create reset URL
+        const resetUrl = `https://geniescareerhub.com/recruiter-reset-password?token=${resetToken}&type=recruiter`;
+
+        // Send email
+        const emailTemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
+        const emailBody = emailTemplate
+            .replace("{userName}", recruiter.name)
+            .replace("{reset-password-link}", resetUrl);
+
+        await sendEmail(
+            recruiter.email,
+            "Reset Your Recruiter Password",
+            emailBody
+        );
+
+        return reply.send({
+            status: 'success',
+            message: 'Password reset link sent to email'
+        });
+
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        reply.code(500).send({
+            status: 'error',
+            message: 'Error sending reset password email'
+        });
+    }
+};
+
+exports.resetPassword = async (request, reply) => {
+    try {
+        const { token, newPassword } = request.body;
+
+        if (!token || !newPassword) {
+            return reply.code(400).send({
+                status: 'error',
+                message: 'Please provide token and new password'
+            });
+        }
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.RESET_PASSWORD_SECRET);
+        
+        // Find recruiter and update password
+        const recruiter = await Recruiter.findById(decoded.id);
+        if (!recruiter) {
+            return reply.code(404).send({
+                status: 'error',
+                message: 'Invalid or expired reset token'
+            });
+        }
+
+        // Update password
+        recruiter.password = newPassword;
+        await recruiter.save();
+
+        return reply.send({
+            status: 'success',
+            message: 'Password successfully reset'
+        });
+
+    } catch (err) {
+        if (err.name === 'JsonWebTokenError') {
+            return reply.code(401).send({
+                status: 'error',
+                message: 'Invalid or expired reset token'
+            });
+        }
+        console.error('Reset password error:', err);
+        reply.code(500).send({
+            status: 'error',
+            message: 'Error resetting password'
         });
     }
 }; 
