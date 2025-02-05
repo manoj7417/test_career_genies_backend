@@ -313,7 +313,6 @@ const forgetPassword = async (request, reply) => {
       message: "Reset password link has been sent to your email",
     });
   } catch (error) {
-    console.log(error);
     reply.code(500).send({
       status: "FAILURE",
       message: "Please enter email address",
