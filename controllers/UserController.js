@@ -244,6 +244,7 @@ const googleLogin = async (request, reply) => {
 
     // Check if the user exists
     let user = await User.findOne({ email });
+    let isNewUser = false;
     if (!user) {
       // Create a new user
       user = new User({
@@ -259,6 +260,16 @@ const googleLogin = async (request, reply) => {
 
     // Generate tokens
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+    // Send welcome email if it's a new user
+    if (isNewUser) {
+      const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
+      const welcomeEmailBody = welcomeTemplate.replace("{fullname}", name);
+
+      setTimeout(async () => {
+        await sendEmail(email, "Welcome to Genies Career Hub", welcomeEmailBody);
+      }, 100000);
+    }
 
     reply.code(200).send({
       status: "SUCCESS",
