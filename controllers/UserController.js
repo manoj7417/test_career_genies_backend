@@ -246,6 +246,8 @@ const googleLogin = async (request, reply) => {
     let user = await User.findOne({ email });
     let isNewUser = false;
     if (!user) {
+
+      isNewUser = true;
       // Create a new user
       user = new User({
         fullname: name,
