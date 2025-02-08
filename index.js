@@ -33,6 +33,7 @@ const { sendEmail } = require('./utils/nodemailer');
 const CoachEditRoute = require('./routes/CoachEditRoute');
 const GoogleOAuthRoute = require('./routes/GoogleOAuthRoute');
 const FilterCoachRoute = require('./routes/FilterCoachRoute');
+const TestimonialRoute = require('./routes/TestimonialRoute');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
@@ -90,7 +91,8 @@ fastify.register(uploadImage, { prefix: "/api/uploadimage" });
 fastify.register(BookingRoute, { prefix: "/api/booking" })
 fastify.register(CoachEditRoute, { prefix: "/api/editCoach" })
 fastify.register(GoogleOAuthRoute, { prefix: "/api/google" })
-fastify.register(FilterCoachRoute , { prefix: "/api/filterCoach" })
+fastify.register(FilterCoachRoute, { prefix: "/api/filterCoach" });
+fastify.register(TestimonialRoute, { prefix: "/api/testimonial" });
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
     if (req.url === '/webhook') {
         req.rawBody = body;
