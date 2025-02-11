@@ -1,6 +1,6 @@
 const fastify = require('fastify')({
     logger: false
-});
+}); 
 fastify.register(require('@fastify/formbody'));
 const path = require('path');
 const fs = require('fs');
