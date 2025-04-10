@@ -85,7 +85,7 @@ const UserSchema = new mongoose.Schema({
                 enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14'],
                 default: 'CVSTUDIO'
             }],
-            default: ['CVSTUDIO'] 
+            default: ['CVSTUDIO']
         },
         planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
         currentPeriodStart: {
@@ -147,7 +147,7 @@ const UserSchema = new mongoose.Schema({
         tokenExpiry: { type: Date },
     },
     trial: {
-        status: { type: String, enum: ['Incomplete','Active', 'Expired'], default: 'Incomplete' },
+        status: { type: String, enum: ['Incomplete', 'Active', 'Expired'], default: 'Incomplete' },
         expiryDate: { type: Date, required: false }
     },
     cv: {
@@ -187,7 +187,8 @@ UserSchema.methods.generateAccessToken = function () {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            // expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: "30s"
         }
     )
 }
@@ -200,7 +201,8 @@ UserSchema.methods.generateRefreshToken = function () {
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            // expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: "1m"
         }
     )
 }
