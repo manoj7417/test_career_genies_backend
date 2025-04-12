@@ -9,6 +9,7 @@ const printResumePath = path.join(
     'resumeTemplate/resume.html'
 );
 
+
 const printResume = async (request, reply) => {
     const userId = request.user._id;
     try {
