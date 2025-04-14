@@ -38,7 +38,7 @@ const createSubscriptionPayment = async (req, res) => {
     if (discount == 100) {
         try {
             const user = await User.findById(userId);
-            
+
             if (!user) {
                 return res.status(404).send({ status: "FAILURE", message: "User not found" });
             }
@@ -628,10 +628,10 @@ const payCoach = async (request, reply) => {
         Array.isArray(coach.availability.dates) &&
         coach.availability.dates.every(day => day.isAvailable === false)
     ) {
-      return reply.status(200).send({
-        status: "FAILURE",
-        message: "Coach is not available all slots are booked for the month."
-      });
+        return reply.status(200).send({
+            status: "FAILURE",
+            message: "Coach is not available all slots are booked for the month."
+        });
     } else {
         try {
             const session = await stripe.checkout.sessions.create({
@@ -653,7 +653,7 @@ const payCoach = async (request, reply) => {
                     type: 'coachPayment'
                 }
             });
-    
+
             const payment = new CoachPayment({
                 user: userId,
                 amount,
@@ -670,7 +670,7 @@ const payCoach = async (request, reply) => {
             return reply.status(500).send('Error processing payment');
         }
     }
-    
+
 
 };
 

@@ -79,6 +79,33 @@ const pricing = {
     }
 }
 
+
+
+
+
+const NewPricingData = {
+    Basic: {
+        price: {
+            monthly: "£0",
+            yearly: "£0"
+        }
+    },
+    Lite: {
+        price: {
+            monthly: "£9.99",
+            yearly: "£99.99"
+        }
+    },
+    Premium: {
+        price: {
+            monthly: "£14.99",
+            yearly: "£149.99"
+        }
+    }
+};
+
+
 module.exports = {
-    pricing
+    pricing,
+    NewPricingData
 }

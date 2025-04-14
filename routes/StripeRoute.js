@@ -4,7 +4,7 @@ const { createSubscriptionPayment, buyCredits, payCoach, bookCoachSlot } = requi
 async function StripeRoute(fastify, options) {
     fastify.post("/createSubscription", { preHandler: [fastify.verifyJWT] }, createSubscriptionPayment)
 
-    fastify.post('/buy-credits', { preHandler: [fastify.verifyJWT] }, buyCredits)
+    // fastify.post('/buy-credits', { preHandler: [fastify.verifyJWT] }, buyCredits)
 
     fastify.post('/payCoach', { preHandler: [fastify.verifyJWT] }, payCoach)
 
