@@ -24,9 +24,9 @@ const printResume = async (request, reply) => {
         //         message: 'Your download CV tokens have expired'
         //     });
         // }
-        // if (user.subscription.downloadCVTokens.credits <= 0) {
-        //     return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
-        // }
+        if (user.subscription.downloadCVTokens.credits <= 0) {
+            return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
+        }
         const htmlbody = request.body.html;
         const htmlPage = fs.readFileSync(printResumePath, 'utf8').toString();
         const html = htmlPage.replace('{{content}}', htmlbody);
@@ -51,7 +51,8 @@ const printResume = async (request, reply) => {
                 '--single-process',
                 "--no-zygote",
             ],
-            executablePath: '/usr/bin/google-chrome-stable',
+            // executablePath: '/usr/bin/google-chrome-stable',
+            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         });
 
         const page = await browser.newPage();

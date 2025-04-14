@@ -71,8 +71,20 @@ const register = async (request, reply) => {
     }
     const user = new User({ email, fullname, password });
     await user.save();
+
+
+    // 3. Generate and apply unique coupon (NEW CODE)
+    const couponCode = 'WELCOME-' +
+      Math.random().toString(36).substring(2, 8).toUpperCase() +
+      '-' +
+      Date.now().toString(36).substring(4, 8).toUpperCase();;
+    await user.applyCoupon(couponCode);
+    await user.save();
+
+
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
+    // const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
+    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
     const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
@@ -88,6 +100,7 @@ const register = async (request, reply) => {
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
+      coupon: couponCode
     });
   } catch (error) {
     console.log(error);
