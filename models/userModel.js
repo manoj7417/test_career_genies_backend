@@ -82,12 +82,12 @@ const UserSchema = new mongoose.Schema({
         plan: {
             type: [{
                 type: String,
-                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14'],
+                enum: ['CVSTUDIO', 'AICareerCoach', 'VirtualCoaching', 'PsychometricTestingTools', 'Trial14', 'Basic', 'Lite', 'Premium'],
                 default: 'CVSTUDIO'
             }],
-            default: ['CVSTUDIO']
+            default: ['CVSTUDIO', 'Basic']
         },
-        planType: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
+        planType: { type: String, enum: ['monthly', 'yearly', 'coupon', 'discounted'], default: 'monthly' },
         currentPeriodStart: {
             type: Date
         },
@@ -125,7 +125,7 @@ const UserSchema = new mongoose.Schema({
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
         downloadCVTokens: {
-            credits: { type: Number, default: 100 },
+            credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
 

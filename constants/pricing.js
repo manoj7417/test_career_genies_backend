@@ -76,6 +76,18 @@ const pricing = {
             price: 50,
             symbol: "£"
         }
+    },
+    Basic: {
+        name: "Basic",
+        GBP: { price: 0, symbol: "£" }
+    },
+    Lite: {
+        name: "Lite",
+        GBP: { price: 10, symbol: "£" }
+    },
+    Premium: {
+        name: "Premium",
+        GBP: { price: 15, symbol: "£" }
     }
 }
 
