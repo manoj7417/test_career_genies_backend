@@ -9,7 +9,7 @@ const printResumePath = path.join(
     'resumeTemplate/resume.html'
 );
 
-const isProduction = process.env.NODE_ENV === 'producion';
+const isProduction = process.env.NODE_ENV === 'production';
 
 const executablePath = isProduction
     ? '/usr/bin/google-chrome-stable'
