@@ -9,6 +9,12 @@ const printResumePath = path.join(
     'resumeTemplate/resume.html'
 );
 
+const isProduction = process.env.NODE_ENV === 'producion';
+
+const executablePath = isProduction
+    ? '/usr/bin/google-chrome-stable'
+    : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+
 
 const printResume = async (request, reply) => {
     const userId = request.user._id;
@@ -51,8 +57,10 @@ const printResume = async (request, reply) => {
                 '--single-process',
                 "--no-zygote",
             ],
+            executablePath: executablePath,
+            headless: true,
             // executablePath: '/usr/bin/google-chrome-stable',
-            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         });
 
         const page = await browser.newPage();
