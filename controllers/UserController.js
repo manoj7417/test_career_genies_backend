@@ -74,8 +74,8 @@ const register = async (request, reply) => {
 
 
     const verificationToken = await getVerificationToken(user._id);
-    // const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
-    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
+    // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
     const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
