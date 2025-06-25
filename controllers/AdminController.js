@@ -4,6 +4,8 @@ const path = require('path')
 const fs = require('fs');
 const { sendEmail } = require("../utils/nodemailer");
 const approveCoachTemplate = path.join(__dirname, '..', 'emailTemplates', 'coachApprovalTemplate.html');
+const { resetAllExpiredCredits } = require('../utils/creditUtils');
+const { User } = require('../models/userModel');
 
 
 const verifyCoach = async (req, res) => {
@@ -144,11 +146,113 @@ const getCoachEditReqById = async (req, res) => {
     }
 }
 
+const resetExpiredCredits = async (req, res) => {
+    try {
+        console.log('Manual reset of expired credits triggered');
+        const result = await resetAllExpiredCredits();
+
+        if (result.success) {
+            return res.status(200).json({
+                status: "SUCCESS",
+                message: `Successfully reset expired credits for ${result.updatedUsers} users`,
+                updatedUsers: result.updatedUsers
+            });
+        } else {
+            return res.status(500).json({
+                status: "FAILURE",
+                message: "Failed to reset expired credits",
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error in resetExpiredCredits endpoint:', error);
+        return res.status(500).json({
+            status: "FAILURE",
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
+const removeDuplicatePlans = async (req, res) => {
+    try {
+        console.log('Manual removal of duplicate plans triggered');
+
+        // Find all users with subscription plans
+        const users = await User.find({ 'subscription.plan': { $exists: true, $ne: [] } });
+        let updatedUsersCount = 0;
+
+        for (const user of users) {
+            const originalPlans = user.subscription.plan || [];
+            const uniquePlans = [...new Set(originalPlans)];
+
+            // Only update if there were duplicates
+            if (originalPlans.length !== uniquePlans.length) {
+                user.subscription.plan = uniquePlans;
+                await user.save();
+                updatedUsersCount++;
+                console.log(`Removed duplicate plans for user ${user._id}: [${originalPlans.join(', ')}] -> [${uniquePlans.join(', ')}]`);
+            }
+        }
+
+        return res.status(200).json({
+            status: "SUCCESS",
+            message: `Successfully removed duplicate plans for ${updatedUsersCount} users`,
+            updatedUsersCount: updatedUsersCount,
+            totalUsersChecked: users.length
+        });
+
+    } catch (error) {
+        console.error('Error removing duplicate plans:', error);
+        return res.status(500).json({
+            status: "FAILURE",
+            message: "Failed to remove duplicate plans",
+            error: error.message
+        });
+    }
+};
+
+const removeOldTrialFields = async (req, res) => {
+    try {
+        console.log('Manual removal of old trial fields triggered');
+
+        // Find all users with the old trial field
+        const users = await User.find({ 'trial': { $exists: true } });
+        let updatedUsersCount = 0;
+
+        for (const user of users) {
+            // Remove the old trial field
+            user.trial = undefined;
+            await user.save();
+            updatedUsersCount++;
+            console.log(`Removed old trial field for user ${user._id}`);
+        }
+
+        return res.status(200).json({
+            status: "SUCCESS",
+            message: `Successfully removed old trial fields for ${updatedUsersCount} users`,
+            updatedUsersCount: updatedUsersCount,
+            totalUsersChecked: users.length
+        });
+
+    } catch (error) {
+        console.error('Error removing old trial fields:', error);
+        return res.status(500).json({
+            status: "FAILURE",
+            message: "Failed to remove old trial fields",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     verifyCoach,
     auth,
     rejectCoach,
     GeteditCoachRequests,
     approveEditCoach,
-    getCoachEditReqById
+    getCoachEditReqById,
+    resetExpiredCredits,
+    removeDuplicatePlans,
+    removeOldTrialFields
 }

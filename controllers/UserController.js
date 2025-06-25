@@ -192,7 +192,7 @@ const UploadProfilePic = async (request, reply) => {
 const login = async (request, reply) => {
   const { email, password } = request.body;
   try {
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
     if (!user) {
       return reply.code(404).send({
         status: "FAILURE",
@@ -212,6 +212,10 @@ const login = async (request, reply) => {
         error: "Invalid password",
       });
     }
+
+    // Check and reset expired credits before returning user data
+    const { checkAndResetExpiredCredits } = require('../utils/creditUtils');
+    user = await checkAndResetExpiredCredits(user);
 
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
     reply.code(200).send({
@@ -591,10 +595,15 @@ const udpateProfileImage = async (req, reply) => {
 const GetuserDetails = async (req, reply) => {
   const userId = req.user._id;
   try {
-    const user = await User.findById(userId);
+    let user = await User.findById(userId);
     if (!user) {
-      return res.code(404).send({ status: "FAILURE", message: "User not found" });
+      return reply.code(404).send({ status: "FAILURE", message: "User not found" });
     }
+
+    // Check and reset expired credits before returning user data
+    const { checkAndResetExpiredCredits } = require('../utils/creditUtils');
+    user = await checkAndResetExpiredCredits(user);
+
     const userData = user.toSafeObject();
     return reply.code(200).send({
       status: "SUCCESS",
@@ -656,19 +665,29 @@ const verifyToken = async (res, reply) => {
   }
   try {
     const decodedAccessToken = await jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-    const user = await User.findById(decodedAccessToken._id);
+    let user = await User.findById(decodedAccessToken._id);
     if (!user) {
       return reply.code(401).send({ status: "FAILURE", message: "User not found" });
     }
+
+    // Check and reset expired credits before returning user data
+    const { checkAndResetExpiredCredits } = require('../utils/creditUtils');
+    user = await checkAndResetExpiredCredits(user);
+
     return reply.code(200).send({ valid: true, userdata: user.toSafeObject(), accessToken, refreshToken });
   } catch (accessTokenError) {
     if (accessTokenError.name === 'TokenExpiredError') {
       try {
         const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const user = await User.findById(decodedRefreshToken._id);
+        let user = await User.findById(decodedRefreshToken._id);
         if (!user) {
           return reply.code(401).send({ status: "FAILURE", message: "User not found" });
         }
+
+        // Check and reset expired credits before returning user data
+        const { checkAndResetExpiredCredits } = require('../utils/creditUtils');
+        user = await checkAndResetExpiredCredits(user);
+
         const tokens = await generateAccessAndRefereshTokens(decodedRefreshToken._id)
 
         return reply.code(200).send({

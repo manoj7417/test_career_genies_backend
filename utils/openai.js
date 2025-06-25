@@ -10,6 +10,7 @@ const { Resume } = require('../models/ResumeModel');
 const { v4: uuidv4 } = require('uuid');
 const { Analysis } = require('../models/AnalysisModel');
 const { Summary } = require('../models/SummaryModel');
+const { checkAndResetExpiredCredits } = require('./creditUtils');
 
 const openai = new OpenAI(
     {
@@ -502,7 +503,7 @@ async function analyseResume(req, reply) {
 async function atsCheck(req, reply) {
     const userId = req.user._id;
     try {
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
 
         if (!user) {
             return reply.code(404).send({
@@ -511,15 +512,9 @@ async function atsCheck(req, reply) {
             });
         }
 
+        // Check and reset expired credits before proceeding
+        user = await checkAndResetExpiredCredits(user);
 
-        const currentDate = new Date();
-
-        if (user.subscription.analyserTokens.expiry <= currentDate) {
-            return reply.code(403).send({
-                status: 'FAILURE',
-                message: 'Your analyser tokens have expired'
-            });
-        }
         if (user.subscription.analyserTokens.credits <= 0) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You have no analyser tokens' });
         }
@@ -649,7 +644,7 @@ async function generateResumeOnFeeback(req, reply) {
     const userId = req.user._id
     let { analysisId, type, message } = await req.body;
     try {
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
         if (!user) {
             return reply.code(404).send({
                 status: "FAILURE",
@@ -668,22 +663,8 @@ async function generateResumeOnFeeback(req, reply) {
             message = analysis?.resumeContent;
         }
 
-        const currentDate = new Date();
-
-        if (type === 'JobCV' && user.subscription.JobCVTokens.expiry < currentDate) {
-            return reply.code(403).send({
-                status: "FAILURE",
-                error: "Service expired , please renue service and try again"
-            });
-        }
-
-        if (type === 'optimizer' && user.subscription.optimizerTokens.expiry < currentDate) {
-            return reply.code(403).send({
-                status: "FAILURE",
-                error: "Service expired , please renue service and try again"
-            });
-        }
-
+        // Check and reset expired credits before proceeding
+        user = await checkAndResetExpiredCredits(user);
 
         if (!type) {
             return reply.code(400).send({
@@ -779,7 +760,7 @@ async function generateResumeOnFeeback(req, reply) {
             message: "Feedback not generated"
         })
     } catch (error) {
-        console.log("error" , error)
+        console.log("error", error)
         reply.status(500).send(error);
     }
 }
@@ -788,7 +769,7 @@ async function generateFreshResume(req, reply) {
     const userId = req.user._id
     let { message, type } = await req.body;
     try {
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
 
         if (!user) {
             return reply.code(404).send({
@@ -797,7 +778,8 @@ async function generateFreshResume(req, reply) {
             });
         }
 
-        const currentDate = new Date();
+        // Check and reset expired credits before proceeding
+        user = await checkAndResetExpiredCredits(user);
 
         if (!type) {
             return reply.code(400).send({
@@ -805,21 +787,6 @@ async function generateFreshResume(req, reply) {
                 error: "Type of resume not provided"
             });
         }
-
-        if (type === 'JobCV' && user.subscription.JobCVTokens.expiry < currentDate) {
-            return reply.code(403).send({
-                status: "FAILURE",
-                error: "Service expired , please renue service and try again"
-            });
-        }
-
-        if (type === 'optimizer' && user.subscription.optimizerTokens.expiry < currentDate) {
-            return reply.code(403).send({
-                status: "FAILURE",
-                error: "Service expired , please renue service and try again"
-            });
-        }
-
 
         if (type === 'JobCV' && user.subscription.JobCVTokens.credits <= 0) {
             return reply.code(403).send({
@@ -968,7 +935,7 @@ async function generateCounsellingTest(req, reply) {
             }, {});
         };
         const testWithAnswers = mapAnswersToQuestions(test);
-        
+
         reply.status(201).send(testWithAnswers);
     } catch (error) {
         reply.status(500).send(error);
@@ -991,17 +958,20 @@ async function createThread() {
 async function generateCareerAdvice(req, reply) {
     const userId = req.user._id;
     try {
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
 
         if (!user) {
             return reply.status(404).send({ error: "User not found" });
         }
 
+        // Check and reset expired credits before proceeding
+        user = await checkAndResetExpiredCredits(user);
+
         if (user.subscription.status !== 'Completed') {
             return reply.status(403).send({ error: "Subscription is not active" });
         }
 
-        if (user.subscription.careerCounsellingTokens <= 0) {
+        if (user.subscription.careerCounsellingTokens.credits <= 0) {
             return reply.status(400).send({ error: "Insufficient career counselling tokens" });
         }
 
@@ -1032,18 +1002,18 @@ async function generateCareerAdvice(req, reply) {
             }
         };
         const response = await checkStatusAndGenerateResponse(threadId, run.id);
-       
+
         const personalisedSummary = JSON.parse(response[0].text.value)
         const userSummary = new Summary({ userId, ...personalisedSummary })
-        
+
         await userSummary.save();
-        
+
         await User.findByIdAndUpdate(userId, {
             $inc: { 'subscription.careerCounsellingTokens.credits': -1 }
         });
         reply.send(response);
     } catch (error) {
-        
+
         reply.status(500).send(error);
     }
 

@@ -1,4 +1,4 @@
-const { verifyCoach, auth, rejectCoach, GeteditCoachRequests, approveEditCoach, getCoachEditReqById } = require("../controllers/AdminController");
+const { verifyCoach, auth, rejectCoach, GeteditCoachRequests, approveEditCoach, getCoachEditReqById, resetExpiredCredits, removeDuplicatePlans, removeOldTrialFields } = require("../controllers/AdminController");
 
 async function AdminRoute(fastify, options) {
 
@@ -22,6 +22,21 @@ async function AdminRoute(fastify, options) {
     fastify.get('/getdetails/:id', {
         preHandler: fastify.roleCheck(['admin'])
     }, getCoachEditReqById)
+
+    // Endpoint to reset all expired credits
+    fastify.post('/reset-expired-credits', {
+        preHandler: fastify.roleCheck(['admin'])
+    }, resetExpiredCredits)
+
+    // Endpoint to remove duplicate plans from user subscriptions
+    fastify.post('/remove-duplicate-plans', {
+        preHandler: fastify.roleCheck(['admin'])
+    }, removeDuplicatePlans)
+
+    // Endpoint to remove old trial fields from users
+    fastify.post('/remove-old-trial-fields', {
+        preHandler: fastify.roleCheck(['admin'])
+    }, removeOldTrialFields)
 }
 
 module.exports = AdminRoute;

@@ -87,7 +87,7 @@ const UserSchema = new mongoose.Schema({
             }],
             default: ['CVSTUDIO', 'Basic']
         },
-        planType: { type: String, enum: ['monthly', 'yearly', 'coupon', 'discounted'], default: 'monthly' },
+        planType: { type: String, enum: ['monthly', 'yearly', 'coupon', 'discounted', 'trial'], default: 'monthly' },
         currentPeriodStart: {
             type: Date
         },
@@ -146,10 +146,7 @@ const UserSchema = new mongoose.Schema({
         refreshToken: { type: String, trim: true },
         tokenExpiry: { type: Date },
     },
-    trial: {
-        status: { type: String, enum: ['Incomplete', 'Active', 'Expired'], default: 'Incomplete' },
-        expiryDate: { type: Date, required: false }
-    },
+
     cv: {
         type: String,
         trim: true,
@@ -170,6 +167,103 @@ UserSchema.pre("save", async function (next) {
         next(error)
     }
 })
+
+// Method to check and reset expired credits
+UserSchema.methods.checkAndResetExpiredCredits = function () {
+    const currentDate = new Date();
+    let needsUpdate = false;
+
+    // Check if trial has expired
+    if (this.subscription?.trialExpiryDate && this.subscription.trialExpiryDate < currentDate) {
+        if (this.subscription.planType === 'trial' && (
+            this.subscription.analyserTokens?.credits > 0 ||
+            this.subscription.optimizerTokens?.credits > 0 ||
+            this.subscription.JobCVTokens?.credits > 0 ||
+            this.subscription.careerCounsellingTokens?.credits > 0 ||
+            this.subscription.downloadCVTokens?.credits > 0
+        )) {
+            this.subscription.analyserTokens.credits = 0;
+            this.subscription.optimizerTokens.credits = 0;
+            this.subscription.JobCVTokens.credits = 0;
+            this.subscription.careerCounsellingTokens.credits = 0;
+            this.subscription.downloadCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    // Check if coupon has expired
+    if (this.subscription?.couponExpiryDate && this.subscription.couponExpiryDate < currentDate) {
+        if (this.subscription.planType === 'coupon' && (
+            this.subscription.analyserTokens?.credits > 0 ||
+            this.subscription.optimizerTokens?.credits > 0 ||
+            this.subscription.JobCVTokens?.credits > 0 ||
+            this.subscription.careerCounsellingTokens?.credits > 0 ||
+            this.subscription.downloadCVTokens?.credits > 0
+        )) {
+            this.subscription.analyserTokens.credits = 0;
+            this.subscription.optimizerTokens.credits = 0;
+            this.subscription.JobCVTokens.credits = 0;
+            this.subscription.careerCounsellingTokens.credits = 0;
+            this.subscription.downloadCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    // Check if discounted plan has expired
+    if (this.subscription?.planType === 'discounted' && this.subscription?.currentPeriodEnd && this.subscription.currentPeriodEnd < currentDate) {
+        if (this.subscription.analyserTokens?.credits > 0 ||
+            this.subscription.optimizerTokens?.credits > 0 ||
+            this.subscription.JobCVTokens?.credits > 0 ||
+            this.subscription.careerCounsellingTokens?.credits > 0 ||
+            this.subscription.downloadCVTokens?.credits > 0
+        ) {
+            this.subscription.analyserTokens.credits = 0;
+            this.subscription.optimizerTokens.credits = 0;
+            this.subscription.JobCVTokens.credits = 0;
+            this.subscription.careerCounsellingTokens.credits = 0;
+            this.subscription.downloadCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    // Check individual token expiry dates (for regular paid plans)
+    if (this.subscription?.analyserTokens?.expiry && this.subscription.analyserTokens.expiry < currentDate) {
+        if (this.subscription.analyserTokens.credits > 0) {
+            this.subscription.analyserTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    if (this.subscription?.optimizerTokens?.expiry && this.subscription.optimizerTokens.expiry < currentDate) {
+        if (this.subscription.optimizerTokens.credits > 0) {
+            this.subscription.optimizerTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    if (this.subscription?.JobCVTokens?.expiry && this.subscription.JobCVTokens.expiry < currentDate) {
+        if (this.subscription.JobCVTokens.credits > 0) {
+            this.subscription.JobCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    if (this.subscription?.careerCounsellingTokens?.expiry && this.subscription.careerCounsellingTokens.expiry < currentDate) {
+        if (this.subscription.careerCounsellingTokens.credits > 0) {
+            this.subscription.careerCounsellingTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    if (this.subscription?.downloadCVTokens?.expiry && this.subscription.downloadCVTokens.expiry < currentDate) {
+        if (this.subscription.downloadCVTokens.credits > 0) {
+            this.subscription.downloadCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    return needsUpdate;
+};
 
 UserSchema.methods.comparePassword = async function (password) {
     try {
@@ -230,7 +324,7 @@ UserSchema.methods.toSafeObject = function () {
         occupation: this.occupation,
         phoneNumber: this.phoneNumber,
         googleAuth: this.googleAuth,
-        trial: this.trial,
+
         cv: this.cv,
     };
 };

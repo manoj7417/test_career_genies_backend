@@ -321,10 +321,338 @@ const getPlanName = (planName) => {
 //     }
 // };
 
+//  Latest Running Code 
+// const createSubscriptionPayment = async (req, res) => {
+//     const userId = req.user._id;
+//     const { email, success_url, cancel_url, currency, duration, plan, planName, discount } = req.body;
+
+//     try {
+//         const user = await User.findById(userId);
+//         if (!user) {
+//             return res.status(404).send({ status: "FAILURE", message: "User not found" });
+//         }
+
+//         // ---- Coupon Logic ----
+//         if (discount == 100) {
+//             // Check if user already has an active coupon
+//             if (user.subscription?.couponApplied) {
+//                 return res.status(200).send({ status: "FAILURE", error: "Coupon already redeemed" });
+//             }
+
+//             // Set expiry to 3 months (90 days)
+//             const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+
+//             // Create payment record with 1500+ credits
+//             const payment = new Payment({
+//                 user: userId,
+//                 amount: 0, // Free with coupon
+//                 currency,
+//                 status: 'Completed', // Set as completed immediately
+//                 plan: planName,
+//                 planType: "coupon",
+//                 expiryDate,
+//                 analyserTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 optimizerTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 jobCVTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 careerCounsellingTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 downloadCVTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 }
+//             });
+
+//             await payment.save();
+
+//             // Update user subscription with coupon benefits
+//             user.subscription = user.subscription || {};
+//             user.subscription.status = 'Completed';
+//             user.subscription.plan = [...(user.subscription.plan || []), planName];
+//             user.subscription.planType = "coupon";
+//             user.subscription.currentPeriodStart = new Date();
+//             user.subscription.currentPeriodEnd = expiryDate;
+//             user.subscription.paymentId = payment._id;
+
+//             // Set 1500+ credits for all token types
+//             user.subscription.analyserTokens = {
+//                 credits: 1500,
+//                 expiry: expiryDate
+//             };
+//             user.subscription.optimizerTokens = {
+//                 credits: 1500,
+//                 expiry: expiryDate
+//             };
+//             user.subscription.JobCVTokens = {
+//                 credits: 1500,
+//                 expiry: expiryDate
+//             };
+//             user.subscription.downloadCVTokens = {
+//                 credits: 1500,
+//                 expiry: expiryDate
+//             };
+//             user.subscription.careerCounsellingTokens = {
+//                 credits: 1500,
+//                 expiry: expiryDate
+//             };
+
+//             // Mark that user has redeemed a coupon
+//             user.subscription.couponApplied = true;
+//             user.subscription.couponExpiryDate = expiryDate;
+
+//             user.payments = [...(user.payments || []), payment._id];
+//             await user.save();
+
+//             return res.status(200).send({
+//                 status: "SUCCESS",
+//                 message: "Coupon applied successfully. You now have 3 months free access with 1500+ credits."
+//             });
+//         }
+
+//         // ---- Partial Discount Logic (>0% and <100%) ----
+//         if (discount && discount > 0 && discount < 100) {
+//             // Calculate discounted amount
+//             let amount, planDisplayName;
+
+//             if (plan) {
+//                 const priceString = plan?.price?.[duration];
+//                 if (!priceString) {
+//                     return res.status(400).send({ status: "FAILURE", message: "Invalid price information" });
+//                 }
+
+//                 amount = parseFloat(priceString.replace(/[^\d.]/g, ''));
+//                 planDisplayName = plan?.name || "Subscription Plan";
+
+//                 if (!amount || isNaN(amount)) {
+//                     return res.status(400).send({ status: "FAILURE", message: "Invalid pricing format" });
+//                 }
+//             } else {
+//                 const pricing = getPricing(currency, planName);
+//                 amount = pricing?.price;
+//                 planDisplayName = getPlanName(planName);
+//                 if (!amount || !planDisplayName) {
+//                     return res.status(400).send({ status: "FAILURE", message: "Invalid plan details" });
+//                 }
+
+//                 // Adjust annual pricing if needed
+//                 if (duration === 'yearly') {
+//                     amount *= 10;
+//                 }
+//             }
+
+//             // Apply discount
+//             const discountedAmount = amount * (1 - discount / 100);
+
+//             // Set expiry to 3 months
+//             const expiryDate = new Date(new Date().setMonth(new Date().getMonth() + 3));
+
+//             // Create Stripe checkout session with discounted amount
+//             const session = await stripe.checkout.sessions.create({
+//                 payment_method_types: ['card'],
+//                 mode: 'payment',
+//                 line_items: [{
+//                     price_data: {
+//                         currency: currency.toLowerCase(),
+//                         product_data: {
+//                             name: `${planDisplayName} - ${duration} (${discount}% off)`,
+//                         },
+//                         unit_amount: discountedAmount * 100,
+//                     },
+//                     quantity: 1,
+//                 }],
+//                 customer_email: email,
+//                 success_url,
+//                 cancel_url,
+//                 metadata: {
+//                     discount: discount.toString(),
+//                     type: 'discountedPayment'
+//                 }
+//             });
+
+//             // Create payment record with 1500+ credits
+//             const payment = new Payment({
+//                 user: userId,
+//                 amount: discountedAmount,
+//                 status: 'Pending',
+//                 currency,
+//                 plan: planName,
+//                 planType: "discounted",
+//                 sessionId: session.id,
+//                 expiryDate,
+//                 discount,
+//                 analyserTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 optimizerTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 jobCVTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 careerCounsellingTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 },
+//                 downloadCVTokens: {
+//                     credits: 1500,
+//                     expiry: expiryDate,
+//                 }
+//             });
+
+//             await payment.save();
+
+//             return res.status(200).send({
+//                 url: session.url,
+//             });
+//         }
+
+//         // ---- Regular Paid Plan Logic (no discount) ----
+//         // [Rest of your existing code for regular plans...]
+//         let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0;
+
+//         let amount, planDisplayName;
+
+//         if (plan) {
+//             // ✅ New Plan Flow (frontend-driven)
+//             const priceString = plan?.price?.[duration];
+//             if (!priceString) {
+//                 return res.status(400).send({ status: "FAILURE", message: "Invalid price information" });
+//             }
+
+//             amount = parseFloat(priceString.replace(/[^\d.]/g, ''));
+//             planDisplayName = plan?.name || "Subscription Plan";
+
+//             if (!amount || isNaN(amount)) {
+//                 return res.status(400).send({ status: "FAILURE", message: "Invalid pricing format" });
+//             }
+//         } else {
+//             // ✅ Fallback to Old Logic (backend pricing functions)
+//             const pricing = getPricing(currency, planName);
+//             amount = pricing?.price;
+//             planDisplayName = getPlanName(planName);
+//             if (!amount || !planDisplayName) {
+//                 return res.status(400).send({ status: "FAILURE", message: "Invalid plan details" });
+//             }
+
+//             // Adjust annual pricing if needed
+//             if (duration === 'yearly') {
+//                 amount *= 10;
+//             }
+//         }
+
+//         const session = await stripe.checkout.sessions.create({
+//             payment_method_types: ['card'],
+//             mode: 'payment',
+//             line_items: [{
+//                 price_data: {
+//                     currency: currency.toLowerCase(),
+//                     product_data: {
+//                         name: `${planDisplayName} - ${duration}`,
+//                     },
+//                     unit_amount: amount * 100,
+//                 },
+//                 quantity: 1,
+//             }],
+//             customer_email: email,
+//             success_url,
+//             cancel_url,
+//         });
+
+//         // Calculate expiry date
+//         const currentPeriodEnd = duration === 'monthly'
+//             ? new Date(new Date().setMonth(new Date().getMonth() + 1))
+//             : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+
+//         // Standard token allocation
+//         if (planName?.toLowerCase() === 'cvstudio') {
+//             analyserTokens = 20;
+//             optimizerTokens = 20;
+//             JobCVTokens = 20;
+//             downloadCVTokens = 20;
+//         } else if (planName?.toLowerCase() === 'aicareercoach') {
+//             careerCounsellingTokens = 1;
+//         } else if (planName?.toLowerCase() === 'basic') {
+//             analyserTokens = 50;
+//             optimizerTokens = 50;
+//             JobCVTokens = 50;
+//             downloadCVTokens = 50;
+//         } else if (planName?.toLowerCase() === 'lite') {
+//             analyserTokens = 200;
+//             optimizerTokens = 200;
+//             JobCVTokens = 200;
+//             downloadCVTokens = 200;
+//         } else if (planName?.toLowerCase() === 'premium') {
+//             analyserTokens = 500;
+//             optimizerTokens = 500;
+//             JobCVTokens = 500;
+//             downloadCVTokens = 500;
+//             careerCounsellingTokens = 500;
+//         }
+
+//         const payment = new Payment({
+//             user: userId,
+//             amount,
+//             status: 'Pending',
+//             currency,
+//             plan: planName,
+//             planType: duration,
+//             sessionId: session.id,
+//             analyserTokens: {
+//                 credits: analyserTokens,
+//                 expiry: currentPeriodEnd,
+//             },
+//             optimizerTokens: {
+//                 credits: optimizerTokens,
+//                 expiry: currentPeriodEnd,
+//             },
+//             jobCVTokens: {
+//                 credits: JobCVTokens,
+//                 expiry: currentPeriodEnd,
+//             },
+//             careerCounsellingTokens: {
+//                 credits: careerCounsellingTokens,
+//                 expiry: currentPeriodEnd,
+//             },
+//             downloadCVTokens: {
+//                 credits: downloadCVTokens,
+//                 expiry: currentPeriodEnd,
+//             },
+//             expiryDate: currentPeriodEnd,
+//         });
+
+//         await payment.save();
+
+//         return res.status(200).send({
+//             url: session.url,
+//         });
+
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500).send({
+//             status: "FAILURE",
+//             error: error.message || "Internal server error",
+//         });
+//     }
+// };
+
+
 
 const createSubscriptionPayment = async (req, res) => {
     const userId = req.user._id;
-    const { email, success_url, cancel_url, currency, duration, plan, planName, discount } = req.body;
+    const { email, success_url, cancel_url, currency, duration, plan, planName, discount, isTrial } = req.body;
 
     try {
         const user = await User.findById(userId);
@@ -332,15 +660,130 @@ const createSubscriptionPayment = async (req, res) => {
             return res.status(404).send({ status: "FAILURE", message: "User not found" });
         }
 
+        // ---- 14-Day Trial Logic ----
+        if (isTrial) {
+            // Check if user already has used trial
+            if (user.subscription?.trialUsed) {
+                // Check if trial has expired
+                const currentDate = new Date();
+                if (user.subscription?.trialExpiryDate && user.subscription.trialExpiryDate < currentDate) {
+                    return res.status(200).send({ status: "FAILURE", error: "Trial expired" });
+                } else if (user.subscription?.trialExpiryDate && user.subscription.trialExpiryDate > currentDate) {
+                    return res.status(200).send({ status: "FAILURE", error: "Trial already active" });
+                } else {
+                    return res.status(200).send({ status: "FAILURE", error: "Trial already used" });
+                }
+            }
+
+            // Only allow trial for lite and premium plans
+            if (!planName || !['lite', 'premium'].includes(planName.toLowerCase())) {
+                return res.status(400).send({ status: "FAILURE", message: "Trial is only available for Lite and Premium plans" });
+            }
+
+            // Set expiry to 14 days
+            const expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+            // const expiryDate = new Date();
+            // expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+
+            // Create payment record with 10 credits for each function
+            const payment = new Payment({
+                user: userId,
+                amount: 0, // Free trial
+                currency,
+                status: 'Completed', // Set as completed immediately
+                plan: planName,
+                planType: "trial",
+                expiryDate,
+                analyserTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
+                },
+                optimizerTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
+                },
+                jobCVTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
+                },
+                careerCounsellingTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
+                },
+                downloadCVTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
+                }
+            });
+
+            await payment.save();
+
+
+            // Update user subscription with trial benefits
+            user.subscription = user.subscription || {};
+            user.subscription.status = 'Completed';
+            user.subscription.plan = [...new Set([...(user.subscription.plan || []), planName])];
+            user.subscription.planType = "trial";
+            user.subscription.currentPeriodStart = new Date();
+            user.subscription.currentPeriodEnd = expiryDate;
+            user.subscription.paymentId = payment._id;
+
+            // Set 10 credits for all token types
+            user.subscription.analyserTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+            user.subscription.optimizerTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+            user.subscription.JobCVTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+            user.subscription.downloadCVTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+            user.subscription.careerCounsellingTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+
+            // Mark that user has used trial
+            user.subscription.trialUsed = true;
+            user.subscription.trialExpiryDate = expiryDate;
+
+            user.payments = [...(user.payments || []), payment._id];
+            await user.save();
+
+            return res.status(200).send({
+                status: "SUCCESS",
+                message: `14-day trial activated successfully for ${planName} plan.`,
+                trialExpiry: expiryDate
+            });
+        }
+
         // ---- Coupon Logic ----
         if (discount == 100) {
             // Check if user already has an active coupon
             if (user.subscription?.couponApplied) {
-                return res.status(200).send({ status: "FAILURE", error: "Coupon already redeemed" });
+                // Check if coupon has expired
+                const currentDate = new Date();
+                if (user.subscription?.couponExpiryDate && user.subscription.couponExpiryDate < currentDate) {
+                    return res.status(200).send({ status: "FAILURE", error: "Coupon expired" });
+                } else if (user.subscription?.couponExpiryDate && user.subscription.couponExpiryDate > currentDate) {
+                    return res.status(200).send({ status: "FAILURE", error: "Coupon already active" });
+                } else {
+                    return res.status(200).send({ status: "FAILURE", error: "Coupon already redeemed" });
+                }
             }
 
-            // Set expiry to 3 months (90 days)
+            // Set expiry to 3 months (90 days) - For testing, set to 2 minutes
             const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            // const expiryDate = new Date();
+            // expiryDate.setMinutes(expiryDate.getMinutes() + 2);
 
             // Create payment record with 1500+ credits
             const payment = new Payment({
@@ -378,7 +821,7 @@ const createSubscriptionPayment = async (req, res) => {
             // Update user subscription with coupon benefits
             user.subscription = user.subscription || {};
             user.subscription.status = 'Completed';
-            user.subscription.plan = [...(user.subscription.plan || []), planName];
+            user.subscription.plan = [...new Set([...(user.subscription.plan || []), planName])];
             user.subscription.planType = "coupon";
             user.subscription.currentPeriodStart = new Date();
             user.subscription.currentPeriodEnd = expiryDate;
@@ -453,8 +896,10 @@ const createSubscriptionPayment = async (req, res) => {
             // Apply discount
             const discountedAmount = amount * (1 - discount / 100);
 
-            // Set expiry to 3 months
-            const expiryDate = new Date(new Date().setMonth(new Date().getMonth() + 3));
+            // Set expiry to 3 months - For testing, set to 2 minutes
+            // const expiryDate = new Date(new Date().setMonth(new Date().getMonth() + 3));
+            const expiryDate = new Date();
+            expiryDate.setMinutes(expiryDate.getMinutes() + 2);
 
             // Create Stripe checkout session with discounted amount
             const session = await stripe.checkout.sessions.create({
@@ -520,7 +965,6 @@ const createSubscriptionPayment = async (req, res) => {
         }
 
         // ---- Regular Paid Plan Logic (no discount) ----
-        // [Rest of your existing code for regular plans...]
         let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0;
 
         let amount, planDisplayName;
@@ -700,6 +1144,278 @@ const chargeDelayedPayment = async (paymentId) => {
     }
 };
 
+// Latest Running Code  
+// const webhook = async (request, reply) => {
+//     const sig = request.headers['stripe-signature'];
+//     const payload = request.rawBody;
+//     let event;
+
+//     try {
+//         event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+//     } catch (err) {
+//         console.error(`Webhook signature verification failed: ${err.message}`);
+//         return reply.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+
+//     switch (event.type) {
+//         case 'setup_intent.succeeded': {
+//             const setupIntent = event.data.object;
+
+//             try {
+//                 const payment = await Payment.findOne({ setupIntentId: setupIntent.id });
+
+//                 if (!payment) {
+//                     console.error(`Payment record not found for setupIntentId: ${setupIntent.id}`);
+//                     return reply.status(404).send('Payment record not found');
+//                 }
+
+//                 // payment.status = 'Ready for Charge';
+//                 payment.status = 'Completed';
+//                 await payment.save();
+//                 const user = await payment.user;
+
+//                 if (!user) {
+//                     throw new Error('User not found in payment.');
+//                 }
+
+//                 const userId = await User.findOne({ _id: user });
+//                 if (!userId) {
+//                     throw new Error(`User with ID ${user} not found.`);
+//                 }
+//                 if (!userId.subscription) {
+//                     throw new Error(`Subscription data missing for user ${userId._id}`);
+//                 }
+
+//                 // userId.subscription.analyserTokens.credits = 20;
+//                 // userId.subscription.optimizerTokens.credits = 20;
+//                 // userId.subscription.JobCVTokens.credits = 20;
+//                 // userId.subscription.downloadCVTokens.credits = 20;
+//                 // userId.subscription.plan.push("Trial14");
+//                 // userId.subscription.trial.status = "Active";
+//                 // userId.subscription.trial.expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+//                 user.subscription = user.subscription || {};
+//                 user.subscription.status = 'Completed';
+//                 user.subscription.plan = [...(user.subscription.plan || []), payment.plan];
+//                 user.subscription.planType = payment.planType;
+//                 user.subscription.currentPeriodStart = new Date();
+//                 user.subscription.currentPeriodEnd = payment.expiryDate; // 3 months
+//                 user.subscription.paymentId = payment._id;
+
+//                 user.subscription.analyserTokens = {
+//                     credits: 1500,
+//                     expiry: payment.expiryDate
+//                 };
+//                 user.subscription.optimizerTokens = {
+//                     credits: 1500,
+//                     expiry: payment.expiryDate
+//                 };
+//                 user.subscription.JobCVTokens = {
+//                     credits: 1500,
+//                     expiry: payment.expiryDate
+//                 };
+//                 user.subscription.downloadCVTokens = {
+//                     credits: 1500,
+//                     expiry: payment.expiryDate
+//                 };
+//                 user.subscription.careerCounsellingTokens = {
+//                     credits: 1500,
+//                     expiry: payment.expiryDate
+//                 };
+
+//                 user.payments = [...(user.payments || []), payment._id];
+//                 await user.save();
+//                 return reply.status(200).send({ message: 'Discounted subscription payment completed successfully' });
+
+//                 // console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
+//             } catch (err) {
+//                 console.error('Error processing setup_intent.succeeded event:', err);
+//                 return reply.status(500).send('Internal server error');
+//             }
+//             break;
+//         }
+
+//         case 'setup_intent.setup_failed': {
+//             const setupIntent = event.data.object;
+
+//             try {
+//                 const payment = await Payment.findOne({ setupIntentId: setupIntent.id });
+
+//                 if (!payment) {
+//                     console.error(`Payment record not found for setupIntentId: ${setupIntent.id}`);
+//                     return reply.status(404).send('Payment record not found');
+//                 }
+
+//                 payment.status = 'Failed'; // Update status to Failed
+//                 await payment.save();
+//                 console.log(`Payment setup failed for payment ID: ${payment._id}`);
+//             } catch (err) {
+//                 console.error('Error processing setup_intent.setup_failed event:', err);
+//                 return reply.status(500).send('Internal server error');
+//             }
+//             break;
+//         }
+
+//         case 'payment_intent.succeeded': {
+//             const paymentIntent = event.data.object;
+//             if (paymentIntent.metadata?.payment === 'delayedPayment') {
+//                 try {
+//                     const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+
+//                     if (!payment) {
+//                         console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
+//                         return reply.status(404).send('Payment record not found');
+//                     }
+
+//                     payment.status = 'Completed'; // Update payment status
+//                     await payment.save();
+
+//                     // Additional logic for subscription or user updates
+//                     const userId = payment.user;
+//                     const user = await User.findOne({ _id: userId });
+//                     if (!user) {
+//                         console.error('User not found for payment:', payment.user);
+//                         return reply.status(404).send('User not found');
+//                     }
+
+//                     // Update user subscription
+//                     await User.findByIdAndUpdate(payment.user, {
+//                         $set: {
+//                             'subscription.status': 'Completed',
+//                             'subscription.plan': [...user.subscription.plan, payment.plan],
+//                             'subscription.planType': payment.planType,
+//                             'subscription.currentPeriodStart': new Date(),
+//                             'subscription.currentPeriodEnd': payment.expiryDate,
+//                             'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
+//                             'subscription.paymentId': payment._id,
+//                             'subscription.analyserTokens': payment.analyserTokens,
+//                             'subscription.optimizerTokens': payment.optimizerTokens,
+//                             'subscription.JobCVTokens': payment.jobCVTokens,
+//                             'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
+//                             'subscription.downloadCVTokens': payment.downloadCVTokens,
+//                             payments: [...user.payments, payment._id],
+//                         },
+//                     });
+
+//                     console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
+//                     return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+//                 } catch (err) {
+//                     console.error('Error processing payment_intent.succeeded event:', err);
+//                     return reply.status(500).send('Internal server error');
+//                 }
+//             }
+
+//         }
+
+
+//         case 'payment_intent.payment_failed': {
+//             const paymentIntent = event.data.object;
+
+//             try {
+//                 const payment = await Payment.findOne({ setupIntentId: paymentIntent.setup_intent });
+
+//                 if (!payment) {
+//                     console.error(`Payment record not found for setupIntentId: ${paymentIntent.setup_intent}`);
+//                     return reply.status(404).send('Payment record not found');
+//                 }
+
+//                 payment.status = 'Failed'; // Update payment status
+//                 await payment.save();
+
+//                 console.log(`Payment intent failed for setupIntentId: ${paymentIntent.setup_intent}`);
+//             } catch (err) {
+//                 console.error('Error updating payment status to Failed:', err);
+//                 return reply.status(500).send('Internal server error');
+//             }
+//             break;
+//         }
+
+//         case 'checkout.session.completed': {
+//             const session = event.data.object;
+
+//             try {
+//                 // Check if session status is 'complete'
+//                 if (session.status === 'complete') {
+//                     console.log('Session status is complete.');
+
+//                     // Check for metadata type
+//                     if (session.metadata?.type === 'coachPayment') {
+//                         console.log('Processing coach payment...');
+//                         try {
+//                             // Retrieve the coach payment record
+//                             const coachPayment = await CoachPayment.findOne({ sessionId: session.id });
+
+//                             if (coachPayment) {
+//                                 // Update the coach payment status
+//                                 coachPayment.status = 'Completed';
+//                                 await coachPayment.save();
+//                                 // console.log('Coach payment updated successfully:', coachPayment);
+
+//                                 // Send success response
+//                                 return reply.status(200).send({ message: 'Coach payment completed successfully' });
+//                             } else {
+//                                 console.log('No coach payment found for session ID:', session.id);
+//                                 return reply.status(404).send({ message: 'Coach payment record not found' });
+//                             }
+//                         } catch (error) {
+//                             console.error('Error processing coach payment:', error);
+//                             return reply.status(500).send({ message: 'Internal server error while processing coach payment' });
+//                         }
+//                     } else if (session.metadata?.type === 'slotBooking') {
+//                         console.log('Processing slot booking...');
+//                         // Add slot booking logic here
+//                     } else {
+//                         try {
+
+//                             const payment = await Payment.findOne({ sessionId: session.id });
+//                             if (!payment) {
+//                                 console.error(`Payment record not found for sessionId: ${session.id}`);
+//                                 return reply.status(404).send('Payment record not found');
+//                             }
+
+//                             payment.status = 'Completed'; // Update payment status
+//                             await payment.save();
+
+//                             // Additional logic for subscription or user updates
+//                             const user = await User.findOne({ _id: payment.user });
+//                             if (!user) {
+//                                 console.error('User not found for payment:', payment.user);
+//                                 return reply.status(404).send('User not found');
+//                             }
+
+//                             // Update user subscription
+//                             user.subscription.analyserTokens.credits = 20;
+//                             user.subscription.optimizerTokens.credits = 20;
+//                             user.subscription.JobCVTokens.credits = 20;
+//                             user.subscription.downloadCVTokens.credits = 20;
+//                             await user.save();
+
+
+//                             return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+//                         } catch (err) {
+//                             console.error('Error processing payment_intent.succeeded event:', err);
+//                             return reply.status(500).send('Internal server error');
+//                         }
+//                     }
+//                 } else {
+//                     console.warn(`Session status is not complete: ${session.status}`);
+//                     return reply.status(400).send({ message: `Invalid session status: ${session.status}` });
+//                 }
+//             } catch (err) {
+//                 console.error('Error handling checkout.session.completed event:', err);
+//                 return reply.status(500).send({ message: 'Internal server error' });
+//             }
+
+//             break;
+//         }
+
+
+//         default:
+//             console.log(`Unhandled event type: ${event.type}`);
+//     }
+
+//     reply.status(200).send();
+// };
+
 
 const webhook = async (request, reply) => {
     const sig = request.headers['stripe-signature'];
@@ -725,69 +1441,87 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                // payment.status = 'Ready for Charge';
                 payment.status = 'Completed';
                 await payment.save();
-                const user = await payment.user;
+                const user = await User.findById(payment.user);
 
                 if (!user) {
                     throw new Error('User not found in payment.');
                 }
 
-                const userId = await User.findOne({ _id: user });
-                if (!userId) {
-                    throw new Error(`User with ID ${user} not found.`);
-                }
-                if (!userId.subscription) {
-                    throw new Error(`Subscription data missing for user ${userId._id}`);
-                }
-
-                // userId.subscription.analyserTokens.credits = 20;
-                // userId.subscription.optimizerTokens.credits = 20;
-                // userId.subscription.JobCVTokens.credits = 20;
-                // userId.subscription.downloadCVTokens.credits = 20;
-                // userId.subscription.plan.push("Trial14");
-                // userId.subscription.trial.status = "Active";
-                // userId.subscription.trial.expiryDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+                // Initialize subscription if it doesn't exist
                 user.subscription = user.subscription || {};
+
+                // Common subscription updates
                 user.subscription.status = 'Completed';
-                user.subscription.plan = [...(user.subscription.plan || []), payment.plan];
-                user.subscription.planType = payment.planType;
+                user.subscription.plan = [...new Set([...(user.subscription.plan || []), payment.plan])]; // Ensure unique plans
+                user.subscription.planType = payment.planType === 'trial' ? 'trial' :
+                    payment.planType === 'coupon' ? 'coupon' :
+                        payment.planType === 'discounted' ? 'discounted' :
+                            payment.duration === 'yearly' ? 'yearly' : 'monthly'; // Fallback to monthly
                 user.subscription.currentPeriodStart = new Date();
-                user.subscription.currentPeriodEnd = payment.expiryDate; // 3 months
+                user.subscription.currentPeriodEnd = payment.expiryDate;
                 user.subscription.paymentId = payment._id;
 
-                user.subscription.analyserTokens = {
-                    credits: 1500,
-                    expiry: payment.expiryDate
-                };
-                user.subscription.optimizerTokens = {
-                    credits: 1500,
-                    expiry: payment.expiryDate
-                };
-                user.subscription.JobCVTokens = {
-                    credits: 1500,
-                    expiry: payment.expiryDate
-                };
-                user.subscription.downloadCVTokens = {
-                    credits: 1500,
-                    expiry: payment.expiryDate
-                };
-                user.subscription.careerCounsellingTokens = {
-                    credits: 1500,
-                    expiry: payment.expiryDate
-                };
+                // Set tokens based on payment type
+                if (payment.planType === 'trial' || payment.planType === 'coupon' || payment.planType === 'discounted') {
+                    // For trial, coupon, and discounted plans, use the credits from payment record
+                    user.subscription.analyserTokens = payment.analyserTokens;
+                    user.subscription.optimizerTokens = payment.optimizerTokens;
+                    user.subscription.JobCVTokens = payment.jobCVTokens;
+                    user.subscription.downloadCVTokens = payment.downloadCVTokens;
+                    user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
 
-                user.payments = [...(user.payments || []), payment._id];
+                    // Mark trial or coupon if applicable
+                    if (payment.planType === 'trial') {
+                        user.subscription.trialUsed = true;
+                        user.subscription.trialExpiryDate = payment.expiryDate;
+                    } else if (payment.planType === 'coupon') {
+                        user.subscription.couponApplied = true;
+                        user.subscription.couponExpiryDate = payment.expiryDate;
+                    }
+                } else {
+                    // For regular paid plans
+                    user.subscription.analyserTokens = {
+                        credits: payment.analyserTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                    user.subscription.optimizerTokens = {
+                        credits: payment.optimizerTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                    user.subscription.JobCVTokens = {
+                        credits: payment.jobCVTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                    user.subscription.downloadCVTokens = {
+                        credits: payment.downloadCVTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                    user.subscription.careerCounsellingTokens = {
+                        credits: payment.careerCounsellingTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                }
+
+                // Add payment to user's payments array if not already present
+                if (!user.payments.includes(payment._id)) {
+                    user.payments = [...(user.payments || []), payment._id];
+                }
+
                 await user.save();
-                return reply.status(200).send({ message: 'Discounted subscription payment completed successfully' });
 
-                // console.log(`Payment setup succeeded for payment ID: ${payment._id}`);
+                const successMessage = payment.planType === 'trial' ? 'Trial activated successfully' :
+                    payment.planType === 'coupon' ? 'Coupon applied successfully' :
+                        payment.planType === 'discounted' ? 'Discounted subscription payment completed successfully' :
+                            'Subscription payment completed successfully';
+
+                return reply.status(200).send({ message: successMessage });
+
             } catch (err) {
                 console.error('Error processing setup_intent.succeeded event:', err);
                 return reply.status(500).send('Internal server error');
             }
-            break;
         }
 
         case 'setup_intent.setup_failed': {
@@ -801,14 +1535,14 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                payment.status = 'Failed'; // Update status to Failed
+                payment.status = 'Failed';
                 await payment.save();
                 console.log(`Payment setup failed for payment ID: ${payment._id}`);
+                return reply.status(200).send({ message: 'Payment setup failed' });
             } catch (err) {
                 console.error('Error processing setup_intent.setup_failed event:', err);
                 return reply.status(500).send('Internal server error');
             }
-            break;
         }
 
         case 'payment_intent.succeeded': {
@@ -822,46 +1556,86 @@ const webhook = async (request, reply) => {
                         return reply.status(404).send('Payment record not found');
                     }
 
-                    payment.status = 'Completed'; // Update payment status
+                    payment.status = 'Completed';
                     await payment.save();
 
-                    // Additional logic for subscription or user updates
-                    const userId = payment.user;
-                    const user = await User.findOne({ _id: userId });
+                    const user = await User.findById(payment.user);
                     if (!user) {
                         console.error('User not found for payment:', payment.user);
                         return reply.status(404).send('User not found');
                     }
 
-                    // Update user subscription
-                    await User.findByIdAndUpdate(payment.user, {
-                        $set: {
-                            'subscription.status': 'Completed',
-                            'subscription.plan': [...user.subscription.plan, payment.plan],
-                            'subscription.planType': payment.planType,
-                            'subscription.currentPeriodStart': new Date(),
-                            'subscription.currentPeriodEnd': payment.expiryDate,
-                            'subscription.stripeCheckoutSessionId': paymentIntent.id, // If still useful
-                            'subscription.paymentId': payment._id,
-                            'subscription.analyserTokens': payment.analyserTokens,
-                            'subscription.optimizerTokens': payment.optimizerTokens,
-                            'subscription.JobCVTokens': payment.jobCVTokens,
-                            'subscription.careerCounsellingTokens': payment.careerCounsellingTokens,
-                            'subscription.downloadCVTokens': payment.downloadCVTokens,
-                            payments: [...user.payments, payment._id],
-                        },
-                    });
+                    // Initialize subscription if it doesn't exist
+                    user.subscription = user.subscription || {};
 
-                    console.log(`Payment intent succeeded for setupIntentId: ${paymentIntent.setup_intent}`);
-                    return reply.status(200).send({ message: 'Subscription payment completed successfully' });
+                    // Common subscription updates
+                    user.subscription.status = 'Completed';
+                    user.subscription.plan = [...new Set([...(user.subscription.plan || []), payment.plan])];
+                    user.subscription.planType = payment.planType === 'trial' ? 'trial' :
+                        payment.planType === 'coupon' ? 'coupon' :
+                            payment.planType === 'discounted' ? 'discounted' :
+                                payment.duration || 'monthly';
+                    user.subscription.currentPeriodStart = new Date();
+                    user.subscription.currentPeriodEnd = payment.expiryDate;
+                    user.subscription.paymentId = payment._id;
+
+                    // Set tokens based on payment type
+                    if (payment.planType === 'trial' || payment.planType === 'coupon' || payment.planType === 'discounted') {
+                        user.subscription.analyserTokens = payment.analyserTokens;
+                        user.subscription.optimizerTokens = payment.optimizerTokens;
+                        user.subscription.JobCVTokens = payment.jobCVTokens;
+                        user.subscription.downloadCVTokens = payment.downloadCVTokens;
+                        user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+
+                        if (payment.planType === 'trial') {
+                            user.subscription.trialUsed = true;
+                            user.subscription.trialExpiryDate = payment.expiryDate;
+                        } else if (payment.planType === 'coupon') {
+                            user.subscription.couponApplied = true;
+                            user.subscription.couponExpiryDate = payment.expiryDate;
+                        }
+                    } else {
+                        user.subscription.analyserTokens = {
+                            credits: payment.analyserTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                        user.subscription.optimizerTokens = {
+                            credits: payment.optimizerTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                        user.subscription.JobCVTokens = {
+                            credits: payment.jobCVTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                        user.subscription.downloadCVTokens = {
+                            credits: payment.downloadCVTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                        user.subscription.careerCounsellingTokens = {
+                            credits: payment.careerCounsellingTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                    }
+
+                    if (!user.payments.includes(payment._id)) {
+                        user.payments = [...(user.payments || []), payment._id];
+                    }
+
+                    await user.save();
+
+                    const successMessage = payment.planType === 'trial' ? 'Trial activated successfully' :
+                        payment.planType === 'coupon' ? 'Coupon applied successfully' :
+                            payment.planType === 'discounted' ? 'Discounted subscription payment completed successfully' :
+                                'Subscription payment completed successfully';
+
+                    return reply.status(200).send({ message: successMessage });
                 } catch (err) {
                     console.error('Error processing payment_intent.succeeded event:', err);
                     return reply.status(500).send('Internal server error');
                 }
             }
-
+            break;
         }
-
 
         case 'payment_intent.payment_failed': {
             const paymentIntent = event.data.object;
@@ -874,83 +1648,113 @@ const webhook = async (request, reply) => {
                     return reply.status(404).send('Payment record not found');
                 }
 
-                payment.status = 'Failed'; // Update payment status
+                payment.status = 'Failed';
                 await payment.save();
 
                 console.log(`Payment intent failed for setupIntentId: ${paymentIntent.setup_intent}`);
+                return reply.status(200).send({ message: 'Payment failed' });
             } catch (err) {
                 console.error('Error updating payment status to Failed:', err);
                 return reply.status(500).send('Internal server error');
             }
-            break;
         }
 
         case 'checkout.session.completed': {
             const session = event.data.object;
 
             try {
-                // Check if session status is 'complete'
                 if (session.status === 'complete') {
-                    console.log('Session status is complete.');
-
-                    // Check for metadata type
+                    // Handle coach payment
                     if (session.metadata?.type === 'coachPayment') {
-                        console.log('Processing coach payment...');
-                        try {
-                            // Retrieve the coach payment record
-                            const coachPayment = await CoachPayment.findOne({ sessionId: session.id });
-
-                            if (coachPayment) {
-                                // Update the coach payment status
-                                coachPayment.status = 'Completed';
-                                await coachPayment.save();
-                                // console.log('Coach payment updated successfully:', coachPayment);
-
-                                // Send success response
-                                return reply.status(200).send({ message: 'Coach payment completed successfully' });
-                            } else {
-                                console.log('No coach payment found for session ID:', session.id);
-                                return reply.status(404).send({ message: 'Coach payment record not found' });
-                            }
-                        } catch (error) {
-                            console.error('Error processing coach payment:', error);
-                            return reply.status(500).send({ message: 'Internal server error while processing coach payment' });
+                        const coachPayment = await CoachPayment.findOne({ sessionId: session.id });
+                        if (coachPayment) {
+                            coachPayment.status = 'Completed';
+                            await coachPayment.save();
+                            return reply.status(200).send({ message: 'Coach payment completed successfully' });
                         }
-                    } else if (session.metadata?.type === 'slotBooking') {
-                        console.log('Processing slot booking...');
+                        return reply.status(404).send({ message: 'Coach payment record not found' });
+                    }
+                    // Handle slot booking
+                    else if (session.metadata?.type === 'slotBooking') {
                         // Add slot booking logic here
-                    } else {
-                        try {
-
-                            const payment = await Payment.findOne({ sessionId: session.id });
-                            if (!payment) {
-                                console.error(`Payment record not found for sessionId: ${session.id}`);
-                                return reply.status(404).send('Payment record not found');
-                            }
-
-                            payment.status = 'Completed'; // Update payment status
-                            await payment.save();
-
-                            // Additional logic for subscription or user updates
-                            const user = await User.findOne({ _id: payment.user });
-                            if (!user) {
-                                console.error('User not found for payment:', payment.user);
-                                return reply.status(404).send('User not found');
-                            }
-
-                            // Update user subscription
-                            user.subscription.analyserTokens.credits = 20;
-                            user.subscription.optimizerTokens.credits = 20;
-                            user.subscription.JobCVTokens.credits = 20;
-                            user.subscription.downloadCVTokens.credits = 20;
-                            await user.save();
-
-
-                            return reply.status(200).send({ message: 'Subscription payment completed successfully' });
-                        } catch (err) {
-                            console.error('Error processing payment_intent.succeeded event:', err);
-                            return reply.status(500).send('Internal server error');
+                        return reply.status(200).send({ message: 'Slot booking completed' });
+                    }
+                    // Handle regular subscription payment
+                    else {
+                        const payment = await Payment.findOne({ sessionId: session.id });
+                        if (!payment) {
+                            console.error(`Payment record not found for sessionId: ${session.id}`);
+                            return reply.status(404).send('Payment record not found');
                         }
+
+                        payment.status = 'Completed';
+                        await payment.save();
+
+                        const user = await User.findById(payment.user);
+                        if (!user) {
+                            console.error('User not found for payment:', payment.user);
+                            return reply.status(404).send('User not found');
+                        }
+
+                        // Initialize subscription if it doesn't exist
+                        user.subscription = user.subscription || {};
+
+                        // Common subscription updates
+                        user.subscription.status = 'Completed';
+                        user.subscription.plan = [...new Set([...(user.subscription.plan || []), payment.plan])];
+                        user.subscription.planType = payment.planType === 'trial' ? 'trial' :
+                            payment.planType === 'coupon' ? 'coupon' :
+                                payment.planType === 'discounted' ? 'discounted' :
+                                    payment.duration || 'monthly';
+                        user.subscription.currentPeriodStart = new Date();
+                        user.subscription.currentPeriodEnd = payment.expiryDate;
+                        user.subscription.paymentId = payment._id;
+
+                        // Set tokens based on payment type
+                        if (payment.planType === 'trial' || payment.planType === 'coupon' || payment.planType === 'discounted') {
+                            user.subscription.analyserTokens = payment.analyserTokens;
+                            user.subscription.optimizerTokens = payment.optimizerTokens;
+                            user.subscription.JobCVTokens = payment.jobCVTokens;
+                            user.subscription.downloadCVTokens = payment.downloadCVTokens;
+                            user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+
+                            if (payment.planType === 'trial') {
+                                user.subscription.trialUsed = true;
+                                user.subscription.trialExpiryDate = payment.expiryDate;
+                            } else if (payment.planType === 'coupon') {
+                                user.subscription.couponApplied = true;
+                                user.subscription.couponExpiryDate = payment.expiryDate;
+                            }
+                        } else {
+                            // For regular paid plans
+                            user.subscription.analyserTokens = {
+                                credits: payment.analyserTokens?.credits || 0,
+                                expiry: payment.expiryDate
+                            };
+                            user.subscription.optimizerTokens = {
+                                credits: payment.optimizerTokens?.credits || 0,
+                                expiry: payment.expiryDate
+                            };
+                            user.subscription.JobCVTokens = {
+                                credits: payment.jobCVTokens?.credits || 0,
+                                expiry: payment.expiryDate
+                            };
+                            user.subscription.downloadCVTokens = {
+                                credits: payment.downloadCVTokens?.credits || 0,
+                                expiry: payment.expiryDate
+                            };
+                            user.subscription.careerCounsellingTokens = {
+                                credits: payment.careerCounsellingTokens?.credits || 0,
+                                expiry: payment.expiryDate
+                            };
+                        }
+
+                        if (!user.payments.includes(payment._id)) {
+                            user.payments = [...(user.payments || []), payment._id];
+                        }
+
+                        await user.save();
+                        return reply.status(200).send({ message: 'Subscription payment completed successfully' });
                     }
                 } else {
                     console.warn(`Session status is not complete: ${session.status}`);
@@ -960,17 +1764,17 @@ const webhook = async (request, reply) => {
                 console.error('Error handling checkout.session.completed event:', err);
                 return reply.status(500).send({ message: 'Internal server error' });
             }
-
             break;
         }
 
-
         default:
             console.log(`Unhandled event type: ${event.type}`);
+            return reply.status(200).send({ message: 'Event received but not handled' });
     }
 
     reply.status(200).send();
 };
+
 
 const razorpayWebhook = async (request, reply) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;

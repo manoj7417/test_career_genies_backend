@@ -1,6 +1,6 @@
 const fastify = require('fastify')({
     logger: false
-}); 
+});
 fastify.register(require('@fastify/formbody'));
 const path = require('path');
 const fs = require('fs');
@@ -34,6 +34,7 @@ const CoachEditRoute = require('./routes/CoachEditRoute');
 const GoogleOAuthRoute = require('./routes/GoogleOAuthRoute');
 const FilterCoachRoute = require('./routes/FilterCoachRoute');
 const TestimonialRoute = require('./routes/TestimonialRoute');
+const { resetAllExpiredCredits } = require('./utils/creditUtils');
 
 fastify.register(multipart); // Fastify-multipart is already registered
 require('dotenv').config();
@@ -114,6 +115,20 @@ const start = async () => {
         await DBConnection();
         await fastify.listen({ port: process.env.PORT || 3009, host: '0.0.0.0' });
         fastify.log.info(`Server started on PORT ${fastify.server.address().port}`);
+
+        // Schedule automatic reset of expired credits every minute
+        setInterval(async () => {
+            try {
+                const result = await resetAllExpiredCredits();
+                if (result.success && result.updatedUsers > 0) {
+                    console.log(`🔄 Scheduled reset: Updated ${result.updatedUsers} users with expired credits`);
+                }
+            } catch (error) {
+                console.error('❌ Error in scheduled credit reset:', error);
+            }
+        }, 60000); // Run every 60 seconds (1 minute)
+
+        console.log('🕐 Scheduled credit reset job started (runs every minute)');
     } catch (error) {
         console.log(error);
         fastify.log.info("Server connection error");

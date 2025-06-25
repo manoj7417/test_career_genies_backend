@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const { User } = require('../models/userModel');
+const { checkAndResetExpiredCredits } = require('../utils/creditUtils');
 
 const printResumePath = path.join(
     __dirname,
@@ -19,17 +20,14 @@ const executablePath = isProduction
 const printResume = async (request, reply) => {
     const userId = request.user._id;
     try {
-        const user = await User.findById(userId);
-        const currentDate = new Date();
+        let user = await User.findById(userId);
         if (!user) {
             return reply.code(404).send({ status: 'FAILURE', message: 'User not found' });
         }
-        // if (user.subscription.downloadCVTokens.expiry <= currentDate) {
-        //     return reply.code(403).send({
-        //         status: 'FAILURE',
-        //         message: 'Your download CV tokens have expired'
-        //     });
-        // }
+
+        // Check and reset expired credits before proceeding
+        user = await checkAndResetExpiredCredits(user);
+
         if (user.subscription.downloadCVTokens.credits <= 0) {
             return reply.code(403).send({ status: 'FAILURE', message: 'You have no download CV tokens' });
         }
