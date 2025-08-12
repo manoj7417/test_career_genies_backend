@@ -94,7 +94,7 @@ const ResumeSchema = new mongoose.Schema({
             custom: {}
         },
         metadata: {
-            template: { type: String, default: 'Template3' },
+            template: { type: String, default: 'Template7' },
             page: {
                 format: {
                     type: { type: String, default: "a4" },
