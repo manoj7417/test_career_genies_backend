@@ -482,6 +482,65 @@ async function analyzeResume(req, reply) {
                     description: ''
                 },
                 ]
+            },
+            skills: {
+                label: "Skills",
+                isEditing: false,
+                sections: [{
+                    name: "Skill Name",
+                    level: "Expert"
+                }]
+            },
+            projects: {
+                label: "Projects",
+                isEditing: false,
+                sections: [{
+                    name: "Project Name",
+                    description: "Project description",
+                    url: ""
+                }]
+            },
+            language: {
+                label: "Language",
+                isEditing: false,
+                sections: [{
+                    name: "English",
+                    level: "Native"
+                }]
+            },
+            certificates: {
+                label: "Certificates",
+                isEditing: false,
+                sections: [{
+                    name: "Certificate Name",
+                    issuer: "Issuing Organization",
+                    date: "2023"
+                }]
+            },
+            reference: {
+                label: "Reference",
+                isEditing: false,
+                sections: [{
+                    name: "Reference Name",
+                    position: "Position",
+                    company: "Company",
+                    phone: "+1234567890",
+                    email: "reference@email.com"
+                }]
+            },
+            awards: {
+                label: "Awards",
+                isEditing: false,
+                sections: [{
+                    title: "Award Title",
+                    date: "2023",
+                    description: "Award description"
+                }]
+            },
+            hobbies: {
+                label: "Hobbies",
+                isEditing: false,
+                sections: ["Hobby 1", "Hobby 2", "Hobby 3"]
             }
         }
 
@@ -569,6 +628,65 @@ async function analyseResume(req, reply) {
                     description: ''
                 },
                 ]
+            },
+            skills: {
+                label: "Skills",
+                isEditing: false,
+                sections: [{
+                    name: "Skill Name",
+                    level: "Expert"
+                }]
+            },
+            projects: {
+                label: "Projects",
+                isEditing: false,
+                sections: [{
+                    name: "Project Name",
+                    description: "Project description",
+                    url: ""
+                }]
+            },
+            language: {
+                label: "Language",
+                isEditing: false,
+                sections: [{
+                    name: "English",
+                    level: "Native"
+                }]
+            },
+            certificates: {
+                label: "Certificates",
+                isEditing: false,
+                sections: [{
+                    name: "Certificate Name",
+                    issuer: "Issuing Organization",
+                    date: "2023"
+                }]
+            },
+            reference: {
+                label: "Reference",
+                isEditing: false,
+                sections: [{
+                    name: "Reference Name",
+                    position: "Position",
+                    company: "Company",
+                    phone: "+1234567890",
+                    email: "reference@email.com"
+                }]
+            },
+            awards: {
+                label: "Awards",
+                isEditing: false,
+                sections: [{
+                    title: "Award Title",
+                    date: "2023",
+                    description: "Award description"
+                }]
+            },
+            hobbies: {
+                label: "Hobbies",
+                isEditing: false,
+                sections: ["Hobby 1", "Hobby 2", "Hobby 3"]
             }
         }
 
@@ -766,7 +884,7 @@ async function generateResumeOnFeedback(req, reply) {
                 messages: [
                     {
                         role: "system",
-                        content: "You are a professional resume generator. Create a JSON response with this exact structure: {\"basics\": {\"name\": \"John Doe\", \"email\": \"john@email.com\", \"phone\": \"+1234567890\", \"location\": \"City, Country\", \"website\": \"https://website.com\", \"summary\": \"Professional summary here\"}, \"sections\": {\"experience\": [{\"company\": \"Company Name\", \"position\": \"Job Title\", \"startDate\": \"2020\", \"endDate\": \"2023\", \"summary\": \"Job description\"}], \"education\": [{\"institution\": \"University Name\", \"area\": \"Degree Field\", \"studyType\": \"Bachelor's\", \"startDate\": \"2016\", \"endDate\": \"2020\"}], \"skills\": [{\"name\": \"Skill Name\", \"level\": \"Expert\"}], \"projects\": [{\"name\": \"Project Name\", \"description\": \"Project description\", \"url\": \"https://project.com\"}]}}. Return ONLY valid JSON, no additional text."
+                        content: "You are a professional resume generator. Create a JSON response with this exact structure: {\"basics\": {\"name\": \"John Doe\", \"email\": \"john@email.com\", \"phone\": \"+1234567890\", \"location\": \"City, Country\", \"website\": \"https://website.com\", \"summary\": \"Professional summary here\"}, \"sections\": {\"experience\": [{\"company\": \"Company Name\", \"position\": \"Job Title\", \"startDate\": \"2020\", \"endDate\": \"2023\", \"summary\": \"Job description\"}], \"education\": [{\"institution\": \"University Name\", \"area\": \"Degree Field\", \"studyType\": \"Bachelor's\", \"startDate\": \"2016\", \"endDate\": \"2020\"}], \"skills\": [{\"name\": \"Skill Name\", \"level\": \"Expert\"}], \"projects\": [{\"name\": \"Project Name\", \"description\": \"Project description\", \"url\": \"https://project.com\"}], \"language\": [{\"name\": \"English\", \"level\": \"Native\"}], \"certificates\": [{\"name\": \"Certificate Name\", \"issuer\": \"Issuing Organization\", \"date\": \"2023\"}], \"reference\": [{\"name\": \"Reference Name\", \"position\": \"Position\", \"company\": \"Company\", \"phone\": \"+1234567890\", \"email\": \"reference@email.com\"}], \"awards\": [{\"title\": \"Award Title\", \"date\": \"2023\", \"description\": \"Award description\"}], \"hobbies\": [\"Hobby 1\", \"Hobby 2\", \"Hobby 3\"]}}. Return ONLY valid JSON, no additional text."
                     },
                     {
                         role: "user",
