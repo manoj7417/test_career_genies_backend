@@ -8,7 +8,7 @@ const newsLetterpath = path.join(
     "newsletter.html"
 );
 require('dotenv').config();
-const USER_EMAIL = process.env.USER_EMAIL
+const USER_EMAIL = process.env.EMAIL_USER
 
 
 const subscribeNewsletter = async (req, res) => {

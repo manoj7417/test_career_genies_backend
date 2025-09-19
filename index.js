@@ -1,5 +1,7 @@
 const fastify = require('fastify')({
-    logger: false
+    logger: false,
+    requestTimeout: 180000, // 3 minutes global timeout
+    connectionTimeout: 180000 // 3 minutes connection timeout
 });
 fastify.register(require('@fastify/formbody'));
 const path = require('path');

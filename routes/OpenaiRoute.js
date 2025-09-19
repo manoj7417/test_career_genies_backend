@@ -1,4 +1,4 @@
-const { createAssistant, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyzeResume, generateBetterResume, generateResumeOnFeeback, aicounselling, generateCounsellingTest, generateCareerAdvice, generateFreshResume } = require("../utils/openai");
+const { createAssistant, createThread, communicateWithAgent, aiAgent, atsCheck, askBot, analyzeResume, generateBetterResume, generateResumeOnFeedback, aicounselling, generateCounsellingTest, generateCareerAdvice, generateFreshResume } = require("../utils/openai");
 const multer = require('fastify-multer');
 const upload = multer({ dest: 'uploads/' });
 
@@ -28,8 +28,12 @@ async function OpenaiRoute(fastify, options) {
     // fastify.post("/analyseResume", { preHandler: [fastify.verifyJWT, upload.single('file')] }, analyseResume)
     fastify.post("/createThread", { schema: createAssistantSchema }, createThread)
     fastify.post("/generateBetterResume", generateBetterResume)
-    fastify.post("/generateResumeOnFeeback", { preHandler: fastify.verifyJWT }, generateResumeOnFeeback)
-    fastify.post('/generateFreshResume', { preHandler: fastify.verifyJWT }, generateFreshResume)
+    fastify.post("/generateResumeOnFeedback", {
+        preHandler: fastify.verifyJWT
+    }, generateResumeOnFeedback)
+    fastify.post('/generateFreshResume', {
+        preHandler: fastify.verifyJWT
+    }, generateFreshResume)
     fastify.post("/generateCounsellingTest", { preHandler: fastify.verifyJWT }, generateCounsellingTest)
     fastify.post("/generateCareerAdvice", { preHandler: fastify.verifyJWT }, generateCareerAdvice)
 }
