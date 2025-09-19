@@ -109,15 +109,15 @@ const UserSchema = new mongoose.Schema({
             ref: "Payment"
         },
         analyserTokens: {
-            credits: { type: Number, default: 0 },
+            credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
         optimizerTokens: {
-            credits: { type: Number, default: 0 },
+            credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
         JobCVTokens: {
-            credits: { type: Number, default: 0 },
+            credits: { type: Number, default: 1 },
             expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
         },
         careerCounsellingTokens: {
