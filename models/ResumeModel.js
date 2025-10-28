@@ -96,10 +96,7 @@ const ResumeSchema = new mongoose.Schema({
         metadata: {
             template: { type: String, default: 'Template7' },
             page: {
-                format: {
-                    type: { type: String, default: "a4" },
-                    enum: ["a4", "letter"]
-                }
+                format: { type: String, default: "a4", enum: ["a4", "letter"] }
             },
             theme: {
                 background: { type: String, default: '#ffffff' },
