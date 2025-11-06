@@ -12,13 +12,15 @@ const checkAndResetExpiredCredits = async (user) => {
             user.subscription.optimizerTokens?.credits > 0 ||
             user.subscription.JobCVTokens?.credits > 0 ||
             user.subscription.careerCounsellingTokens?.credits > 0 ||
-            user.subscription.downloadCVTokens?.credits > 0
+            user.subscription.downloadCVTokens?.credits > 0 ||
+            user.subscription.cvScanTokens?.credits > 0
         )) {
             user.subscription.analyserTokens.credits = 0;
             user.subscription.optimizerTokens.credits = 0;
             user.subscription.JobCVTokens.credits = 0;
             user.subscription.careerCounsellingTokens.credits = 0;
             user.subscription.downloadCVTokens.credits = 0;
+            user.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
             resetReason.push('trial expired');
         }
@@ -31,13 +33,15 @@ const checkAndResetExpiredCredits = async (user) => {
             user.subscription.optimizerTokens?.credits > 0 ||
             user.subscription.JobCVTokens?.credits > 0 ||
             user.subscription.careerCounsellingTokens?.credits > 0 ||
-            user.subscription.downloadCVTokens?.credits > 0
+            user.subscription.downloadCVTokens?.credits > 0 ||
+            user.subscription.cvScanTokens?.credits > 0
         )) {
             user.subscription.analyserTokens.credits = 0;
             user.subscription.optimizerTokens.credits = 0;
             user.subscription.JobCVTokens.credits = 0;
             user.subscription.careerCounsellingTokens.credits = 0;
             user.subscription.downloadCVTokens.credits = 0;
+            user.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
             resetReason.push('coupon expired');
         }
@@ -49,13 +53,15 @@ const checkAndResetExpiredCredits = async (user) => {
             user.subscription.optimizerTokens?.credits > 0 ||
             user.subscription.JobCVTokens?.credits > 0 ||
             user.subscription.careerCounsellingTokens?.credits > 0 ||
-            user.subscription.downloadCVTokens?.credits > 0
+            user.subscription.downloadCVTokens?.credits > 0 ||
+            user.subscription.cvScanTokens?.credits > 0
         ) {
             user.subscription.analyserTokens.credits = 0;
             user.subscription.optimizerTokens.credits = 0;
             user.subscription.JobCVTokens.credits = 0;
             user.subscription.careerCounsellingTokens.credits = 0;
             user.subscription.downloadCVTokens.credits = 0;
+            user.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
             resetReason.push('discounted plan expired');
         }
@@ -102,6 +108,14 @@ const checkAndResetExpiredCredits = async (user) => {
         }
     }
 
+    if (user.subscription?.cvScanTokens?.expiry && user.subscription.cvScanTokens.expiry < currentDate) {
+        if (user.subscription.cvScanTokens.credits > 0) {
+            user.subscription.cvScanTokens.credits = 0;
+            needsUpdate = true;
+            resetReason.push('CV scan tokens expired');
+        }
+    }
+
     // Save user if any credits were reset
     if (needsUpdate) {
         await user.save();
@@ -135,13 +149,15 @@ const resetAllExpiredCredits = async () => {
                     user.subscription.optimizerTokens?.credits > 0 ||
                     user.subscription.JobCVTokens?.credits > 0 ||
                     user.subscription.careerCounsellingTokens?.credits > 0 ||
-                    user.subscription.downloadCVTokens?.credits > 0
+                    user.subscription.downloadCVTokens?.credits > 0 ||
+                    user.subscription.cvScanTokens?.credits > 0
                 )) {
                     user.subscription.analyserTokens.credits = 0;
                     user.subscription.optimizerTokens.credits = 0;
                     user.subscription.JobCVTokens.credits = 0;
                     user.subscription.careerCounsellingTokens.credits = 0;
                     user.subscription.downloadCVTokens.credits = 0;
+                    user.subscription.cvScanTokens.credits = 0;
                     needsUpdate = true;
                     resetCreditsInfo.push('trial expired');
                 }
@@ -154,13 +170,15 @@ const resetAllExpiredCredits = async () => {
                     user.subscription.optimizerTokens?.credits > 0 ||
                     user.subscription.JobCVTokens?.credits > 0 ||
                     user.subscription.careerCounsellingTokens?.credits > 0 ||
-                    user.subscription.downloadCVTokens?.credits > 0
+                    user.subscription.downloadCVTokens?.credits > 0 ||
+                    user.subscription.cvScanTokens?.credits > 0
                 )) {
                     user.subscription.analyserTokens.credits = 0;
                     user.subscription.optimizerTokens.credits = 0;
                     user.subscription.JobCVTokens.credits = 0;
                     user.subscription.careerCounsellingTokens.credits = 0;
                     user.subscription.downloadCVTokens.credits = 0;
+                    user.subscription.cvScanTokens.credits = 0;
                     needsUpdate = true;
                     resetCreditsInfo.push('coupon expired');
                 }
@@ -223,6 +241,14 @@ const resetAllExpiredCredits = async () => {
                 user.subscription.downloadCVTokens.credits = 0;
                 needsUpdate = true;
                 resetCreditsInfo.push('download CV tokens expired');
+            }
+
+            if (user.subscription?.cvScanTokens?.expiry &&
+                user.subscription.cvScanTokens.expiry < currentDate &&
+                user.subscription.cvScanTokens.credits > 0) {
+                user.subscription.cvScanTokens.credits = 0;
+                needsUpdate = true;
+                resetCreditsInfo.push('CV scan tokens expired');
             }
 
             // Save user if any credits were reset

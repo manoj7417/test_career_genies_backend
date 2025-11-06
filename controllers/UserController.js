@@ -86,7 +86,7 @@ const register = async (request, reply) => {
       VerfiyEmailBody,
     );
     setTimeout(async () => {
-      await sendEmail(email, "Welcome to Genies Career Hub", welcomeEmailBody);
+      await sendEmail(email, "Welcome to Genies Career Hub-– You’ve Got 10 Free Credits!", welcomeEmailBody);
     }, 100000)
     return reply.code(201).send({
       status: "SUCCESS",
@@ -276,7 +276,7 @@ const googleLogin = async (request, reply) => {
       const welcomeEmailBody = welcomeTemplate.replace("{fullname}", name);
 
       setTimeout(async () => {
-        await sendEmail(email, "Welcome to Genies Career Hub", welcomeEmailBody);
+        await sendEmail(email, "Welcome to Genies Career Hub-– You’ve Got 10 Free Credits!", welcomeEmailBody);
       }, 100000);
     }
 

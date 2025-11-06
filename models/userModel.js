@@ -109,24 +109,28 @@ const UserSchema = new mongoose.Schema({
             ref: "Payment"
         },
         analyserTokens: {
-            credits: { type: Number, default: 1 },
-            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
         },
         optimizerTokens: {
-            credits: { type: Number, default: 1 },
-            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
         },
         JobCVTokens: {
-            credits: { type: Number, default: 1 },
-            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
         },
         careerCounsellingTokens: {
-            credits: { type: Number, default: 1 },
-            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
         },
         downloadCVTokens: {
-            credits: { type: Number, default: 1 },
-            expiry: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
+        },
+        cvScanTokens: {
+            credits: { type: Number, default: 10 },
+            expiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
         },
 
     },
@@ -180,13 +184,15 @@ UserSchema.methods.checkAndResetExpiredCredits = function () {
             this.subscription.optimizerTokens?.credits > 0 ||
             this.subscription.JobCVTokens?.credits > 0 ||
             this.subscription.careerCounsellingTokens?.credits > 0 ||
-            this.subscription.downloadCVTokens?.credits > 0
+            this.subscription.downloadCVTokens?.credits > 0 ||
+            this.subscription.cvScanTokens?.credits > 0
         )) {
             this.subscription.analyserTokens.credits = 0;
             this.subscription.optimizerTokens.credits = 0;
             this.subscription.JobCVTokens.credits = 0;
             this.subscription.careerCounsellingTokens.credits = 0;
             this.subscription.downloadCVTokens.credits = 0;
+            this.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
         }
     }
@@ -198,13 +204,15 @@ UserSchema.methods.checkAndResetExpiredCredits = function () {
             this.subscription.optimizerTokens?.credits > 0 ||
             this.subscription.JobCVTokens?.credits > 0 ||
             this.subscription.careerCounsellingTokens?.credits > 0 ||
-            this.subscription.downloadCVTokens?.credits > 0
+            this.subscription.downloadCVTokens?.credits > 0 ||
+            this.subscription.cvScanTokens?.credits > 0
         )) {
             this.subscription.analyserTokens.credits = 0;
             this.subscription.optimizerTokens.credits = 0;
             this.subscription.JobCVTokens.credits = 0;
             this.subscription.careerCounsellingTokens.credits = 0;
             this.subscription.downloadCVTokens.credits = 0;
+            this.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
         }
     }
@@ -215,13 +223,15 @@ UserSchema.methods.checkAndResetExpiredCredits = function () {
             this.subscription.optimizerTokens?.credits > 0 ||
             this.subscription.JobCVTokens?.credits > 0 ||
             this.subscription.careerCounsellingTokens?.credits > 0 ||
-            this.subscription.downloadCVTokens?.credits > 0
+            this.subscription.downloadCVTokens?.credits > 0 ||
+            this.subscription.cvScanTokens?.credits > 0
         ) {
             this.subscription.analyserTokens.credits = 0;
             this.subscription.optimizerTokens.credits = 0;
             this.subscription.JobCVTokens.credits = 0;
             this.subscription.careerCounsellingTokens.credits = 0;
             this.subscription.downloadCVTokens.credits = 0;
+            this.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
         }
     }
@@ -258,6 +268,13 @@ UserSchema.methods.checkAndResetExpiredCredits = function () {
     if (this.subscription?.downloadCVTokens?.expiry && this.subscription.downloadCVTokens.expiry < currentDate) {
         if (this.subscription.downloadCVTokens.credits > 0) {
             this.subscription.downloadCVTokens.credits = 0;
+            needsUpdate = true;
+        }
+    }
+
+    if (this.subscription?.cvScanTokens?.expiry && this.subscription.cvScanTokens.expiry < currentDate) {
+        if (this.subscription.cvScanTokens.credits > 0) {
+            this.subscription.cvScanTokens.credits = 0;
             needsUpdate = true;
         }
     }

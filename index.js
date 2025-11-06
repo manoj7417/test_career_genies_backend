@@ -36,6 +36,7 @@ const CoachEditRoute = require('./routes/CoachEditRoute');
 const GoogleOAuthRoute = require('./routes/GoogleOAuthRoute');
 const FilterCoachRoute = require('./routes/FilterCoachRoute');
 const TestimonialRoute = require('./routes/TestimonialRoute');
+const CVScanRoute = require('./routes/CVScanRoute');
 const { resetAllExpiredCredits } = require('./utils/creditUtils');
 
 fastify.register(multipart); // Fastify-multipart is already registered
@@ -96,6 +97,7 @@ fastify.register(CoachEditRoute, { prefix: "/api/editCoach" })
 fastify.register(GoogleOAuthRoute, { prefix: "/api/google" })
 fastify.register(FilterCoachRoute, { prefix: "/api/filterCoach" });
 fastify.register(TestimonialRoute, { prefix: "/api/testimonial" });
+fastify.register(CVScanRoute, { prefix: "/api/cv-scan" });
 fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
     if (req.url === '/webhook') {
         req.rawBody = body;

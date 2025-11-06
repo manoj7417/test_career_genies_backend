@@ -714,6 +714,10 @@ const createSubscriptionPayment = async (req, res) => {
                 downloadCVTokens: {
                     credits: 10,
                     expiry: expiryDate,
+                },
+                cvScanTokens: {
+                    credits: 10,
+                    expiry: expiryDate,
                 }
             });
 
@@ -747,6 +751,10 @@ const createSubscriptionPayment = async (req, res) => {
                 expiry: expiryDate
             };
             user.subscription.careerCounsellingTokens = {
+                credits: 10,
+                expiry: expiryDate
+            };
+            user.subscription.cvScanTokens = {
                 credits: 10,
                 expiry: expiryDate
             };
@@ -813,6 +821,10 @@ const createSubscriptionPayment = async (req, res) => {
                 downloadCVTokens: {
                     credits: 1500,
                     expiry: expiryDate,
+                },
+                cvScanTokens: {
+                    credits: 1500,
+                    expiry: expiryDate,
                 }
             });
 
@@ -845,6 +857,10 @@ const createSubscriptionPayment = async (req, res) => {
                 expiry: expiryDate
             };
             user.subscription.careerCounsellingTokens = {
+                credits: 1500,
+                expiry: expiryDate
+            };
+            user.subscription.cvScanTokens = {
                 credits: 1500,
                 expiry: expiryDate
             };
@@ -954,6 +970,10 @@ const createSubscriptionPayment = async (req, res) => {
                 downloadCVTokens: {
                     credits: 1500,
                     expiry: expiryDate,
+                },
+                cvScanTokens: {
+                    credits: 1500,
+                    expiry: expiryDate,
                 }
             });
 
@@ -965,7 +985,7 @@ const createSubscriptionPayment = async (req, res) => {
         }
 
         // ---- Regular Paid Plan Logic (no discount) ----
-        let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0;
+        let analyserTokens = 0, optimizerTokens = 0, JobCVTokens = 0, careerCounsellingTokens = 0, downloadCVTokens = 0, cvScanTokens = 0;
 
         let amount, planDisplayName;
 
@@ -1026,6 +1046,7 @@ const createSubscriptionPayment = async (req, res) => {
             optimizerTokens = 20;
             JobCVTokens = 20;
             downloadCVTokens = 20;
+            cvScanTokens = 20;
         } else if (planName?.toLowerCase() === 'aicareercoach') {
             careerCounsellingTokens = 1;
         } else if (planName?.toLowerCase() === 'basic') {
@@ -1033,17 +1054,20 @@ const createSubscriptionPayment = async (req, res) => {
             optimizerTokens = 50;
             JobCVTokens = 50;
             downloadCVTokens = 50;
+            cvScanTokens = 50;
         } else if (planName?.toLowerCase() === 'lite') {
             analyserTokens = 200;
             optimizerTokens = 200;
             JobCVTokens = 200;
             downloadCVTokens = 200;
+            cvScanTokens = 200;
         } else if (planName?.toLowerCase() === 'premium') {
             analyserTokens = 500;
             optimizerTokens = 500;
             JobCVTokens = 500;
             downloadCVTokens = 500;
             careerCounsellingTokens = 500;
+            cvScanTokens = 500;
         }
 
         const payment = new Payment({
@@ -1072,6 +1096,10 @@ const createSubscriptionPayment = async (req, res) => {
             },
             downloadCVTokens: {
                 credits: downloadCVTokens,
+                expiry: currentPeriodEnd,
+            },
+            cvScanTokens: {
+                credits: cvScanTokens,
                 expiry: currentPeriodEnd,
             },
             expiryDate: currentPeriodEnd,
@@ -1471,6 +1499,7 @@ const webhook = async (request, reply) => {
                     user.subscription.JobCVTokens = payment.jobCVTokens;
                     user.subscription.downloadCVTokens = payment.downloadCVTokens;
                     user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+                    user.subscription.cvScanTokens = payment.cvScanTokens;
 
                     // Mark trial or coupon if applicable
                     if (payment.planType === 'trial') {
@@ -1500,6 +1529,10 @@ const webhook = async (request, reply) => {
                     };
                     user.subscription.careerCounsellingTokens = {
                         credits: payment.careerCounsellingTokens?.credits || 0,
+                        expiry: payment.expiryDate
+                    };
+                    user.subscription.cvScanTokens = {
+                        credits: payment.cvScanTokens?.credits || 0,
                         expiry: payment.expiryDate
                     };
                 }
@@ -1586,6 +1619,7 @@ const webhook = async (request, reply) => {
                         user.subscription.JobCVTokens = payment.jobCVTokens;
                         user.subscription.downloadCVTokens = payment.downloadCVTokens;
                         user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+                        user.subscription.cvScanTokens = payment.cvScanTokens;
 
                         if (payment.planType === 'trial') {
                             user.subscription.trialUsed = true;
@@ -1613,6 +1647,10 @@ const webhook = async (request, reply) => {
                         };
                         user.subscription.careerCounsellingTokens = {
                             credits: payment.careerCounsellingTokens?.credits || 0,
+                            expiry: payment.expiryDate
+                        };
+                        user.subscription.cvScanTokens = {
+                            credits: payment.cvScanTokens?.credits || 0,
                             expiry: payment.expiryDate
                         };
                     }
@@ -1818,6 +1856,7 @@ const razorpayWebhook = async (request, reply) => {
                 user.subscription.optimizerTokens = payment.optimizerTokens;
                 user.subscription.JobCVTokens = payment.jobCVTokens;
                 user.subscription.careerCounsellingTokens = payment.careerCounsellingTokens;
+                user.subscription.cvScanTokens = payment.cvScanTokens;
                 await user.save();
                 const templateAmount = "₹" + payment.amount;
                 const date = new Date(payment.expiryDate);

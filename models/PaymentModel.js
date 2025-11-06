@@ -37,6 +37,10 @@ const PaymentSchema = new mongoose.Schema({
         credits: { type: Number, default: 0 },
         expiry: { type: Date }
     },
+    cvScanTokens: {
+        credits: { type: Number, default: 0 },
+        expiry: { type: Date }
+    },
     addCredits: {
         serviceName: { type: String, default: '' },
         credits: { type: Number, default: 0 }
