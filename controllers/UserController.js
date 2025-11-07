@@ -78,7 +78,11 @@ const register = async (request, reply) => {
       const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
       // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
       const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
-      const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
+      const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink);
+      // Ensure no old domain is in the email body
+      if (VerfiyEmailBody.includes('geniescareerhub.com/verify-email')) {
+        console.error('ERROR: Old domain found in verification email!');
+      }
       const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
       const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
       await sendEmail(
@@ -768,7 +772,11 @@ const resendVerificationEmail = async (req, res) => {
     const verificationToken = await getVerificationToken(user._id);
     const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
-    const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink)
+    const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink);
+    // Ensure no old domain is in the email body
+    if (VerfiyEmailBody.includes('geniescareerhub.com/verify-email')) {
+      console.error('ERROR: Old domain found in verification email!');
+    }
     await sendEmail(
       email,
       "Genie's Career Hub: Email verification",
