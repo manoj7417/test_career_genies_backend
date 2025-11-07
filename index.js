@@ -6,6 +6,7 @@ const fastify = require('fastify')({
 fastify.register(require('@fastify/formbody'));
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const DBConnection = require('./config/db');
 const { apiKeyAuth } = require('./middlewares/auth');
 const roleCheck = require('./middlewares/RoleBasedAccessControl');
@@ -51,6 +52,7 @@ fastify.register(cors, {
         'https://careergenie-24.vercel.app',
         'https://career-genies-frontend.vercel.app',
         'https://testing-cg-frontend.vercel.app',
+        'https://test-career-genies-frontend.vercel.app',
         "https://sea-turtle-app-2-e6fjt.ondigitalocean.app",
         "https://www.geniescareerhub.com"
     ],
@@ -76,7 +78,29 @@ fastify.decorate('verifyJWT', verifyJWT);
 fastify.decorate('roleCheck', roleCheck);
 fastify.decorate('coachAuth', coachAuth);
 
-fastify.addHook('preHandler', apiKeyAuth);
+// Register health check endpoints BEFORE the API key auth hook
+// Health check endpoint - doesn't require DB connection
+fastify.get('/health', async (request, reply) => {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    return reply.code(200).send({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        database: dbStatus,
+        uptime: process.uptime()
+    });
+});
+
+// Simple root endpoint for Render health checks
+fastify.get('/', async (request, reply) => {
+    return reply.code(200).send({
+        status: 'ok',
+        message: 'Career Genies Backend API',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Use onRequest hook which runs earlier in the request lifecycle
+fastify.addHook('onRequest', apiKeyAuth);
 fastify.register(UploadRoute, { prefix: '/api/upload' });
 fastify.register(UserRoute, { prefix: '/api/user' });
 fastify.register(AdminRoute, { prefix: '/api/admin' })
@@ -116,9 +140,15 @@ fastify.register(require('./routes/recruiterRoutes'), { prefix: '/api/recruiters
 
 const start = async () => {
     try {
-        await DBConnection();
+        // Start server first, then connect to DB (non-blocking)
         await fastify.listen({ port: process.env.PORT || 3009, host: '0.0.0.0' });
-        fastify.log.info(`Server started on PORT ${fastify.server.address().port}`);
+        console.log(`✅ Server started on PORT ${fastify.server.address().port}`);
+
+        // Connect to database (non-blocking - server already accepting requests)
+        DBConnection().catch(err => {
+            console.error('⚠️ Database connection failed, but server is running:', err.message);
+            console.log('Server will continue to run. Database operations will fail until connection is established.');
+        });
 
         // Schedule automatic reset of expired credits every minute
         setInterval(async () => {
