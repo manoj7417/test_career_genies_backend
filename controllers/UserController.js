@@ -15,6 +15,10 @@ const { User } = require("../models/userModel");
 const { Resume } = require("../models/ResumeModel");
 const { Transaction } = require("../models/TransactionModel");
 const produrl = process.env.NODE_ENV !== 'development' ? process.env.PROD_URL : process.env.LOCAL_URL
+// Frontend URL based on environment
+const FRONTEND_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:3000'
+  : 'https://test-career-genies-frontend.vercel.app';
 const axios = require('axios');
 const { uploadfile } = require('../utils/s3Client');
 const { Booking } = require('../models/BookingModel');
@@ -75,8 +79,7 @@ const register = async (request, reply) => {
     // Try to send verification email, but don't fail registration if it fails
     try {
       const verificationToken = await getVerificationToken(user._id);
-      const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
-      // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+      const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
       const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
       const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink);
       // Ensure no old domain is in the email body
@@ -770,7 +773,7 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
+    const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink);
     // Ensure no old domain is in the email body
