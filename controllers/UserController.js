@@ -335,8 +335,8 @@ const forgetPassword = async (request, reply) => {
       });
     }
     const token = await user.generateResetPassowordToken();
-    const url = `https://geniescareerhub.com/reset-password?token=${token}`;
-    // const url = `https://geniescareerhub.com/reset-password?token=${token}&type=user`;
+    const url = `https://test-career-genies-backend.onrender.com/reset-password?token=${token}`;
+    // const url = `https://test-career-genies-backend.onrender.com/reset-password?token=${token}&type=user`;
     const emailtemplate = fs.readFileSync(resetPasswordTemplatePath, "utf-8");
     const emailBody = emailtemplate
       .replace("{userName}", user.fullname)
@@ -766,7 +766,7 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
+    const verificationLink = `https://test-career-genies-backend.onrender.com/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink)
     await sendEmail(
