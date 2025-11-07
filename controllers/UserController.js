@@ -766,7 +766,7 @@ const resendVerificationEmail = async (req, res) => {
       });
     }
     const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `https://test-career-genies-backend.onrender.com/verify-email?token=${verificationToken}`;
+    const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
     const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
     const VerfiyEmailBody = VerifyEmail.replace("{username}", user.fullname).replace("{verify-link}", verificationLink)
     await sendEmail(
