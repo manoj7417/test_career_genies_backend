@@ -54,7 +54,8 @@ fastify.register(cors, {
         'https://testing-cg-frontend.vercel.app',
         'https://test-career-genies-frontend.vercel.app',
         "https://sea-turtle-app-2-e6fjt.ondigitalocean.app",
-        "https://www.geniescareerhub.com"
+        "https://www.geniescareerhub.com",
+        "https://test-career-genies-frontend.vercel.app",
     ],
     allowedHeaders: [
         "Content-Type",
