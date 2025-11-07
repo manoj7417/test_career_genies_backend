@@ -72,31 +72,56 @@ const register = async (request, reply) => {
     const user = new User({ email, fullname, password });
     await user.save();
 
+    // Try to send verification email, but don't fail registration if it fails
+    try {
+      const verificationToken = await getVerificationToken(user._id);
+      const verificationLink = `https://test-career-genies-frontend.vercel.app/verify-email?token=${verificationToken}`;
+      // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+      const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
+      const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
+      const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
+      const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
+      await sendEmail(
+        email,
+        "Genies Career Hub: Email verification",
+        VerfiyEmailBody,
+      );
+      setTimeout(async () => {
+        try {
+          await sendEmail(email, "Welcome to Genies Career Hub-– You've Got 10 Free Credits!", welcomeEmailBody);
+        } catch (emailError) {
+          console.error('Error sending welcome email:', emailError);
+        }
+      }, 100000)
+    } catch (emailError) {
+      // Log email error but don't fail registration
+      console.error('Error sending verification email:', emailError);
+      // User is still registered successfully even if email fails
+    }
 
-    const verificationToken = await getVerificationToken(user._id);
-    const verificationLink = `https://geniescareerhub.com/verify-email?token=${verificationToken}`;
-    // const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
-    const VerifyEmail = fs.readFileSync(VerfiyEmailPath, "utf-8");
-    const VerfiyEmailBody = VerifyEmail.replace("{username}", fullname).replace("{verify-link}", verificationLink)
-    const welcomeTemplate = fs.readFileSync(welcomeTemplatePath, "utf-8");
-    const welcomeEmailBody = welcomeTemplate.replace("{fullname}", fullname)
-    await sendEmail(
-      email,
-      "Genies Career Hub: Email verification",
-      VerfiyEmailBody,
-    );
-    setTimeout(async () => {
-      await sendEmail(email, "Welcome to Genies Career Hub-– You’ve Got 10 Free Credits!", welcomeEmailBody);
-    }, 100000)
     return reply.code(201).send({
       status: "SUCCESS",
       message: "Registration successful",
     });
   } catch (error) {
-    console.log(error);
-    reply.code(500).send({
+    console.error('Registration error:', error);
+    // Handle specific error types
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message).join(', ');
+      return reply.code(400).send({
+        status: "FAILURE",
+        error: `Validation error: ${errors}`,
+      });
+    }
+    if (error.code === 11000) {
+      return reply.code(409).send({
+        status: "FAILURE",
+        error: "Account already exists",
+      });
+    }
+    return reply.code(500).send({
       status: "FAILURE",
-      error: error.message || "Internal server error",
+      error: error.message || "Error registering user",
     });
   }
 };
